@@ -1,3 +1,5 @@
+//go:build integration
+
 // Copyright 2015 Andrew E. Bruno. All rights reserved.
 // Use of this source code is governed by a BSD style
 // license that can be found in the LICENSE file.
@@ -9,13 +11,13 @@ import (
 	"testing"
 
 	"github.com/brianvoe/gofakeit/v6"
+	"github.com/neverlless/goipa"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/ubccr/goipa"
 )
 
 func addTestUser(c *ipa.Client, username, password string) (*ipa.User, error) {
-	user := *ipa.User{}
+	user := &ipa.User{}
 	user.Username = username
 	user.First = gofakeit.FirstName()
 	user.Last = gofakeit.LastName()
@@ -117,12 +119,12 @@ func TestUserAdd(t *testing.T) {
 	c, err := newTestClientCCache()
 	require.NoError(err)
 
-	user := *ipa.User{}
+	user := &ipa.User{}
 	user.Username = gofakeit.Username()
 	user.Email = gofakeit.Email()
 	user.First = gofakeit.FirstName()
 	user.Last = gofakeit.LastName()
-	user.Home = "/user/" + username
+	user.HomeDir = "/user/" + user.Username
 	user.Shell = "/bin/bash"
 	password := gofakeit.Password(true, true, true, true, false, 16)
 

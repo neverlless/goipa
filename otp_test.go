@@ -1,3 +1,5 @@
+//go:build integration
+
 // Copyright 2015 Andrew E. Bruno. All rights reserved.
 // Use of this source code is governed by a BSD style
 // license that can be found in the LICENSE file.
@@ -9,9 +11,9 @@ import (
 	"time"
 
 	"github.com/brianvoe/gofakeit/v6"
+	"github.com/neverlless/goipa"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/ubccr/goipa"
 )
 
 func TestAddTOTPToken(t *testing.T) {

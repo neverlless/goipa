@@ -1,6 +1,8 @@
-module github.com/ubccr/goipa
+module github.com/neverlless/goipa
 
-go 1.20
+go 1.26.0
+
+toolchain go1.27.3
 
 require (
 	github.com/brianvoe/gofakeit/v6 v6.14.5
@@ -10,7 +12,7 @@ require (
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.8.1
 	github.com/tidwall/gjson v1.17.1
-	golang.org/x/crypto v0.23.0
+	golang.org/x/crypto v0.58.0
 )
 
 require (
@@ -24,7 +26,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.1 // indirect
-	golang.org/x/net v0.25.0 // indirect
-	golang.org/x/sys v0.20.0 // indirect
+	golang.org/x/net v0.60.0 // indirect
+	golang.org/x/sys v0.49.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

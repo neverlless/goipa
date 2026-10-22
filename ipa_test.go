@@ -1,3 +1,5 @@
+//go:build integration
+
 // Copyright 2018 Andrew E. Bruno. All rights reserved.
 // Use of this source code is governed by a BSD style
 // license that can be found in the LICENSE file.
@@ -11,10 +13,10 @@ import (
 	"testing"
 
 	_ "github.com/joho/godotenv/autoload"
+	"github.com/neverlless/goipa"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/ubccr/goipa"
 )
 
 var (
