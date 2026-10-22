@@ -9,7 +9,6 @@ require (
 	github.com/go-ini/ini v1.67.0
 	github.com/jcmturner/gokrb5/v8 v8.4.4
 	github.com/joho/godotenv v1.4.0
-	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.8.1
 	github.com/tidwall/gjson v1.17.1
 	golang.org/x/crypto v0.58.0

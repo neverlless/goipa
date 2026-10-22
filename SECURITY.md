@@ -30,6 +30,6 @@ You will get an answer within 7 days. A fix and advisory are published within
 - goipa verifies the server certificate against the system roots plus
   `/etc/ipa/ca.crt`. Do not pass an `http.Client` with
   `InsecureSkipVerify` to `NewClientCustomHttp` outside tests.
-- At logrus `trace` level goipa dumps full HTTP requests and responses,
-  including passwords and session cookies. Never enable trace logging in
-  production.
+- goipa does not log. If you wrap the HTTP transport to debug, log methods,
+  paths and status codes only: request and response bodies carry passwords,
+  OTP codes, random passwords and session cookies.

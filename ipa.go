@@ -15,7 +15,6 @@ import (
 	"io"
 	"net"
 	"net/http"
-	"net/http/httputil"
 	"net/url"
 	"os"
 	"strings"
@@ -28,7 +27,6 @@ import (
 	"github.com/jcmturner/gokrb5/v8/credentials"
 	"github.com/jcmturner/gokrb5/v8/keytab"
 	"github.com/jcmturner/gokrb5/v8/spnego"
-	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -230,11 +228,6 @@ func (c *Client) rpc(method string, params []string, options Options) (*Response
 		}
 	}
 
-	if log.IsLevelEnabled(log.TraceLevel) {
-		dump, _ := httputil.DumpRequestOut(req, true)
-		log.Tracef("FreeIPA RPC request: %s", dump)
-	}
-
 	res, err := c.httpClient.Do(req)
 	if err != nil {
 		return nil, err
@@ -253,8 +246,6 @@ func (c *Client) rpc(method string, params []string, options Options) (*Response
 	if err != nil {
 		return nil, err
 	}
-
-	log.Tracef("FreeIPA JSON response: %s", string(rawJson))
 
 	var ipaRes Response
 	err = json.Unmarshal(rawJson, &ipaRes)
@@ -352,11 +343,6 @@ func (c *Client) RemoteLogin(uid, passwd string) error {
 		return err
 	}
 	defer res.Body.Close()
-
-	if log.IsLevelEnabled(log.TraceLevel) {
-		dump, _ := httputil.DumpResponse(res, true)
-		log.Tracef("FreeIPA RemoteLogin response: %s", dump)
-	}
 
 	if res.StatusCode == 401 && res.Header.Get("X-IPA-Rejection-Reason") == "password-expired" {
 		return ErrExpiredPassword

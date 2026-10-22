@@ -14,7 +14,6 @@ import (
 
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/neverlless/goipa"
-	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -41,10 +40,6 @@ func newTestClientUserPassword() (*ipa.Client, error) {
 		return nil, err
 	}
 
-	if testing.Verbose() {
-		log.SetLevel(log.TraceLevel)
-	}
-
 	return c, nil
 }
 
@@ -54,10 +49,6 @@ func newTestClientKeytab() (*ipa.Client, error) {
 	err := c.LoginWithKeytab(TestEnvKeytabFile, TestEnvKeytabUser)
 	if err != nil {
 		return nil, err
-	}
-
-	if testing.Verbose() {
-		log.SetLevel(log.TraceLevel)
 	}
 
 	return c, nil
@@ -73,10 +64,6 @@ func newTestClientCCache() (*ipa.Client, error) {
 	err = c.LoginFromCCache(fmt.Sprintf("/tmp/krb5cc_%s", user.Uid))
 	if err != nil {
 		return nil, err
-	}
-
-	if testing.Verbose() {
-		log.SetLevel(log.TraceLevel)
 	}
 
 	return c, nil
