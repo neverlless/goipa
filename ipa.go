@@ -12,11 +12,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"os"
 	"regexp"
 	"strings"
 	"time"
@@ -55,14 +56,13 @@ var (
 	ErrUnauthorized = errors.New("unauthorized")
 
 	// ErrUserExists is returned when user account already exists
-	ErrUserExists = errors.New("unauthorized")
+	ErrUserExists = errors.New("user exists")
 )
 
 // FreeIPA Client
 type Client struct {
 	host       string
 	realm      string
-	keyTab     string
 	sessionID  string
 	sticky     bool
 	httpClient *http.Client
@@ -97,7 +97,7 @@ type Response struct {
 func init() {
 	// If ca.crt for ipa exists, use it as the cert pool
 	// otherwise default to system root ca.
-	pem, err := ioutil.ReadFile("/etc/ipa/ca.crt")
+	pem, err := os.ReadFile("/etc/ipa/ca.crt")
 	if err == nil {
 		ipaCertPool = x509.NewCertPool()
 		if !ipaCertPool.AppendCertsFromPEM(pem) {
@@ -209,6 +209,9 @@ func (c *Client) rpc(method string, params []string, options Options) (*Response
 	}
 
 	req, err := http.NewRequest("POST", ipaUrl, bytes.NewBuffer(b))
+	if err != nil {
+		return nil, err
+	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Referer", fmt.Sprintf("https://%s/ipa/xml", c.host))
 
@@ -217,7 +220,9 @@ func (c *Client) rpc(method string, params []string, options Options) (*Response
 		req.Header.Set("Cookie", fmt.Sprintf("ipa_session=%s", c.sessionID))
 	} else if c.krbClient != nil {
 		// use Kerberos auth (SPNEGO)
-		spnego.SetSPNEGOHeader(c.krbClient, req, "")
+		if err := spnego.SetSPNEGOHeader(c.krbClient, req, ""); err != nil {
+			return nil, err
+		}
 	}
 
 	if log.IsLevelEnabled(log.TraceLevel) {
@@ -239,7 +244,7 @@ func (c *Client) rpc(method string, params []string, options Options) (*Response
 		return nil, err
 	}
 
-	rawJson, err := ioutil.ReadAll(res.Body)
+	rawJson, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -328,6 +333,9 @@ func (c *Client) RemoteLogin(uid, passwd string) error {
 
 	form := url.Values{"user": {uid}, "password": {passwd}}
 	req, err := http.NewRequest("POST", ipaUrl, strings.NewReader(form.Encode()))
+	if err != nil {
+		return err
+	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Set("Referer", fmt.Sprintf("https://%s/ipa", c.host))
 

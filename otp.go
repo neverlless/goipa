@@ -13,10 +13,10 @@ import (
 
 // OTP Token hash Algorithms supported by FreeIPA
 const (
-	AlgorithmSHA1   string = "sha1"
-	AlgorithmSHA256        = "sha256"
-	AlgorithmSHA384        = "sha384"
-	AlgorithmSHA512        = "sha512"
+	AlgorithmSHA1   = "sha1"
+	AlgorithmSHA256 = "sha256"
+	AlgorithmSHA384 = "sha384"
+	AlgorithmSHA512 = "sha512"
 )
 
 // OTP Token types supported by FreeIPA

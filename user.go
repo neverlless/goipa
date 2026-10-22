@@ -357,6 +357,9 @@ func (c *Client) SetPassword(username, old_passwd, new_passwd, otpcode string) e
 	}
 
 	req, err := http.NewRequest("POST", ipaUrl, strings.NewReader(form.Encode()))
+	if err != nil {
+		return err
+	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Set("Referer", fmt.Sprintf("https://%s/ipa", c.host))
 
@@ -434,7 +437,7 @@ func (c *Client) UserEnable(username string) error {
 // Privilege in FreeIPA.
 func (c *Client) UserAddWithPassword(user *User, password string) (*User, error) {
 	if user.Username == "" {
-		return nil, errors.New("Username is required")
+		return nil, errors.New("username is required")
 	}
 	if password == "" {
 		return nil, errors.New("password is required")
@@ -457,7 +460,7 @@ func (c *Client) UserAddWithPassword(user *User, password string) (*User, error)
 // user. Note this requires "User Administrators" Privilege in FreeIPA.
 func (c *Client) UserAdd(user *User, random bool) (*User, error) {
 	if user.Username == "" {
-		return nil, errors.New("Username is required")
+		return nil, errors.New("username is required")
 	}
 
 	options := user.ToOptions()
@@ -507,7 +510,7 @@ func (c *Client) UserDelete(preserve, stopOnError bool, usernames ...string) err
 // telephonenumber, and mobile
 func (c *Client) UserMod(user *User) (*User, error) {
 	if user.Username == "" {
-		return nil, errors.New("Username is required")
+		return nil, errors.New("username is required")
 	}
 
 	options := user.ToOptions()
