@@ -7,12 +7,14 @@ package ipa
 
 import (
 	"bytes"
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"net"
 	"net/http"
 	"net/url"
@@ -180,15 +182,22 @@ func (e *IpaError) Error() string {
 }
 
 // Call FreeIPA API with method, params and options
-func (c *Client) rpc(method string, params []string, options Options) (*Response, error) {
-	if options == nil {
-		options = Options{}
+func (c *Client) rpc(ctx context.Context, method string, params []string, options Options) (*Response, error) {
+	// The caller's map may be shared between goroutines; never write to it.
+	opts := maps.Clone(options)
+	if opts == nil {
+		opts = Options{}
 	}
-	options["version"] = IpaClientVersion
+	if _, ok := opts["version"]; !ok {
+		opts["version"] = IpaClientVersion
+	}
+	if params == nil {
+		params = []string{}
+	}
 
 	data := []interface{}{
 		params,
-		options,
+		opts,
 	}
 
 	payload := Options{
@@ -211,7 +220,7 @@ func (c *Client) rpc(method string, params []string, options Options) (*Response
 		ipaUrl = fmt.Sprintf("https://%s/ipa/session/json", c.host)
 	}
 
-	req, err := http.NewRequest("POST", ipaUrl, bytes.NewBuffer(b))
+	req, err := http.NewRequestWithContext(ctx, "POST", ipaUrl, bytes.NewBuffer(b))
 	if err != nil {
 		return nil, err
 	}
@@ -270,9 +279,22 @@ func (c *Client) Realm() string {
 	return c.realm
 }
 
+// RPC calls any FreeIPA command, an escape hatch for commands goipa does not
+// wrap. It uses the client's HTTP client, session or Kerberos credentials and
+// API version. A FreeIPA failure is returned as a bare *IpaError. options is
+// not modified; a "version" in options wins over IpaClientVersion.
+func (c *Client) RPC(method string, args []string, options Options) (*Response, error) {
+	return c.RPCContext(context.Background(), method, args, options)
+}
+
+// RPCContext is like RPC but ends the request when ctx is done.
+func (c *Client) RPCContext(ctx context.Context, method string, args []string, options Options) (*Response, error) {
+	return c.rpc(ctx, method, args, options)
+}
+
 // Ping FreeIPA server to check connection
 func (c *Client) Ping() (*Response, error) {
-	res, err := c.rpc("ping", []string{}, nil)
+	res, err := c.rpc(context.Background(), "ping", []string{}, nil)
 
 	if err != nil {
 		return nil, err
