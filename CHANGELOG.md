@@ -12,6 +12,12 @@ existing exported identifiers keep their signatures).
   TLS settings, session or Kerberos auth and API version (ubccr/goipa#11).
 - `rpc` and `UserFind` no longer write `version`/`all`/`no_members` into the
   caller's `Options` map (data race when shared).
+- `Result` keeps `Count`, `Truncated`, `Messages`, `Completed`, `Failed`, and
+  the whole result object in `Raw` (for shapes without a `result` key such
+  as `hbactest`).
+- A response without `result` and `error` is an error instead of a
+  nil-pointer panic.
+- Responses over 64 MiB are rejected.
 
 ## [v0.1.0] - 2026-10-22
 

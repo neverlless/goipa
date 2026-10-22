@@ -73,6 +73,8 @@ type Client struct {
 // FreeIPA api options map
 type Options map[string]interface{}
 
+const maxResponseSize = 64 << 20
+
 // FreeIPA error
 type IpaError struct {
 	Message string
@@ -81,9 +83,36 @@ type IpaError struct {
 
 // Result returned from a FreeIPA JSON rpc call
 type Result struct {
-	Summary string          `json:"summary"`
-	Value   interface{}     `json:"value"`
-	Data    json.RawMessage `json:"result"`
+	Summary   string          `json:"summary"`
+	Value     interface{}     `json:"value"`
+	Data      json.RawMessage `json:"result"`
+	Count     int             `json:"count"`
+	Truncated bool            `json:"truncated"`
+	Messages  []Message       `json:"messages"`
+	Completed int             `json:"completed"`
+	Failed    json.RawMessage `json:"failed"`
+	// Raw is the whole FreeIPA result object, for shapes without a "result"
+	// key such as hbactest.
+	Raw json.RawMessage `json:"-"`
+}
+
+// Message is a server warning attached to a FreeIPA result.
+type Message struct {
+	Type    string          `json:"type"`
+	Name    string          `json:"name"`
+	Message string          `json:"message"`
+	Code    int             `json:"code"`
+	Data    json.RawMessage `json:"data"`
+}
+
+// UnmarshalJSON decodes the result and keeps a copy of the raw object in Raw.
+func (r *Result) UnmarshalJSON(b []byte) error {
+	type plain Result
+	if err := json.Unmarshal(b, (*plain)(r)); err != nil {
+		return err
+	}
+	r.Raw = append(json.RawMessage(nil), b...)
+	return nil
 }
 
 // Response returned from a FreeIPA JSON rpc call
@@ -251,9 +280,12 @@ func (c *Client) rpc(ctx context.Context, method string, params []string, option
 		return nil, err
 	}
 
-	rawJson, err := io.ReadAll(res.Body)
+	rawJson, err := io.ReadAll(io.LimitReader(res.Body, maxResponseSize+1))
 	if err != nil {
 		return nil, err
+	}
+	if len(rawJson) > maxResponseSize {
+		return nil, fmt.Errorf("ipa: response larger than %d bytes", maxResponseSize)
 	}
 
 	var ipaRes Response
@@ -264,6 +296,10 @@ func (c *Client) rpc(ctx context.Context, method string, params []string, option
 
 	if ipaRes.Error != nil {
 		return nil, ipaRes.Error
+	}
+
+	if ipaRes.Result == nil {
+		return nil, errors.New("ipa: response has neither result nor error")
 	}
 
 	return &ipaRes, nil
