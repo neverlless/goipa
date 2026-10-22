@@ -18,8 +18,8 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"os"
-	"regexp"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/go-ini/ini"
@@ -38,10 +38,9 @@ const (
 )
 
 var (
-	ipaDefaultHost    string
-	ipaDefaultRealm   string
-	ipaCertPool       *x509.CertPool
-	ipaSessionPattern = regexp.MustCompile(`^ipa_session=([^;]+);`)
+	ipaDefaultHost  string
+	ipaDefaultRealm string
+	ipaCertPool     *x509.CertPool
 
 	// ErrPasswordPolicy is returned when a password does not conform to the password policy
 	ErrPasswordPolicy = errors.New("password does not conform to policy")
@@ -63,10 +62,12 @@ var (
 type Client struct {
 	host       string
 	realm      string
-	sessionID  string
-	sticky     bool
 	httpClient *http.Client
-	krbClient  *client.Client
+
+	mu        sync.Mutex // guards the fields below; a Client is shared across goroutines
+	sessionID string
+	sticky    bool
+	krbClient *client.Client
 }
 
 // FreeIPA api options map
@@ -203,8 +204,12 @@ func (c *Client) rpc(method string, params []string, options Options) (*Response
 		return nil, err
 	}
 
+	c.mu.Lock()
+	sessionID, krbClient := c.sessionID, c.krbClient
+	c.mu.Unlock()
+
 	ipaUrl := fmt.Sprintf("https://%s/ipa/json", c.host)
-	if len(c.sessionID) > 0 {
+	if len(sessionID) > 0 {
 		ipaUrl = fmt.Sprintf("https://%s/ipa/session/json", c.host)
 	}
 
@@ -215,12 +220,12 @@ func (c *Client) rpc(method string, params []string, options Options) (*Response
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Referer", fmt.Sprintf("https://%s/ipa/xml", c.host))
 
-	if len(c.sessionID) > 0 {
+	if len(sessionID) > 0 {
 		// If session is set, use the session id
-		req.Header.Set("Cookie", fmt.Sprintf("ipa_session=%s", c.sessionID))
-	} else if c.krbClient != nil {
+		req.Header.Set("Cookie", fmt.Sprintf("ipa_session=%s", sessionID))
+	} else if krbClient != nil {
 		// use Kerberos auth (SPNEGO)
-		if err := spnego.SetSPNEGOHeader(c.krbClient, req, ""); err != nil {
+		if err := spnego.SetSPNEGOHeader(krbClient, req, ""); err != nil {
 			return nil, err
 		}
 	}
@@ -287,40 +292,43 @@ func (c *Client) Ping() (*Response, error) {
 
 // Return current FreeIPA sessionID
 func (c *Client) SessionID() string {
+	c.mu.Lock()
+	defer c.mu.Unlock()
 	return c.sessionID
 }
 
 // Clears out FreeIPA session id
 func (c *Client) ClearSession() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
 	c.sessionID = ""
 }
 
 // Set stick sessions.
 func (c *Client) StickySession(enable bool) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
 	c.sticky = enable
 }
 
 // Set FreeIPA sessionID from http response cookie
 func (c *Client) setSessionID(res *http.Response) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
 	if !c.sticky {
 		return nil
 	}
 
-	cookie := res.Header.Get("Set-Cookie")
-	if len(cookie) == 0 {
-		return nil
-	}
-
-	ipaSession := ""
-	matches := ipaSessionPattern.FindStringSubmatch(cookie)
-	if len(matches) == 2 {
-		ipaSession = matches[1]
-	}
-
-	if len(ipaSession) == 32 || strings.HasPrefix(ipaSession, "MagBearerToken") {
-		c.sessionID = ipaSession
-	} else {
-		return errors.New("invalid set-cookie header")
+	// Other cookies (e.g. a load balancer's) may come first and are not ours to reject.
+	for _, cookie := range res.Cookies() {
+		if cookie.Name != "ipa_session" {
+			continue
+		}
+		if len(cookie.Value) != 32 && !strings.HasPrefix(cookie.Value, "MagBearerToken") {
+			return errors.New("invalid set-cookie header")
+		}
+		c.sessionID = cookie.Value
 	}
 
 	return nil
@@ -387,7 +395,9 @@ func (c *Client) Login(username, password string) error {
 		return err
 	}
 
+	c.mu.Lock()
 	c.krbClient = cl
+	c.mu.Unlock()
 
 	return nil
 }
@@ -411,7 +421,9 @@ func (c *Client) LoginWithKeytab(ktab, username string) error {
 		return err
 	}
 
+	c.mu.Lock()
 	c.krbClient = cl
+	c.mu.Unlock()
 
 	return nil
 }
@@ -438,7 +450,9 @@ func (c *Client) LoginFromCCache(cpath string) error {
 		return err
 	}
 
+	c.mu.Lock()
 	c.krbClient = cl
+	c.mu.Unlock()
 
 	return nil
 }
