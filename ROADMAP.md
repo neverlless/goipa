@@ -52,7 +52,8 @@ The foundation every typed call builds on.
       `*HTTPError`
 - [ ] Robustness: nil `result` is an error instead of a panic, response size
       cap, caller's `Options` map is not modified, `AddOTPToken` no longer
-      writes into `DefaultTOTPToken`, replaced Kerberos clients are destroyed
+      writes into `DefaultTOTPToken` and sends token validity dates in UTC,
+      replaced Kerberos clients are destroyed
 - [ ] `SetSessionID` to restore a saved session on any client
 - [ ] `…Context` twins of every existing method
 - [ ] CI: `apidiff` against the latest tag fails on incompatible changes
