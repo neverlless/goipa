@@ -1,0 +1,39 @@
+name: Bug report
+description: Something does not work as documented
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What did you call, what did you expect, and what happened instead?
+    validations: {required: true}
+  - type: input
+    id: version
+    attributes:
+      label: goipa version
+      placeholder: e.g. v0.1.0 or a commit hash
+    validations: {required: true}
+  - type: input
+    id: ipa
+    attributes:
+      label: FreeIPA / IdM version
+      placeholder: e.g. FreeIPA 4.12.2 on RHEL 9
+    validations: {required: true}
+  - type: dropdown
+    id: auth
+    attributes:
+      label: How does the client log in?
+      options: [Keytab, Password (Login / RemoteLogin), Kerberos ccache, Existing session ID, Other]
+  - type: textarea
+    id: code
+    attributes:
+      label: Minimal code
+      description: The smallest program or test that shows the problem.
+      render: go
+  - type: textarea
+    id: logs
+    attributes:
+      label: Error and logs
+      description: The returned error, and the FreeIPA response if you have it. **Remove passwords, session cookies and keytabs.** Trace logs contain them.
+      render: text

@@ -1,0 +1,26 @@
+name: Feature request
+description: Ask for a FreeIPA command or a library feature
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What are you trying to do, and what stops you today?
+    validations: {required: true}
+  - type: input
+    id: command
+    attributes:
+      label: FreeIPA command(s)
+      description: The API command this needs, if any.
+      placeholder: e.g. group_add_member_manager
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed API
+      description: The Go function or type you would like to call.
+      render: go
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered

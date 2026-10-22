@@ -1,1 +1,11 @@
 .env
+.ansible
+.planning/
+
+# local key material (release signing key backup) — never commit
+private/
+docs/
+.playwright-mcp/
+.superpowers
+.claude
+CLAUDE.md
