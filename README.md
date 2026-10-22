@@ -1,78 +1,151 @@
-# goipa - FreeIPA client library
-===============================================================================
+# goipa
 
-[![GoDoc](https://img.shields.io/badge/godoc-reference-blue)](https://pkg.go.dev/github.com/ubccr/goipa)
+**Go client library for the FreeIPA / Red Hat IdM JSON-RPC API.**
 
-goipa is a [FreeIPA](http://www.freeipa.org/) client library written in Go.
-It interfaces with the FreeIPA JSON [api](https://github.com/freeipa/freeipa/blob/master/API.txt)
-over HTTPS.
+[![CI](https://github.com/neverlless/goipa/actions/workflows/ci.yml/badge.svg)](https://github.com/neverlless/goipa/actions/workflows/ci.yml)
+[![Go Reference](https://pkg.go.dev/badge/github.com/neverlless/goipa.svg)](https://pkg.go.dev/github.com/neverlless/goipa)
+[![Release](https://img.shields.io/github/v/release/neverlless/goipa)](https://github.com/neverlless/goipa/releases)
+[![Go version](https://img.shields.io/github/go-mod/go-version/neverlless/goipa)](go.mod)
+[![License](https://img.shields.io/github/license/neverlless/goipa)](LICENSE)
+
+goipa talks to a [FreeIPA](https://www.freeipa.org/) server over HTTPS using
+its JSON-RPC [API](https://github.com/freeipa/freeipa/blob/master/API.txt).
+It logs in with a password, a keytab, a Kerberos credential cache or an
+existing session, and gives you typed Go calls for users, passwords, SSH keys
+and OTP tokens.
+
+> **Note:** This is the maintained continuation of
+> [ubccr/goipa](https://github.com/ubccr/goipa) by Andrew E. Bruno, which has
+> had no release since 2024. It is a drop-in replacement for ubccr/goipa
+> v0.0.7; see [Migrating from ubccr/goipa](#migrating-from-ubccrgoipa).
+> It is developed alongside [mokey](https://github.com/neverlless/mokey), a FreeIPA self-service portal.
+
+## Features
+
+- Login: password (`Login`, `RemoteLogin`), keytab (`LoginWithKeytab`),
+  Kerberos credential cache (`LoginFromCCache`), or a saved session ID
+  (`NewDefaultClientWithSession`)
+- Reads the host, realm and CA from `/etc/ipa/default.conf` and
+  `/etc/ipa/ca.crt` on enrolled machines, or takes them explicitly
+  (`NewClient`, `NewClientCustomHttp`)
+- Users: show, find, add (with random or given password), modify, enable,
+  disable, delete
+- Passwords: set, change (with OTP), reset; typed errors for policy, invalid
+  and expired passwords
+- SSH public keys and user authentication types (password, OTP, ...)
+- OTP tokens: add, list, enable, disable, remove
+
+Groups, stage users, HBAC/sudo, sub-IDs, passkeys, password policy and a
+generic `RPC` call are planned; see the [roadmap](ROADMAP.md).
+
+## Install
+
+```sh
+go get github.com/neverlless/goipa
+```
+
+Requires Go 1.26 or newer. The package name is `ipa`.
 
 ## Usage
 
-Install using go tools:
-
-```
-$ go get github.com/ubccr/goipa
-```
-
-Example calling FreeIPA user-show:
+On a host enrolled in FreeIPA (with `/etc/ipa/default.conf`), log in with a
+keytab and show a user:
 
 ```go
 package main
 
 import (
-    "fmt"
+	"fmt"
+	"log"
 
-    "github.com/ubccr/goipa"
+	ipa "github.com/neverlless/goipa"
 )
 
 func main() {
-    client := ipa.NewDefaultClient()
+	client := ipa.NewDefaultClient()
 
-    err := client.LoginWithKeytab("/path/to/user.keytab", "username")
-    if err != nil {
-        panic(err)
-    }
+	if err := client.LoginWithKeytab("/etc/myapp/myapp.keytab", "myapp"); err != nil {
+		log.Fatal(err)
+	}
 
-    rec, err := client.UserShow("username")
-    if err != nil {
-        panic(err)
-    }
+	user, err := client.UserShow("jdoe")
+	if err != nil {
+		log.Fatal(err)
+	}
 
-    fmt.Println("%s - %s", rec.Username, rec.Uid)
+	fmt.Printf("%s <%s> uid=%s groups=%v\n", user.DisplayName, user.Email, user.Uid, user.Groups)
 }
 ```
 
-## Hacking
+Elsewhere, name the server and realm and log in with a password:
 
-Development and testing goipa uses docker-compose. The scripts to spin up a
-FreeIPA test server in docker were copied/adopted from [this great repository](https://github.com/adelton/webauthinfra). 
-Most of the scripts in `container/` directory are written by Jan Pazdziora and
-licensed under Apache 2.0 and modified for use with goipa.
-
-NOTE: The containers are NOT meant to be run in production and used solely for
-development.
-
-To get started hacking on goipa and running the test suite:
-
-```
-$ cp .env.sample .env
-[edit to taste. add passwords and ssh key]
-
-$ docker-compose build
-$ docker-compose up -d
-$ ssh -p 9022 localhost
-$ kinit admin
-$ cd /app
-$ go test
+```go
+client := ipa.NewClient("ipa.example.com", "EXAMPLE.COM")
+if err := client.RemoteLogin("jdoe", password); err != nil {
+	switch {
+	case errors.Is(err, ipa.ErrExpiredPassword):
+		// ask for a new password, then client.SetPassword(...)
+	case errors.Is(err, ipa.ErrInvalidPassword):
+		// wrong password
+	}
+}
+// Keep client.SessionID() and reuse it later with NewDefaultClientWithSession.
 ```
 
-To run a specific test with trace debugging:
+Full API reference: [pkg.go.dev/github.com/neverlless/goipa](https://pkg.go.dev/github.com/neverlless/goipa).
 
+## Migrating from ubccr/goipa
+
+The API is the same as ubccr/goipa v0.0.7. Change the import path:
+
+```sh
+grep -rl ubccr/goipa --include='*.go' . | xargs sed -i 's#ubccr/goipa#neverlless/goipa#'
+go mod tidy
 ```
-$ go test -v -run UserShow
+
+On macOS use `sed -i ''`. What changed since v0.0.7 is listed in the
+[ChangeLog](CHANGELOG.md).
+
+## Differences from upstream
+
+- Security updates: `golang.org/x/crypto` and friends are current, and
+  Dependabot and govulncheck keep them that way
+- Bug fixes: `ErrUserExists` no longer has the same message as
+  `ErrUnauthorized`; Kerberos and request-building errors are returned
+  instead of being ignored
+- `go test ./...` runs without a FreeIPA server; tests that need one are
+  behind the `integration` build tag
+- CI with race detector, staticcheck, gosec and govulncheck
+
+## Development
+
+```sh
+go test -race ./...
 ```
+
+Integration tests run against a real FreeIPA in a container. The scripts in
+`container/` were adapted from [webauthinfra](https://github.com/adelton/webauthinfra)
+by Jan Pazdziora (Apache 2.0) and are for development only, never production.
+
+```sh
+cp .env.sample .env      # set passwords and your SSH key
+docker compose build
+docker compose up -d
+ssh -p 9022 localhost
+kinit admin
+cd /app
+go test -tags integration ./...
+go test -tags integration -v -run UserShow   # one test
+```
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) before sending a pull request.
+
+## Security
+
+Report vulnerabilities privately; see [SECURITY.md](SECURITY.md).
 
 ## License
 
-goipa is released under a BSD style License. See the LICENSE file.
+goipa is released under a BSD-style license. See [LICENSE](LICENSE) and
+[NOTICE](NOTICE). Copyright 2015 Andrew E. Bruno and the goipa authors
+([AUTHORS.rst](AUTHORS.rst)).
