@@ -7,6 +7,8 @@ existing exported identifiers keep their signatures).
 
 ## [Unreleased]
 
+- CI fails on any incompatible API change against the latest tag (apidiff).
+
 ## [v0.1.0] - 2026-10-22
 
 First release of the maintained continuation of
