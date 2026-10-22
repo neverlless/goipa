@@ -84,3 +84,28 @@ jobs:
         run: |
           go install github.com/securego/gosec/v2/cmd/gosec@v2.29.0
           gosec ./...
+
+  apidiff:
+    name: API compatibility
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+
+      # Stricter than semver requires on v0: ubccr/goipa v0.0.7 users depend on drop-in compatibility.
+      - name: apidiff against the latest tag
+        shell: bash
+        run: |
+          go install golang.org/x/exp/cmd/apidiff@v0.0.0-20261014143641-f0251eb4aa3e
+          base=$(git describe --tags --abbrev=0)
+          git worktree add "$RUNNER_TEMP/base" "$base"
+          (cd "$RUNNER_TEMP/base" && apidiff -m -w "$RUNNER_TEMP/base.api" github.com/neverlless/goipa)
+          apidiff -m -incompatible "$RUNNER_TEMP/base.api" github.com/neverlless/goipa | tee "$RUNNER_TEMP/apidiff.txt"
+          test ! -s "$RUNNER_TEMP/apidiff.txt"
