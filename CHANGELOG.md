@@ -8,6 +8,10 @@ existing exported identifiers keep their signatures).
 ## [Unreleased]
 
 - CI fails on any incompatible API change against the latest tag (apidiff).
+- `(*Client).RPC` and `RPCContext` call any FreeIPA command with the client's
+  TLS settings, session or Kerberos auth and API version (ubccr/goipa#11).
+- `rpc` and `UserFind` no longer write `version`/`all`/`no_members` into the
+  caller's `Options` map (data race when shared).
 
 ## [v0.1.0] - 2026-10-22
 

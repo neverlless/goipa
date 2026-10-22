@@ -6,9 +6,11 @@ package ipa
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"net/http"
 	"net/url"
 	"strings"
@@ -240,7 +242,7 @@ func (c *Client) UserShow(username string) (*User, error) {
 		"all":        true,
 	}
 
-	res, err := c.rpc("user_show", []string{username}, options)
+	res, err := c.rpc(context.Background(), "user_show", []string{username}, options)
 
 	if err != nil {
 		return nil, err
@@ -257,6 +259,7 @@ func (c *Client) UserShow(username string) (*User, error) {
 
 // Find users.
 func (c *Client) UserFind(options Options) ([]*User, error) {
+	options = maps.Clone(options)
 	if options == nil {
 		options = Options{}
 	}
@@ -264,7 +267,7 @@ func (c *Client) UserFind(options Options) ([]*User, error) {
 	options["no_members"] = false
 	options["all"] = true
 
-	res, err := c.rpc("user_find", []string{""}, options)
+	res, err := c.rpc(context.Background(), "user_find", []string{""}, options)
 
 	if err != nil {
 		return nil, err
@@ -293,7 +296,7 @@ func (c *Client) ResetPassword(username string) (string, error) {
 		"random":     true,
 		"all":        true}
 
-	res, err := c.rpc("user_mod", []string{username}, options)
+	res, err := c.rpc(context.Background(), "user_mod", []string{username}, options)
 
 	if err != nil {
 		return "", err
@@ -325,7 +328,7 @@ func (c *Client) ChangePassword(username, old_passwd, new_passwd, otpcode string
 		options["otp"] = otpcode
 	}
 
-	_, err := c.rpc("passwd", []string{username}, options)
+	_, err := c.rpc(context.Background(), "passwd", []string{username}, options)
 
 	if err != nil {
 		return err
@@ -395,7 +398,7 @@ func (c *Client) SetAuthTypes(username string, types []string) error {
 		options["ipauserauthtype"] = ""
 	}
 
-	_, err := c.rpc("user_mod", []string{username}, options)
+	_, err := c.rpc(context.Background(), "user_mod", []string{username}, options)
 
 	if err != nil {
 		return err
@@ -406,7 +409,7 @@ func (c *Client) SetAuthTypes(username string, types []string) error {
 
 // Disable User Account
 func (c *Client) UserDisable(username string) error {
-	_, err := c.rpc("user_disable", []string{username}, nil)
+	_, err := c.rpc(context.Background(), "user_disable", []string{username}, nil)
 
 	if err != nil {
 		return err
@@ -417,7 +420,7 @@ func (c *Client) UserDisable(username string) error {
 
 // Enable User Account
 func (c *Client) UserEnable(username string) error {
-	_, err := c.rpc("user_enable", []string{username}, nil)
+	_, err := c.rpc(context.Background(), "user_enable", []string{username}, nil)
 
 	if err != nil {
 		return err
@@ -462,7 +465,7 @@ func (c *Client) UserAdd(user *User, random bool) (*User, error) {
 		options["random"] = true
 	}
 
-	res, err := c.rpc("user_add", []string{user.Username}, options)
+	res, err := c.rpc(context.Background(), "user_add", []string{user.Username}, options)
 	if err != nil {
 		if ierr, ok := err.(*IpaError); ok {
 			if ierr.Code == 4002 {
@@ -490,7 +493,7 @@ func (c *Client) UserDelete(preserve, stopOnError bool, usernames ...string) err
 		"preserve": preserve,
 	}
 
-	_, err := c.rpc("user_del", usernames, options)
+	_, err := c.rpc(context.Background(), "user_del", usernames, options)
 	if err != nil {
 		return err
 	}
@@ -508,7 +511,7 @@ func (c *Client) UserMod(user *User) (*User, error) {
 
 	options := user.ToOptions()
 
-	res, err := c.rpc("user_mod", []string{user.Username}, options)
+	res, err := c.rpc(context.Background(), "user_mod", []string{user.Username}, options)
 	if err != nil {
 		if ierr, ok := err.(*IpaError); ok {
 			// error 4202 - no modifications to be performed

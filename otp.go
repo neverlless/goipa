@@ -5,6 +5,7 @@
 package ipa
 
 import (
+	"context"
 	"errors"
 	"time"
 
@@ -90,7 +91,7 @@ func (t *OTPToken) fromJSON(raw []byte) error {
 
 // Remove OTP token
 func (c *Client) RemoveOTPToken(tokenUUID string) error {
-	_, err := c.rpc("otptoken_del", []string{tokenUUID}, nil)
+	_, err := c.rpc(context.Background(), "otptoken_del", []string{tokenUUID}, nil)
 
 	if err != nil {
 		return err
@@ -106,7 +107,7 @@ func (c *Client) FetchOTPTokens(owner string) ([]*OTPToken, error) {
 		"all":           true,
 	}
 
-	res, err := c.rpc("otptoken_find", []string{}, options)
+	res, err := c.rpc(context.Background(), "otptoken_find", []string{}, options)
 
 	if err != nil {
 		return nil, err
@@ -180,7 +181,7 @@ func (c *Client) AddOTPToken(token *OTPToken) (*OTPToken, error) {
 		}
 	}
 
-	res, err := c.rpc("otptoken_add", []string{}, options)
+	res, err := c.rpc(context.Background(), "otptoken_add", []string{}, options)
 
 	if err != nil {
 		return nil, err
@@ -202,7 +203,7 @@ func (c *Client) EnableOTPToken(tokenUUID string) error {
 		"all":              false,
 	}
 
-	_, err := c.rpc("otptoken_mod", []string{tokenUUID}, options)
+	_, err := c.rpc(context.Background(), "otptoken_mod", []string{tokenUUID}, options)
 
 	return err
 }
@@ -214,7 +215,7 @@ func (c *Client) DisableOTPToken(tokenUUID string) error {
 		"all":              false,
 	}
 
-	_, err := c.rpc("otptoken_mod", []string{tokenUUID}, options)
+	_, err := c.rpc(context.Background(), "otptoken_mod", []string{tokenUUID}, options)
 
 	return err
 }
