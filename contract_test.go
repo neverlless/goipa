@@ -9,6 +9,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -187,6 +188,25 @@ func TestContractRandomPasswordExpired(t *testing.T) {
 	})
 }
 
+// lockedLogin is how b rejects the right password of a disabled or locked-out
+// user. FreeIPA before 4.13.1 missed kinit's "Client's credentials have been
+// revoked" and answered invalid-password (https://pagure.io/freeipa/issue/9891).
+func lockedLogin(t *testing.T, b backend) (string, error) {
+	t.Helper()
+	res, err := b.admin.Ping()
+	if err != nil {
+		t.Fatal(err)
+	}
+	var x, y, z int
+	if _, err := fmt.Sscanf(res.Version, "%d.%d.%d", &x, &y, &z); err != nil {
+		t.Fatalf("server version %q: %v", res.Version, err)
+	}
+	if x < 4 || x == 4 && (y < 13 || y == 13 && z < 1) {
+		return "invalid-password", ipa.ErrInvalidPassword
+	}
+	return "user-locked", ipa.ErrUnauthorized
+}
+
 // TestContractLoginRejection pins Q5.
 func TestContractLoginRejection(t *testing.T) {
 	forEachBackend(t, func(t *testing.T, b backend) {
@@ -195,9 +215,10 @@ func TestContractLoginRejection(t *testing.T) {
 		if err := b.admin.UserDisable(uid); err != nil {
 			t.Fatal(err)
 		}
-		wantIs(t, b.client().RemoteLogin(uid, goodPW), ipa.ErrUnauthorized)
-		if got := rawLogin(t, b, uid, goodPW).Header.Get("X-IPA-Rejection-Reason"); got != "user-locked" {
-			t.Fatalf("rejection reason %q, want user-locked", got)
+		wantReason, wantErr := lockedLogin(t, b)
+		wantIs(t, b.client().RemoteLogin(uid, goodPW), wantErr)
+		if got := rawLogin(t, b, uid, goodPW).Header.Get("X-IPA-Rejection-Reason"); got != wantReason {
+			t.Fatalf("rejection reason %q, want %s", got, wantReason)
 		}
 	})
 }
@@ -209,9 +230,10 @@ func TestContractLockout(t *testing.T) {
 		for i := 0; i < 6; i++ {
 			wantIs(t, b.client().RemoteLogin(uid, "wrong"), ipa.ErrInvalidPassword)
 		}
-		wantIs(t, b.client().RemoteLogin(uid, goodPW), ipa.ErrUnauthorized)
-		if got := rawLogin(t, b, uid, goodPW).Header.Get("X-IPA-Rejection-Reason"); got != "user-locked" {
-			t.Fatalf("rejection reason %q, want user-locked", got)
+		wantReason, wantErr := lockedLogin(t, b)
+		wantIs(t, b.client().RemoteLogin(uid, goodPW), wantErr)
+		if got := rawLogin(t, b, uid, goodPW).Header.Get("X-IPA-Rejection-Reason"); got != wantReason {
+			t.Fatalf("rejection reason %q, want %s", got, wantReason)
 		}
 	})
 }
@@ -490,7 +512,8 @@ func TestContractOTPLifecycle(t *testing.T) {
 			t.Fatal(err)
 		}
 		check(true)
-		wantIs(t, c.RemoveOTPToken("goipa-missing"), ipa.ErrNotFound)
+		// A user gets 2100 for a token it cannot see; ipatest has no ACIs.
+		wantIs(t, b.admin.RemoveOTPToken("goipa-missing"), ipa.ErrNotFound)
 	})
 }
 
