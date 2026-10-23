@@ -94,6 +94,11 @@ func (c *Client) rpc(ctx context.Context, method string, params []string, option
 		return nil, err
 	}
 
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+
+	c.krbMu.RLock()
 	c.mu.Lock()
 	sessionID, krbClient := c.sessionID, c.krbClient
 	c.mu.Unlock()
@@ -105,6 +110,7 @@ func (c *Client) rpc(ctx context.Context, method string, params []string, option
 
 	req, err := http.NewRequestWithContext(ctx, "POST", ipaURL, bytes.NewBuffer(b))
 	if err != nil {
+		c.krbMu.RUnlock()
 		return nil, err
 	}
 	req.Header.Set("Content-Type", "application/json")
@@ -116,9 +122,11 @@ func (c *Client) rpc(ctx context.Context, method string, params []string, option
 	} else if krbClient != nil {
 		// use Kerberos auth (SPNEGO)
 		if err := spnego.SetSPNEGOHeader(krbClient, req, ""); err != nil {
+			c.krbMu.RUnlock()
 			return nil, err
 		}
 	}
+	c.krbMu.RUnlock()
 
 	res, err := c.httpClient.Do(req)
 	if err != nil {

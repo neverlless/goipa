@@ -41,6 +41,10 @@ type Client struct {
 	realm      string
 	httpClient *http.Client
 
+	// krbMu keeps Destroy of a replaced Kerberos client out of an in-flight
+	// SPNEGO step. Lock order: krbMu, then mu.
+	krbMu sync.RWMutex
+
 	mu        sync.Mutex // guards the fields below; a Client is shared across goroutines
 	sessionID string
 	sticky    bool
