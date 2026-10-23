@@ -431,3 +431,25 @@ func TestPasswdByAdminExpires(t *testing.T) {
 		t.Errorf("ghost: %v", err)
 	}
 }
+
+func TestUserModRequiredNames(t *testing.T) {
+	s := ipatest.NewServer(t)
+	s.AddUser("walt", ipatest.User{})
+	c := s.ClientAs("admin")
+	for _, opt := range []string{"givenname", "sn"} {
+		if _, err := c.RPC("user_mod", []string{"walt"}, ipa.Options{opt: ""}); ipaCode(t, err) != ipa.CodeRequirement {
+			t.Errorf("%s cleared: %v", opt, err)
+		}
+	}
+	if u, _ := s.User("walt"); u.First != "Test" || u.Last != "User" {
+		t.Errorf("stored: %+v", u)
+	}
+}
+
+func TestUserModEmptySliceUnchanged(t *testing.T) {
+	s := ipatest.NewServer(t)
+	s.AddUser("walt", ipatest.User{SSHPubKeys: []string{}, Groups: []string{}})
+	if _, err := s.ClientAs("admin").RPC("user_mod", []string{"walt"}, ipa.Options{"ipasshpubkey": []string{}}); ipaCode(t, err) != ipa.CodeEmptyModlist {
+		t.Errorf("unchanged mod: %v", err)
+	}
+}

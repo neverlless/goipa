@@ -61,8 +61,12 @@ var forms = map[string]func(s *Server, w http.ResponseWriter, r *http.Request){}
 
 // Call is one JSON-RPC request the server accepted.
 type Call struct {
-	Method  string
-	Args    []string
+	Method string
+	// Args are the positional arguments; non-string ones are flattened with
+	// fmt.Sprint.
+	Args []string
+	// Options are the decoded JSON options: numbers are float64, lists []any,
+	// datetimes map[string]any{"__datetime__": ...}.
 	Options map[string]any
 	// User is the authenticated caller's uid.
 	User string

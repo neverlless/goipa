@@ -37,3 +37,39 @@ func ExampleClient_RPC() {
 	fmt.Println(res.Principal, res.Version)
 	// Output: admin@TEST.LOCAL 4.13.4
 }
+
+// Login gets a Kerberos ticket for the password, which later calls
+// authenticate with; it needs /etc/krb5.conf and a KDC, so it is compiled but
+// not run.
+func ExampleClient_Login() {
+	c := ipa.NewClient("ipa.example.com", "EXAMPLE.COM")
+	if err := c.Login("jesse", "secret"); err != nil {
+		log.Fatal(err)
+	}
+}
+
+// LoginFromCCache reuses a ticket obtained with kinit; compiled but not run.
+func ExampleClient_LoginFromCCache() {
+	c := ipa.NewDefaultClient()
+	if err := c.LoginFromCCache("/tmp/krb5cc_1000"); err != nil {
+		log.Fatal(err)
+	}
+}
+
+// RemoteLogin posts the password to /ipa/session/login_password. Its session
+// ID can be stored, for example in a web session, and reused later without
+// logging in again; compiled but not run.
+func ExampleClient_RemoteLogin() {
+	c := ipa.NewDefaultClient()
+	if err := c.RemoteLogin("jesse", "secret"); err != nil {
+		log.Fatal(err)
+	}
+	sid := c.SessionID()
+
+	later := ipa.NewDefaultClientWithSession(sid)
+	u, err := later.UserShow("jesse")
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(u.Username)
+}
