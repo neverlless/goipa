@@ -201,8 +201,6 @@ command catalogue), never for the public call API.
 - [ ] `ipatest` record/replay: record raw responses from a real server in
       the nightly run (`IPATEST_RECORD=dir`) and replay them for commands
       it doesn't model, so tests of unwrapped commands use real shapes
-- [ ] Comparison table in the README (goipa vs generated clients) that says
-      plainly when go-freeipa is the better fit
 
 Accept: any FreeIPA command can be called with typed decoding and option
 validation, without hand-written JSON parsing; the listed objects have
