@@ -9,8 +9,19 @@ IPA_REALM="${IPA_REALM:-EXAMPLE.TEST}"
 ENV_FILE="${ENV_FILE:-.env}"
 NAME=goipa-ipa
 
+# Refuse to clobber a host enrolled in another IPA unless on a CI runner or FORCE=1.
+guard() {
+  if [ -n "${GITHUB_ACTIONS:-}" ] || [ "${FORCE:-}" = 1 ]; then return; fi
+  if [ -e /etc/ipa/default.conf ] && ! grep -qF "$IPA_FQDN" /etc/ipa/default.conf; then
+    echo "/etc/ipa/default.conf belongs to another IPA server; this script would overwrite it" >&2
+    echo "and /etc/ipa/ca.crt, /etc/krb5.conf and your Kerberos ccache. Rerun with FORCE=1 to proceed." >&2
+    exit 1
+  fi
+}
+
 up() {
   local pw keytab
+  guard
   pw=$(openssl rand -hex 16)
   if [ -n "${GITHUB_ACTIONS:-}" ]; then echo "::add-mask::$pw"; fi
 
@@ -42,6 +53,9 @@ up() {
   sudo mkdir -p /etc/ipa
   docker exec "$NAME" cat /etc/ipa/ca.crt | sudo tee /etc/ipa/ca.crt >/dev/null
   printf '[global]\nxmlrpc_uri = https://%s/ipa/xml\nrealm = %s\n' "$IPA_FQDN" "$IPA_REALM" | sudo tee /etc/ipa/default.conf >/dev/null
+  if [ -e /etc/krb5.conf ] && [ ! -e /etc/krb5.conf.goipa-bak ]; then
+    sudo cp -p /etc/krb5.conf /etc/krb5.conf.goipa-bak
+  fi
   printf '[libdefaults]\n default_realm = %s\n[realms]\n %s = {\n  kdc = %s\n }\n' "$IPA_REALM" "$IPA_REALM" "$IPA_FQDN" | sudo tee /etc/krb5.conf >/dev/null
 
   # Dedicated user: ipa-getkeytab rotates keys, which would break admin password tests.

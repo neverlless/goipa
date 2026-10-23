@@ -133,6 +133,11 @@ Integration tests run against a real FreeIPA in a container (Linux, Docker, sudo
 scripts/ipa-up.sh && (set -a; . ./.env; set +a; go test -race -tags integration -count=1 ./...) ; scripts/ipa-up.sh down
 ```
 
+`ipa-up.sh` rewrites `/etc/krb5.conf` (backed up once to
+`/etc/krb5.conf.goipa-bak`), `/etc/ipa/` and your ccache, and refuses to run
+on a host whose `/etc/ipa/default.conf` points at another IPA server unless
+`FORCE=1` is set.
+
 See [CONTRIBUTING.md](CONTRIBUTING.md) before sending a pull request.
 
 ## Security

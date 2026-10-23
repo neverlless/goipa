@@ -34,6 +34,11 @@ build tag. On Linux with Docker:
 scripts/ipa-up.sh && (set -a; . ./.env; set +a; go test -race -tags integration -count=1 ./...) ; scripts/ipa-up.sh down
 ```
 
+`ipa-up.sh` rewrites `/etc/krb5.conf` (backed up once to
+`/etc/krb5.conf.goipa-bak`), `/etc/ipa/` and your ccache, and refuses to run
+on a host whose `/etc/ipa/default.conf` points at another IPA server unless
+`FORCE=1` is set.
+
 ## Adding a FreeIPA command
 
 - Check the command's arguments and result attributes against the server's
