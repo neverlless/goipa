@@ -6,8 +6,8 @@ package ipatest_test
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
+	"io"
 	"net/http"
 	"reflect"
 	"strings"
@@ -177,8 +177,18 @@ func TestSessionsNotShared(t *testing.T) {
 	a, b := ipatest.NewServer(t), ipatest.NewServer(t)
 	c := b.Client()
 	c.SetSessionID(a.Session("admin"))
-	if _, err := c.Ping(); !errors.Is(err, ipa.ErrUnauthorized) {
-		t.Fatalf("err = %v, want ErrUnauthorized", err)
+	if _, err := c.Ping(); !errors.Is(err, io.EOF) {
+		t.Fatalf("err = %v, want io.EOF", err)
+	}
+}
+
+func TestUnknownSession(t *testing.T) {
+	c := ipatest.NewServer(t).Client()
+	for _, sid := range []string{"MagBearerToken=", "0123456789abcdef0123456789abcdef"} {
+		c.SetSessionID(sid)
+		if _, err := c.Ping(); !errors.Is(err, ipa.ErrUnauthorized) {
+			t.Errorf("%q: err = %v, want ErrUnauthorized", sid, err)
+		}
 	}
 }
 
@@ -216,22 +226,11 @@ func TestBadRequestBody(t *testing.T) {
 
 func TestRefererJSONRPC(t *testing.T) {
 	s := ipatest.NewServer(t)
-	for referer, want := range map[string]string{
-		"":                      "Missing or invalid HTTP Referer, missing",
-		"https://evil.test/ipa": "Missing or invalid HTTP Referer, https://evil.test/ipa",
-	} {
+	for _, referer := range []string{"", "https://evil.test/ipa"} {
 		res := post(t, s, `{"method":"ping","params":[[],{}],"id":0}`, referer)
-		if res.StatusCode != http.StatusOK {
-			t.Fatalf("status = %d, want 200", res.StatusCode)
-		}
-		var env struct {
-			Error *ipa.IpaError
-		}
-		if err := json.NewDecoder(res.Body).Decode(&env); err != nil {
-			t.Fatal(err)
-		}
-		if env.Error == nil || env.Error.Code != 911 || env.Error.Name != "RefererError" || env.Error.Message != want {
-			t.Errorf("referer %q: error = %+v", referer, env.Error)
+		body, _ := io.ReadAll(res.Body)
+		if res.StatusCode != http.StatusBadRequest || !strings.HasPrefix(res.Header.Get("Content-Type"), "text/html") || !strings.Contains(string(body), "<strong>denied</strong>") {
+			t.Errorf("referer %q: HTTP %d %q %s", referer, res.StatusCode, res.Header.Get("Content-Type"), body)
 		}
 	}
 	if n := len(s.Calls()); n != 0 {

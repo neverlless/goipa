@@ -76,11 +76,16 @@
 //   - Q11: user_mod that changes nothing fails with 4202 EmptyModlist.
 //     TestUserAddModDel, goipa.TestContractUserModNoChange.
 //   - Q12: a request without a Referer starting with https://<host>/ipa is
-//     refused: JSON-RPC with error 911 RefererError ("Missing or invalid HTTP
-//     Referer, <referer>") in an HTTP 200 envelope, form endpoints with HTTP
-//     400. TestRefererJSONRPC, goipa.TestContractReferer.
-//   - Q13: /ipa/session/json without a known ipa_session cookie answers HTTP
-//     401, as for an expired session. TestSessionsNotShared,
+//     refused with HTTP 400 and an HTML page ("denied"), on JSON-RPC and
+//     form endpoints alike, after the session check. TestRefererJSONRPC,
+//     TestFormsNeedReferer, goipa.TestContractReferer.
+//   - Q13: /ipa/session/json closes the connection without a response for
+//     an ipa_session cookie "MagBearerToken=<token>" it did not issue (one
+//     from another server, or forged): FreeIPA 4.9 to 4.13 crash the httpd
+//     child on a token they cannot decrypt, and goipa returns the transport
+//     error (io.EOF). Any other unknown or missing cookie answers HTTP 401
+//     with "WWW-Authenticate: Negotiate", which goipa maps to
+//     ErrUnauthorized. TestSessionsNotShared, TestUnknownSession,
 //     goipa.TestContractInvalidSession.
 //   - Q14: an unknown command fails with 905 CommandError ("unknown command
 //     '<name>'"). TestUnknownCommand, goipa.TestContractUnknownCommand.
