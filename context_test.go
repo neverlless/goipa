@@ -126,6 +126,14 @@ func twinCalls() []twinCall {
 			_, err := c.GroupRemoveMemberManagerContext(ctx, "g", []string{"u"}, nil)
 			return err
 		}},
+		{"HostShowContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.HostShowContext(ctx, "h.test.local")
+			return err
+		}},
+		{"HostFindContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.HostFindContext(ctx, nil)
+			return err
+		}},
 	}
 }
 

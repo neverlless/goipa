@@ -97,6 +97,7 @@ type Server struct {
 	handlers  map[string]HandlerFunc
 	users     map[string]*userRec
 	groups    map[string]*groupRec
+	hosts     map[string]Host
 	tokens    []*OTPToken
 	nextID    int // last uidnumber handed out
 	nextGID   int // last gidnumber handed out
@@ -119,6 +120,7 @@ func New() *Server {
 		handlers: map[string]HandlerFunc{},
 		users:    map[string]*userRec{},
 		groups:   map[string]*groupRec{},
+		hosts:    map[string]Host{serverFQDN: {HasKeytab: true}},
 		nextID:   firstID - 1,
 		nextGID:  firstID - 1,
 	}
