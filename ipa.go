@@ -54,7 +54,7 @@ var (
 	// ErrUnauthorized is returned when user is not authorized
 	ErrUnauthorized = errors.New("unauthorized")
 
-	// ErrUserExists is returned when user account already exists
+	// ErrUserExists is the UserAdd form of ErrDuplicateEntry.
 	ErrUserExists = errors.New("user exists")
 )
 
@@ -79,6 +79,8 @@ const maxResponseSize = 64 << 20
 type IpaError struct {
 	Message string
 	Code    int
+	Name    string          `json:"name"`
+	Data    json.RawMessage `json:"data"`
 }
 
 // Result returned from a FreeIPA JSON rpc call
