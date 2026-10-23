@@ -144,7 +144,7 @@ func (c *Client) GroupAddContext(ctx context.Context, group *Group) (*Group, err
 	if group.Description != "" {
 		options["description"] = group.Description
 	}
-	if !group.NonPOSIX && group.GID != "" {
+	if !group.NonPOSIX && !group.External && group.GID != "" {
 		options["gidnumber"] = group.GID
 	}
 	if group.External {

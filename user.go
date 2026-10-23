@@ -55,7 +55,9 @@ type User struct {
 	RandomPassword   string              `json:"randompassword"`
 
 	// Emails holds every mail value; Email is the first. UserMod and UserAdd
-	// send Email first, then Emails[1:] (see ToOptions).
+	// send Email first, then Emails[1:] (see ToOptions), so Emails[0] is
+	// ignored on write. To set the whole list, set Email = list[0] and
+	// Emails = list.
 	Emails []string `json:"emails"`
 	// IndirectGroups: nested groups; filled by UserShow only, UserFind puts
 	// nested groups in Groups (FreeIPA).
@@ -616,8 +618,8 @@ func (c *Client) UserDeleteContext(ctx context.Context, preserve, stopOnError bo
 }
 
 // Modify user. Currently only modifies a subset of user attributes: mail (all
-// values, see Emails), givenname, sn, homedirectory, loginshell, displayname, ipasshpubkey,
-// telephonenumber, and mobile
+// values, see Emails), givenname, sn, homedirectory, loginshell, displayname,
+// ipasshpubkey, telephonenumber, and mobile
 func (c *Client) UserMod(user *User) (*User, error) {
 	return c.UserModContext(context.Background(), user)
 }
