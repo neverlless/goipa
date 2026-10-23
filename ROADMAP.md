@@ -98,7 +98,7 @@ krb5.conf) can drop the workaround.
       with documented FreeIPA quirks, each pinned by a test
 - [x] Unit tests for the whole existing API against `ipatest`; coverage
       ≥ 80 % with Codecov
-- [ ] Nightly integration workflow against real FreeIPA containers
+- [x] Nightly integration workflow against real FreeIPA containers
       (`almalinux-8-4.9.13`, `almalinux-9-4.12.2`, `almalinux-9-4.13.4`); the
       same contract tests run against `ipatest` and the real server
 - [x] Replace the CentOS 7 `container/` setup with a `docker run` script

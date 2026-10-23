@@ -7,6 +7,13 @@ existing exported identifiers keep their signatures).
 
 ## [Unreleased]
 
+## [v0.3.0] - 2026-10-23
+
+Test infrastructure: an in-memory FreeIPA server for unit tests, and the
+same contract tests run nightly against real FreeIPA 4.9, 4.12 and 4.13.
+The first real-server runs found a bug in `UserAdd` that dates back to
+ubccr/goipa v0.0.7; it is fixed here.
+
 - New package `ipatest`: a fake FreeIPA server over TLS for tests of code
   that uses goipa. `NewServer(t)` (or `New()` outside tests), `Client`,
   `ClientAs`, `Session`, seed and inspect users and OTP tokens, a call
@@ -26,8 +33,9 @@ existing exported identifiers keep their signatures).
 - Removed the CentOS 7 `container/`, `docker-compose.yml` and `.env.sample`;
   `scripts/ipa-up.sh` starts a FreeIPA container instead
 - Testing with `ipatest`: it answers `/ipa/json` (the Kerberos endpoint)
-  with 401 unless `SetNegotiateUser` is set, like a server without Kerberos
-  credentials; log in with `RemoteLogin` or `ClientAs` instead
+  with 401 unless `SetNegotiateUser` is set, as a real server does for a
+  client without a Kerberos ticket; log in with `RemoteLogin` or `ClientAs`
+  instead
 - `UserAdd` and `UserAddWithPassword` leave empty attributes out of
   user_add, so FreeIPA applies its defaults; an unset `HomeDir` failed
   with 4205 missing attribute "homeDirectory" (bug since v0.0.7)
@@ -151,7 +159,8 @@ v0.0.1 – v0.0.7 were released by Andrew E. Bruno as
 [ubccr/goipa](https://github.com/ubccr/goipa/tags). This repository keeps
 that history.
 
-[Unreleased]: https://github.com/neverlless/goipa/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/neverlless/goipa/compare/v0.3.0...HEAD
+[v0.3.0]: https://github.com/neverlless/goipa/compare/v0.2.1...v0.3.0
 [v0.2.1]: https://github.com/neverlless/goipa/compare/v0.2.0...v0.2.1
 [v0.2.0]: https://github.com/neverlless/goipa/compare/v0.1.0...v0.2.0
 [v0.1.0]: https://github.com/neverlless/goipa/releases/tag/v0.1.0
