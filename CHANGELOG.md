@@ -28,6 +28,17 @@ existing exported identifiers keep their signatures).
 - Testing with `ipatest`: it answers `/ipa/json` (the Kerberos endpoint)
   with 401 unless `SetNegotiateUser` is set, like a server without Kerberos
   credentials; log in with `RemoteLogin` or `ClientAs` instead
+- `UserAdd` and `UserAddWithPassword` leave empty attributes out of
+  user_add, so FreeIPA applies its defaults; an unset `HomeDir` failed
+  with 4205 missing attribute "homeDirectory" (bug since v0.0.7)
+- `ipatest`: JSON-RPC without a valid Referer gets HTTP 400 text/html like
+  FreeIPA, not error 911; a `MagBearerToken` it did not issue closes the
+  connection (goipa returns EOF), as the real server's httpd crashes on it
+- `ipatest` models user_add with an empty homedirectory (4205, Q19)
+- `scripts/ipa-up.sh` sets `forwardable = true` in krb5.conf; without it
+  every Kerberos call fails 2100 "Credential cache is empty"
+- Contract tests expect invalid-password for locked users before FreeIPA
+  4.13.1 (FreeIPA issue 9891)
 
 ## [v0.2.1] - 2026-10-23
 
