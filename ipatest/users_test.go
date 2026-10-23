@@ -186,7 +186,7 @@ func TestUserFindFilters(t *testing.T) {
 	if got := names(nil); !slices.Equal(got, []string{"alice", "bob"}) {
 		t.Errorf("nil: %v", got)
 	}
-	if got := names(ipa.Options{"preserved": true}); !slices.Equal(got, []string{"alice", "bob", "carol"}) {
+	if got := names(ipa.Options{"preserved": true}); !slices.Equal(got, []string{"carol"}) {
 		t.Errorf("preserved: %v", got)
 	}
 	// the search argument is a case-insensitive substring

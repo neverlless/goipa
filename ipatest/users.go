@@ -280,7 +280,7 @@ func userFind(s *Server, c Call) (any, *ipa.IpaError) {
 	all := flag(c, "all")
 	var uids []string
 	for uid, r := range s.users {
-		if r.Preserved && !flag(c, "preserved") {
+		if r.Preserved != flag(c, "preserved") {
 			continue
 		}
 		if needle != "" && !slices.ContainsFunc([]string{uid, r.First, r.Last, r.Email}, func(v string) bool {
@@ -338,7 +338,7 @@ func userMod(s *Server, c Call) (any, *ipa.IpaError) {
 		return nil, err
 	}
 	next := r.User.clone()
-	next.apply(c.Options)
+	next.apply(c.Options) // empty strings clear attributes, as in FreeIPA
 	random := flag(c, "random")
 	if !random && reflect.DeepEqual(next, r.User) { // Q11
 		return nil, &ipa.IpaError{Code: ipa.CodeEmptyModlist, Message: "no modifications to be performed"}
