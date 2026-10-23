@@ -44,12 +44,11 @@
 //     emitted; goipa's unknown-status branch is tested with a plain httptest
 //     server. TestChangePasswordForm, TestChangePasswordPolicyHeader.
 //   - Q5: login_password answers 401 with X-IPA-Rejection-Reason
-//     invalid-password (unknown user, no password, wrong password) or
-//     password-expired (Expired, or PasswdExpire not in the future).
+//     invalid-password (unknown user, no password, wrong password),
+//     password-expired (Expired, or PasswdExpire not in the future) or
+//     user-locked (disabled and preserved accounts too).
 //     TestLoginFormRejections.
-//   - Q6: a disabled or preserved user gets user-locked.
-//     TestLoginFormRejections.
-//   - Q8: after 6 wrong passwords (krbpwdmaxfailure) even the right one is
+//   - Q6: after 6 wrong passwords (krbpwdmaxfailure) even the right one is
 //     user-locked; a successful login resets the count.
 //     TestLoginFormRejections.
 //   - Q9: passwd with a wrong current_password fails with 2100 ACIError
