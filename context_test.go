@@ -99,6 +99,17 @@ func twinCalls() []twinCall {
 			_, err := c.GroupFindContext(ctx, nil)
 			return err
 		}},
+		{"GroupAddContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.GroupAddContext(ctx, &ipa.Group{Name: "g"})
+			return err
+		}},
+		{"GroupModContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.GroupModContext(ctx, &ipa.Group{Name: "g"})
+			return err
+		}},
+		{"GroupDeleteContext", func(ctx context.Context, c *ipa.Client) error {
+			return c.GroupDeleteContext(ctx, "g")
+		}},
 	}
 }
 
