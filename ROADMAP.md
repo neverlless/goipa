@@ -161,9 +161,7 @@ against `ipatest` and an integration test.
 
 ## v0.7.0 — Breadth without a generated API
 
-Generated clients such as [go-freeipa](https://github.com/ccin2p3/go-freeipa)
-type all of FreeIPA's ~460 commands as pointer-heavy argument structs. goipa
-keeps a hand-written API for the common objects and makes every other
+goipa keeps a hand-written API for the common objects and makes every other
 command just as safe to call. Code generation is used only for data (the
 command catalogue), never for the public call API.
 
@@ -216,7 +214,5 @@ typed APIs verified nightly on FreeIPA 4.9, 4.12 and 4.13.
 ## Out of scope
 
 - An LDAP backend, a CLI, non-FreeIPA identity systems.
-- Generating the whole API from FreeIPA's schema. If you need every one of
-  FreeIPA's ~460 commands as typed calls, use
-  [go-freeipa](https://github.com/ccin2p3/go-freeipa); goipa's `RPC` covers
-  the long tail.
+- Generating the public call API from FreeIPA's schema; v0.7's command
+  catalogue and `Call` cover the long tail.
