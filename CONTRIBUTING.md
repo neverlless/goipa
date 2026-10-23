@@ -28,13 +28,10 @@ CI also runs `govulncheck`, `staticcheck` and `gosec` (see
 and flags).
 
 Integration tests talk to a real FreeIPA and are behind the `integration`
-build tag. A containerized server is provided:
+build tag. On Linux with Docker:
 
 ```sh
-cp .env.sample .env   # set passwords
-docker compose up -d
-ssh -p 9022 localhost
-kinit admin && cd /app && go test -tags integration ./...
+scripts/ipa-up.sh && go test -tags integration ./... ; scripts/ipa-up.sh down
 ```
 
 ## Adding a FreeIPA command
@@ -44,8 +41,9 @@ kinit admin && cd /app && go test -tags integration ./...
   `/ipa/session/json`), not against memory. Attribute names differ between
   calls with and without `all: true`.
 - Doc comment: name the FreeIPA command it wraps and the privilege it needs.
-- Add a unit test; add an integration test when the behaviour depends on the
-  server.
+- Add a unit test against `ipatest`; model the command in `ipatest` with a quirk
+  test if FreeIPA behaves unusually. Add an integration test when the behaviour
+  depends on the server.
 
 ## Compatibility
 

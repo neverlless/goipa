@@ -124,19 +124,13 @@ On macOS use `sed -i ''`. What changed since v0.0.7 is listed in the
 go test -race ./...
 ```
 
-Integration tests run against a real FreeIPA in a container. The scripts in
-`container/` were adapted from [webauthinfra](https://github.com/adelton/webauthinfra)
-by Jan Pazdziora (Apache 2.0) and are for development only, never production.
+Consumers can test their own code without a FreeIPA server using the fake in
+[`ipatest`](https://pkg.go.dev/github.com/neverlless/goipa/ipatest).
+
+Integration tests run against a real FreeIPA in a container (Linux, Docker, sudo):
 
 ```sh
-cp .env.sample .env      # set passwords and your SSH key
-docker compose build
-docker compose up -d
-ssh -p 9022 localhost
-kinit admin
-cd /app
-go test -tags integration ./...
-go test -tags integration -v -run UserShow   # one test
+scripts/ipa-up.sh && go test -tags integration ./... ; scripts/ipa-up.sh down
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) before sending a pull request.
