@@ -79,8 +79,26 @@ const maxResponseSize = 64 << 20
 type IpaError struct {
 	Message string
 	Code    int
-	Name    string          `json:"name"`
-	Data    json.RawMessage `json:"data"`
+	Name    string `json:"name"`
+	// Data is the raw JSON of the exception's keyword arguments, e.g.
+	// {"reason":"..."}. A string so IpaError stays comparable.
+	Data string `json:"data"`
+}
+
+// UnmarshalJSON keeps Data as raw JSON text; Message and Code still match the
+// "message" and "code" keys case-insensitively.
+func (e *IpaError) UnmarshalJSON(b []byte) error {
+	var v struct {
+		Message string
+		Code    int
+		Name    string
+		Data    json.RawMessage
+	}
+	if err := json.Unmarshal(b, &v); err != nil {
+		return err
+	}
+	*e = IpaError{Message: v.Message, Code: v.Code, Name: v.Name, Data: string(v.Data)}
+	return nil
 }
 
 // Result returned from a FreeIPA JSON rpc call
