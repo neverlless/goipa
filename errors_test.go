@@ -142,3 +142,14 @@ func TestIpaErrorMarshalJSON(t *testing.T) {
 		}
 	}
 }
+
+func TestIpaErrorMarshalJSONInvalidData(t *testing.T) {
+	b, err := json.Marshal(&ipa.IpaError{Code: 4001, Message: "m", Data: "not json"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var out struct{ Data json.RawMessage }
+	if err := json.Unmarshal(b, &out); err != nil || string(out.Data) != "{}" {
+		t.Errorf("got %s, %v", b, err)
+	}
+}
