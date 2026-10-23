@@ -332,16 +332,16 @@ func (c *Client) ResetPasswordContext(ctx context.Context, username string) (str
 
 // Change user password. This will run the passwd ipa command. Optionally
 // provide an OTP if required
-func (c *Client) ChangePassword(username, old_passwd, new_passwd, otpcode string) error {
-	return c.ChangePasswordContext(context.Background(), username, old_passwd, new_passwd, otpcode)
+func (c *Client) ChangePassword(username, oldPasswd, newPasswd, otpcode string) error {
+	return c.ChangePasswordContext(context.Background(), username, oldPasswd, newPasswd, otpcode)
 }
 
 // ChangePasswordContext is like ChangePassword but bounds the request with ctx.
-func (c *Client) ChangePasswordContext(ctx context.Context, username, old_passwd, new_passwd, otpcode string) error {
+func (c *Client) ChangePasswordContext(ctx context.Context, username, oldPasswd, newPasswd, otpcode string) error {
 
 	options := Options{
-		"current_password": old_passwd,
-		"password":         new_passwd,
+		"current_password": oldPasswd,
+		"password":         newPasswd,
 	}
 
 	if len(otpcode) > 0 {
@@ -367,19 +367,19 @@ func (c *Client) ChangePasswordContext(ctx context.Context, username, old_passwd
 // then immediately calling this function. *WARNING* See
 // https://www.freeipa.org/page/Self-Service_Password_Reset for security issues
 // and possible weaknesses of this approach.
-func (c *Client) SetPassword(username, old_passwd, new_passwd, otpcode string) error {
-	return c.SetPasswordContext(context.Background(), username, old_passwd, new_passwd, otpcode)
+func (c *Client) SetPassword(username, oldPasswd, newPasswd, otpcode string) error {
+	return c.SetPasswordContext(context.Background(), username, oldPasswd, newPasswd, otpcode)
 }
 
 // SetPasswordContext is like SetPassword but bounds the request with ctx.
-func (c *Client) SetPasswordContext(ctx context.Context, username, old_passwd, new_passwd, otpcode string) error {
+func (c *Client) SetPasswordContext(ctx context.Context, username, oldPasswd, newPasswd, otpcode string) error {
 	ipaUrl := fmt.Sprintf("https://%s/ipa/session/change_password", c.host)
 
 	form := url.Values{
 		"user":         {username},
 		"otp":          {otpcode},
-		"old_password": {old_passwd},
-		"new_password": {new_passwd},
+		"old_password": {oldPasswd},
+		"new_password": {newPasswd},
 	}
 
 	req, err := http.NewRequestWithContext(ctx, "POST", ipaUrl, strings.NewReader(form.Encode()))

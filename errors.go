@@ -1,3 +1,4 @@
+// Copyright 2015 Andrew E. Bruno. All rights reserved.
 // Copyright 2026 goipa Authors. All rights reserved.
 // Use of this source code is governed by a BSD style
 // license that can be found in the LICENSE file.
@@ -5,6 +6,8 @@
 package ipa
 
 import (
+	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 )
@@ -59,4 +62,51 @@ func (e *HTTPError) Error() string {
 // Is reports whether target is ErrUnauthorized and the status is 401.
 func (e *HTTPError) Is(target error) bool {
 	return target == ErrUnauthorized && e.StatusCode == http.StatusUnauthorized
+}
+
+var (
+	// ErrPasswordPolicy is returned when a password does not conform to the password policy
+	ErrPasswordPolicy = errors.New("password does not conform to policy")
+
+	// ErrInvalidPassword is returned when a password is invalid
+	ErrInvalidPassword = errors.New("invalid current password")
+
+	// ErrExpiredPassword is returned when a password is expired
+	ErrExpiredPassword = errors.New("password expired")
+
+	// ErrUnauthorized is returned when user is not authorized
+	ErrUnauthorized = errors.New("unauthorized")
+
+	// ErrUserExists is the UserAdd form of ErrDuplicateEntry.
+	ErrUserExists = errors.New("user exists")
+)
+
+// FreeIPA error
+type IpaError struct {
+	Message string
+	Code    int
+	Name    string `json:"name"`
+	// Data is the raw JSON of the exception's keyword arguments, e.g.
+	// {"reason":"..."}. A string so IpaError stays comparable.
+	Data string `json:"data"`
+}
+
+// UnmarshalJSON keeps Data as raw JSON text; Message and Code still match the
+// "message" and "code" keys case-insensitively.
+func (e *IpaError) UnmarshalJSON(b []byte) error {
+	var v struct {
+		Message string
+		Code    int
+		Name    string
+		Data    json.RawMessage
+	}
+	if err := json.Unmarshal(b, &v); err != nil {
+		return err
+	}
+	*e = IpaError{Message: v.Message, Code: v.Code, Name: v.Name, Data: string(v.Data)}
+	return nil
+}
+
+func (e *IpaError) Error() string {
+	return fmt.Sprintf("ipa: error %d - %s", e.Code, e.Message)
 }
