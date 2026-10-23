@@ -7,6 +7,13 @@ existing exported identifiers keep their signatures).
 
 ## [Unreleased]
 
+## [v0.4.0] - 2026-10-23
+
+Users and groups: typed group management with per-member failures as
+errors, all of a user's mail addresses, address, language and passkeys,
+and host lookups. Every behaviour is checked against real FreeIPA 4.9,
+4.12 and 4.13 by the contract tests.
+
 - Groups: `GroupShow`, `GroupFind`, `GroupAdd`, `GroupMod`, `GroupDelete`,
   `GroupAddMember`, `GroupRemoveMember`, `GroupAddMemberManager` and
   `GroupRemoveMemberManager`, each with a `Context` twin. Per-member
@@ -182,7 +189,8 @@ v0.0.1 – v0.0.7 were released by Andrew E. Bruno as
 [ubccr/goipa](https://github.com/ubccr/goipa/tags). This repository keeps
 that history.
 
-[Unreleased]: https://github.com/neverlless/goipa/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/neverlless/goipa/compare/v0.4.0...HEAD
+[v0.4.0]: https://github.com/neverlless/goipa/compare/v0.3.0...v0.4.0
 [v0.3.0]: https://github.com/neverlless/goipa/compare/v0.2.1...v0.3.0
 [v0.2.1]: https://github.com/neverlless/goipa/compare/v0.2.0...v0.2.1
 [v0.2.0]: https://github.com/neverlless/goipa/compare/v0.1.0...v0.2.0
