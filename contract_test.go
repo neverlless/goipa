@@ -459,6 +459,9 @@ func TestContractOTPLifecycle(t *testing.T) {
 			if !toks[0].NotBefore.Equal(nb) {
 				t.Fatalf("NotBefore %v, want %v", toks[0].NotBefore, nb)
 			}
+			if !strings.EqualFold(toks[0].Type, ipa.TokenTypeTOTP) {
+				t.Fatalf("Type %q, want %q (any case)", toks[0].Type, ipa.TokenTypeTOTP)
+			}
 		}
 		check(true)
 		if err := c.DisableOTPToken(tok.UUID); err != nil {

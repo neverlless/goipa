@@ -19,7 +19,9 @@
 // method, to inject an error or to serve a command ipatest does not model.
 // Separate servers share no state, so parallel tests each get their own.
 //
-// ipatest started as the fake FreeIPA server in mokey's handler tests (github.com/neverlless/mokey, server/fakeipa_test.go, BSD-3-Clause, same maintainer).
+// ipatest started as the fake FreeIPA server in mokey's handler tests
+// (github.com/neverlless/mokey, server/fakeipa_test.go, BSD-3-Clause, same
+// maintainer).
 //
 // # Auth model
 //

@@ -54,11 +54,20 @@ type userRec struct {
 	uuid string
 }
 
+// clone also turns empty slices into nil, so Q11's DeepEqual sees
+// []string{} and nil as the same unchanged attribute.
 func (u User) clone() User {
-	u.Groups = slices.Clone(u.Groups)
-	u.AuthTypes = slices.Clone(u.AuthTypes)
-	u.SSHPubKeys = slices.Clone(u.SSHPubKeys)
+	u.Groups = cloneStrs(u.Groups)
+	u.AuthTypes = cloneStrs(u.AuthTypes)
+	u.SSHPubKeys = cloneStrs(u.SSHPubKeys)
 	return u
+}
+
+func cloneStrs(s []string) []string {
+	if len(s) == 0 {
+		return nil
+	}
+	return slices.Clone(s)
 }
 
 // AddUser creates or replaces user uid. Empty fields get defaults: Email
@@ -186,7 +195,7 @@ func strs(v any) []string {
 			out = append(out, fmt.Sprint(e))
 		}
 	}
-	return slices.DeleteFunc(out, func(s string) bool { return s == "" })
+	return cloneStrs(slices.DeleteFunc(out, func(s string) bool { return s == "" }))
 }
 
 func str(v any) string {
@@ -345,6 +354,12 @@ func userMod(s *Server, c Call) (any, *ipa.IpaError) {
 	}
 	next := r.User.clone()
 	next.apply(c.Options) // empty strings clear attributes, as in FreeIPA
+	if next.First == "" {
+		return nil, required("givenname")
+	}
+	if next.Last == "" {
+		return nil, required("sn")
+	}
 	random := flag(c, "random")
 	if !random && reflect.DeepEqual(next, r.User) { // Q11
 		return nil, &ipa.IpaError{Code: ipa.CodeEmptyModlist, Message: "no modifications to be performed"}
