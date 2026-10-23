@@ -40,6 +40,10 @@ func TestIpaErrorIs(t *testing.T) {
 		if errors.Is(err, ipa.ErrUnauthorized) {
 			t.Errorf("code %d matches ErrUnauthorized", code)
 		}
+		var nilErr *ipa.IpaError
+		if errors.Is(err, nilErr) || errors.Is(nilErr, ipa.ErrNotFound) {
+			t.Errorf("code %d matches a nil *IpaError", code)
+		}
 	}
 }
 

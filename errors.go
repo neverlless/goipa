@@ -44,7 +44,7 @@ var (
 // Is reports whether target is an *IpaError with the same Code.
 func (e *IpaError) Is(target error) bool {
 	t, ok := target.(*IpaError)
-	return ok && t.Code == e.Code
+	return ok && t != nil && e != nil && t.Code == e.Code
 }
 
 // HTTPError is returned when the server answers a JSON-RPC call with a
