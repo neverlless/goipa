@@ -7,6 +7,28 @@ existing exported identifiers keep their signatures).
 
 ## [Unreleased]
 
+- New package `ipatest`: a fake FreeIPA server over TLS for tests of code
+  that uses goipa. `NewServer(t)` (or `New()` outside tests), `Client`,
+  `ClientAs`, `Session`, seed and inspect users and OTP tokens, a call
+  log (`Calls`) and `Handle` to inject errors or serve any command it
+  does not model. It models user_show/find/add/mod/del/disable/enable,
+  passwd, otptoken_add/del/mod/find, login_password and change_password
+  with the lockout, expiry and last-OTP-token behaviour of FreeIPA 4.13;
+  each quirk is listed in the package doc and pinned by a test
+- `(*IpaError).MarshalJSON` writes FreeIPA's error shape
+  (`code`, `message`, `name`, `data`); `Data` that is not JSON becomes `{}`
+- Unit tests for the whole API against `ipatest`, coverage above 80 %
+  (gated in CI) and Codecov upload
+- Nightly integration tests against FreeIPA 4.9.13, 4.12.2 and 4.13.4; the
+  same contract tests run against `ipatest` and the real server. The
+  integration tests are now named `*_integration_test.go`
+- pkg.go.dev examples for the login modes and the `RPC` escape hatch
+- Removed the CentOS 7 `container/`, `docker-compose.yml` and `.env.sample`;
+  `scripts/ipa-up.sh` starts a FreeIPA container instead
+- Note for tests built on `ipatest`: `/ipa/json` (the Kerberos endpoint)
+  answers 401 unless `SetNegotiateUser` is called, as a real server does
+  without a ticket
+
 ## [v0.2.1] - 2026-10-23
 
 - Keytab, password and ccache logins work on ipa-client 4.13 hosts
