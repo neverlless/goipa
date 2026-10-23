@@ -184,7 +184,7 @@ func (s *Server) renderGroup(cn string, r *groupRec, members, all bool) map[stri
 	}
 	set := func(k string, v []string) {
 		if len(v) > 0 {
-			out[k] = v
+			out[k] = slices.Clone(v) // writeEnvelope marshals after s.mu is released
 		}
 	}
 	var parents []string
@@ -368,7 +368,7 @@ func memberCmd(add, managers bool) builtin {
 			key, users, groups = "membermanager", &r.ManagerUsers, &r.ManagerGroups
 		}
 		allowed := s.canWrite(c.User, cn, r, managers)
-		denied := fmt.Sprintf("Insufficient access: Insufficient 'write' privilege to the 'member' attribute of entry 'cn=%s,%s'.", cn, groupBaseDN)
+		denied := fmt.Sprintf("Insufficient access: Insufficient 'write' privilege to the '%s' attribute of entry 'cn=%s,%s'.", strings.TrimSuffix(key, "manager"), cn, groupBaseDN)
 		failed := map[string][][]string{"user": {}, "group": {}}
 		completed := 0
 		for _, kind := range []string{"user", "group"} {
@@ -387,6 +387,8 @@ func memberCmd(add, managers bool) builtin {
 					msg = denied
 				case !exists(n):
 					msg = "no such entry"
+				case add && !managers && kind == "group" && n == cn:
+					msg = "A group may not be added as a member of itself"
 				case add && isMember(n):
 					msg = "This entry is already a member"
 				case !add && !isMember(n):

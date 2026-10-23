@@ -464,3 +464,16 @@ func TestUserModEmptySliceUnchanged(t *testing.T) {
 		t.Errorf("unchanged mod: %v", err)
 	}
 }
+
+func TestUserFind_MatchesAllMails(t *testing.T) {
+	s := ipatest.NewServer(t)
+	s.AddUser("dave", ipatest.User{Emails: []string{"d1@example.com", "d2@example.com"}})
+	c := s.ClientAs("admin")
+	if us, err := c.UserFind(ipa.Options{"mail": "d2@example.com"}); err != nil || len(us) != 1 {
+		t.Errorf("mail option: %v, %v", us, err)
+	}
+	res := rpc(t, c, "user_find", []string{"d2@"}, nil)
+	if res.Result.Count != 1 {
+		t.Errorf("needle: Count = %d", res.Result.Count)
+	}
+}

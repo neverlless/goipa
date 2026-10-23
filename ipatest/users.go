@@ -364,12 +364,12 @@ func userFind(s *Server, c Call) (any, *ipa.IpaError) {
 		if r.Preserved != flag(c, "preserved") {
 			continue
 		}
-		if needle != "" && !slices.ContainsFunc([]string{uid, r.First, r.Last, r.Email}, func(v string) bool {
+		if needle != "" && !slices.ContainsFunc(append([]string{uid, r.First, r.Last}, r.mails()...), func(v string) bool {
 			return strings.Contains(strings.ToLower(v), needle)
 		}) {
 			continue
 		}
-		if !matches(c, "uid", uid) || !matches(c, "mail", r.Email) || !matches(c, "givenname", r.First) || !matches(c, "sn", r.Last) {
+		if !matches(c, "uid", uid) || !matchesAny(c, "mail", r.mails()) || !matches(c, "givenname", r.First) || !matches(c, "sn", r.Last) {
 			continue
 		}
 		uids = append(uids, uid)
@@ -389,6 +389,11 @@ func userFind(s *Server, c Call) (any, *ipa.IpaError) {
 func matches(c Call, opt, have string) bool {
 	v, ok := c.Options[opt]
 	return !ok || str(v) == have
+}
+
+func matchesAny(c Call, opt string, have []string) bool {
+	v, ok := c.Options[opt]
+	return !ok || slices.Contains(have, str(v))
 }
 
 func userAdd(s *Server, c Call) (any, *ipa.IpaError) {
@@ -449,6 +454,10 @@ func userDel(s *Server, c Call) (any, *ipa.IpaError) {
 		}
 	}
 	for _, uid := range deleted {
+		for _, g := range s.groups { // referential integrity, also when preserved
+			g.Members = slices.DeleteFunc(g.Members, func(m string) bool { return m == uid })
+			g.ManagerUsers = slices.DeleteFunc(g.ManagerUsers, func(m string) bool { return m == uid })
+		}
 		if flag(c, "preserve") {
 			s.users[uid].Preserved, s.users[uid].Locked = true, true
 		} else {

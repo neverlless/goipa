@@ -121,21 +121,26 @@
 //   - Q20: group_show returns members unless no_members is true (all
 //     overrides it); group_find returns them only with no_members false or
 //     all true. Empty member lists are left out; gidnumber only on POSIX
-//     groups; objectclass, ipauniqueid and dn only with all. TestGroupFind_HidesMembersByDefault,
-//     TestGroupShow_Shape, TestGroupObjectClasses.
+//     groups; objectclass, ipauniqueid and dn only with all.
+//     TestGroupFind_HidesMembersByDefault, TestGroupShow_Shape,
+//     TestGroupObjectClasses.
 //   - Q21: group_add of an existing cn fails with 4002 ("group with name
 //     "<cn>" already exists"); a POSIX group without gidnumber gets the next
 //     one from 1000000; nonposix and external groups get none; group_mod that
 //     changes nothing fails with 4202; a missing group is 4001
 //     "<cn>: group not found". TestGroupAddModDel, TestGroupShow_NotFound.
 //   - Q22: group_del returns {result: {failed: []}, value: [cns], summary}
-//     and drops the group from other groups and from users. TestGroupDel_Shape.
+//     and drops the group from other groups and from users. user_del drops
+//     the user from every group's members and managers, preserved or not.
+//     TestGroupDel_Shape, TestUserDel_LeavesGroups.
 //   - Q23: group_{add,remove}_member and the _member_manager commands report
 //     per-member problems ("This entry is already a member", "This entry is
 //     not a member", "no such entry") in failed, next to result, as
 //     {member|membermanager: {user: [[name, msg]], group: [...]}} (member
 //     also carries empty service and idoverrideuser) with error null.
-//     TestGroupAddMember_FailedIsSiblingOfResult,
+//     A group added to itself fails with "A group may not be added as a member
+//     of itself".
+//     TestGroupAddMember_FailedIsSiblingOfResult, TestGroupAddMember_Self,
 //     TestGroupAddMember_AlreadyMember, TestGroupAddMemberManager_FailedKey.
 //   - Q24: member commands are allowed for uid admin, members of admins,
 //     ManagerUsers and members of a ManagerGroups group; manager commands for
@@ -144,8 +149,8 @@
 //     privilege to the 'member' attribute of entry '<dn>'.".
 //     TestGroupAddMember_DeniedGoesToFailed, TestGroupAddMember_ManagerAllowed.
 //   - Q25: nesting is transitive: memberindirect_user and
-//     memberindirect_group list what comes through member groups, memberof_group
-//     the direct parents. user_show has memberof_group (direct) and
+//     memberindirect_group list what comes through member groups,
+//     memberof_group the direct parents. user_show has memberof_group (direct) and
 //     memberofindirect_group; user_find with all folds the nested groups into
 //     memberof_group and has no memberofindirect_group. Membership is the
 //     union of User.Groups and Group.Members.
@@ -170,9 +175,9 @@
 //
 // # Not modelled
 //
-// Stage users, lockout status and unlock, password
-// policy, subordinate IDs, HBAC and sudo rules, hbactest and passkeys
-// (planned for v0.5). Until then, Handle is the way to reach them. Kerberos,
-// LDAP search filters, size limits, replication and HTTP fault injection are
-// left out; wrap HTTPClient's transport for the latter.
+// Stage users, lockout status and unlock, password policy, subordinate IDs,
+// HBAC and sudo rules, hbactest and passkey management (planned for v0.5).
+// Until then, Handle is the way to reach them. Kerberos, LDAP search
+// filters, size limits, replication and HTTP fault injection are left out;
+// wrap HTTPClient's transport for the latter.
 package ipatest
