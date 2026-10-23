@@ -183,7 +183,11 @@ func (u *User) fromJSON(raw []byte) error {
 	u.TelephoneNumber = res.Get("telephonenumber.0").String()
 	u.Shell = res.Get("loginshell.0").String()
 	u.Category = res.Get("userclass.0").String()
-	u.RandomPassword = res.Get("randompassword").String()
+	r := res.Get("randompassword")
+	if r.IsArray() {
+		r = r.Get("0")
+	}
+	u.RandomPassword = r.String()
 	u.LastPasswdChange = ParseDateTime(res.Get("krblastpwdchange.0.__datetime__").String())
 	u.PasswdExpire = ParseDateTime(res.Get("krbpasswordexpiration.0.__datetime__").String())
 	u.PrincipalExpire = ParseDateTime(res.Get("krbprincipalexpiration.0.__datetime__").String())
@@ -425,9 +429,11 @@ func (c *Client) SetPasswordContext(ctx context.Context, username, oldPasswd, ne
 
 	form := url.Values{
 		"user":         {username},
-		"otp":          {otpcode},
 		"old_password": {oldPasswd},
 		"new_password": {newPasswd},
+	}
+	if otpcode != "" {
+		form.Set("otp", otpcode)
 	}
 
 	req, err := http.NewRequestWithContext(ctx, "POST", ipaUrl, strings.NewReader(form.Encode()))
