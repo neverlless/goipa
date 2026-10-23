@@ -17,6 +17,10 @@ existing exported identifiers keep their signatures).
   `IpaError.Data`, and `errors.Is(err, ipa.ErrNotFound)` (also
   `ErrDuplicateEntry`, `ErrACI`, `ErrEmptyModlist`). Errors are still a
   bare `*IpaError`, so `err.(*ipa.IpaError)` keeps working
+- `errors.Is` between two `*IpaError` values matches by `Code`, not by
+  pointer identity
+- A `"version"` in the caller's `Options` is sent as is (it was always
+  overwritten with `IpaClientVersion`)
 - Non-200 JSON-RPC responses return `*HTTPError`; HTTP 401 (e.g. an
   expired session) matches `errors.Is(err, ipa.ErrUnauthorized)`. The
   message text is unchanged

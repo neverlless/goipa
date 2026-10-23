@@ -55,6 +55,7 @@ type HTTPError struct {
 	Status     string
 }
 
+// Error returns the message used before HTTPError existed.
 func (e *HTTPError) Error() string {
 	return fmt.Sprintf("IPA RPC called failed with HTTP status code: %d", e.StatusCode)
 }
@@ -77,7 +78,8 @@ var (
 	// ErrUnauthorized is returned when user is not authorized
 	ErrUnauthorized = errors.New("unauthorized")
 
-	// ErrUserExists is the UserAdd form of ErrDuplicateEntry.
+	// ErrUserExists is returned when user account already exists. UserAdd
+	// returns it for FreeIPA's DuplicateEntry (4002).
 	ErrUserExists = errors.New("user exists")
 )
 
