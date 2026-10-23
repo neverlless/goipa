@@ -96,8 +96,10 @@ type Server struct {
 	calls     []Call
 	handlers  map[string]HandlerFunc
 	users     map[string]*userRec
+	groups    map[string]*groupRec
 	tokens    []*OTPToken
 	nextID    int // last uidnumber handed out
+	nextGID   int // last gidnumber handed out
 }
 
 // NewServer starts a server and closes it with tb.Cleanup.
@@ -116,7 +118,9 @@ func New() *Server {
 		expired:  map[string]bool{},
 		handlers: map[string]HandlerFunc{},
 		users:    map[string]*userRec{},
+		groups:   map[string]*groupRec{},
 		nextID:   firstID - 1,
+		nextGID:  firstID - 1,
 	}
 	mux := http.NewServeMux()
 	mux.HandleFunc("/ipa/session/json", s.serveSessionJSON)

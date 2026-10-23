@@ -146,7 +146,7 @@ func randomPassword() string {
 // render is the user record as FreeIPA's JSON API returns it (Q16): LDAP
 // attributes are lists, nsaccountlock, has_password, has_keytab, preserved
 // and randompassword are scalars, datetimes are {"__datetime__": ...}.
-func (r *userRec) render(uid string) map[string]any {
+func (r *userRec) render(s *Server, uid string, find, all bool) map[string]any {
 	out := map[string]any{
 		"dn":               "uid=" + uid + "," + baseDN,
 		"uid":              []string{uid},
@@ -171,12 +171,26 @@ func (r *userRec) render(uid string) map[string]any {
 		"userclass":       {r.Category},
 		"ipasshpubkey":    r.SSHPubKeys,
 		"ipauserauthtype": r.AuthTypes,
-		"memberof_group":  r.Groups,
 	} {
 		v = slices.DeleteFunc(slices.Clone(v), func(s string) bool { return s == "" })
 		if len(v) > 0 {
 			out[k] = v
 		}
+	}
+	direct := s.userGroups(uid, r)
+	indirect := s.ancestors(direct)
+	if find { // U2
+		if all {
+			direct, indirect = append(direct, indirect...), nil
+		} else {
+			indirect = nil
+		}
+	}
+	if len(direct) > 0 {
+		out["memberof_group"] = direct
+	}
+	if len(indirect) > 0 {
+		out["memberofindirect_group"] = indirect
 	}
 	if !r.PasswdExpire.IsZero() {
 		out["krbpasswordexpiration"] = []map[string]string{{"__datetime__": r.PasswdExpire.UTC().Format(ipa.IpaDatetimeFormat)}}
@@ -269,12 +283,12 @@ func expiredNow() time.Time { return time.Now().UTC().Truncate(time.Second) }
 
 // withRandom implements Q3: random=true sets a random password, returned in
 // this response only, and expired.
-func (r *userRec) withRandom(c Call, uid string) map[string]any {
+func (r *userRec) withRandom(s *Server, c Call, uid string) map[string]any {
 	random := flag(c, "random")
 	if random {
 		r.Password, r.PasswdExpire = randomPassword(), expiredNow()
 	}
-	rec := r.render(uid)
+	rec := r.render(s, uid, false, false)
 	if random {
 		rec["randompassword"] = r.Password
 	}
@@ -286,7 +300,7 @@ func userShow(s *Server, c Call) (any, *ipa.IpaError) {
 	if err != nil {
 		return nil, err
 	}
-	return entry(uid, r.render(uid), ""), nil
+	return entry(uid, r.render(s, uid, false, false), ""), nil
 }
 
 func userFind(s *Server, c Call) (any, *ipa.IpaError) {
@@ -313,7 +327,7 @@ func userFind(s *Server, c Call) (any, *ipa.IpaError) {
 	sort.Strings(uids)
 	recs := make([]map[string]any, 0, len(uids))
 	for _, uid := range uids {
-		rec := s.users[uid].render(uid)
+		rec := s.users[uid].render(s, uid, true, all)
 		if !all { // Q1
 			delete(rec, "userclass")
 		}
@@ -346,7 +360,7 @@ func userAdd(s *Server, c Call) (any, *ipa.IpaError) {
 	if u.Last == "" {
 		return nil, required("sn")
 	}
-	rec := s.putUser(uid, u).withRandom(c, uid)
+	rec := s.putUser(uid, u).withRandom(s, c, uid)
 	return entry(uid, rec, fmt.Sprintf("Added user %q", uid)), nil
 }
 
@@ -368,7 +382,7 @@ func userMod(s *Server, c Call) (any, *ipa.IpaError) {
 		return nil, &ipa.IpaError{Code: ipa.CodeEmptyModlist, Message: "no modifications to be performed"}
 	}
 	r.User = next
-	rec := r.withRandom(c, uid)
+	rec := r.withRandom(s, c, uid)
 	return entry(uid, rec, fmt.Sprintf("Modified user %q", uid)), nil
 }
 
