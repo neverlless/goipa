@@ -5,9 +5,14 @@
 package ipa_test
 
 import (
+	"bytes"
 	"encoding/json"
+	"io"
+	"net/http"
+	"net/url"
 	"reflect"
 	"slices"
+	"strings"
 	"testing"
 
 	ipa "github.com/neverlless/goipa"
@@ -205,5 +210,71 @@ func TestUserMod_ReplacePrimaryKeepsExtras(t *testing.T) {
 	}
 	if ret.Email != "c@x" || !slices.Equal(ret.Emails, want) {
 		t.Errorf("returned Email/Emails = %q %v", ret.Email, ret.Emails)
+	}
+}
+
+type captureTransport struct {
+	rt   http.RoundTripper
+	form url.Values
+}
+
+func (c *captureTransport) RoundTrip(r *http.Request) (*http.Response, error) {
+	if strings.HasSuffix(r.URL.Path, "/change_password") {
+		b, _ := io.ReadAll(r.Body)
+		r.Body = io.NopCloser(bytes.NewReader(b))
+		c.form, _ = url.ParseQuery(string(b))
+	}
+	return c.rt.RoundTrip(r)
+}
+
+func TestSetPassword_OmitsEmptyOTP(t *testing.T) {
+	s := ipatest.NewServer(t)
+	s.AddUser("jdoe", ipatest.User{Password: "old-password-1"})
+	ct := &captureTransport{rt: s.HTTPClient().Transport}
+	c := ipa.NewClientCustomHttp(s.Host(), s.Realm(), &http.Client{Transport: ct})
+
+	if err := c.SetPassword("jdoe", "old-password-1", "new-password-1", ""); err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := ct.form["otp"]; ok {
+		t.Errorf("empty OTP was sent: %v", ct.form)
+	}
+	if err := c.SetPassword("jdoe", "new-password-1", "new-password-2", "123456"); err != nil {
+		t.Fatal(err)
+	}
+	if !slices.Equal(ct.form["otp"], []string{"123456"}) {
+		t.Errorf("otp = %v", ct.form["otp"])
+	}
+}
+
+func resetWithHandler(t *testing.T, rec map[string]any) (string, error) {
+	s, c := newFake(t)
+	s.AddUser("jdoe", ipatest.User{})
+	if rec != nil {
+		s.Handle("user_mod", func(ipatest.Call) (any, *ipa.IpaError) {
+			return map[string]any{"result": rec, "value": "jdoe", "summary": ""}, nil
+		})
+	}
+	return c.ResetPassword("jdoe")
+}
+
+func TestResetPassword_ListForm(t *testing.T) {
+	pw, err := resetWithHandler(t, map[string]any{"uid": []string{"jdoe"}, "randompassword": []string{"s3cret"}})
+	if err != nil || pw != "s3cret" {
+		t.Errorf("ResetPassword = %q, %v", pw, err)
+	}
+}
+
+func TestResetPassword_StringForm(t *testing.T) {
+	pw, err := resetWithHandler(t, nil)
+	if err != nil || pw == "" {
+		t.Errorf("ResetPassword = %q, %v", pw, err)
+	}
+}
+
+func TestResetPassword_IgnoresValue(t *testing.T) {
+	pw, err := resetWithHandler(t, map[string]any{"uid": []string{"jdoe"}})
+	if err == nil {
+		t.Errorf("ResetPassword = %q, want an error", pw)
 	}
 }
