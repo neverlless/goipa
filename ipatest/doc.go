@@ -29,7 +29,7 @@
 // Each item is pinned by the test named after it.
 //
 //   - Q1: user_find leaves out userclass unless all is true; user_show always
-//     has it. TestUserFindFilters.
+//     has it. TestUserFindFilters, goipa.TestContractFindOmitsUserclass.
 //   - Q2: /ipa/json, the Kerberos endpoint, answers 401 with
 //     "WWW-Authenticate: Negotiate" unless SetNegotiateUser was called; then it
 //     serves the call as that user and sets a new session cookie.
@@ -37,55 +37,63 @@
 //   - Q3: user_add and user_mod with random=true return randompassword in
 //     that response only, and the password is expired; so is a password
 //     that passwd sets for another user. TestUserAddModDel,
-//     TestPasswdByAdminExpires.
+//     TestPasswdByAdminExpires, goipa.TestContractRandomPasswordExpired.
 //   - Q4: change_password always answers HTTP 200; the outcome is in
 //     X-IPA-Pwchange-Result (ok, invalid-password, policy-error), with the
 //     policy text in X-IPA-Pwchange-Policy-Error. The "error" result is not
 //     emitted; goipa's unknown-status branch is tested with a plain httptest
-//     server. TestChangePasswordForm, TestChangePasswordPolicyHeader.
+//     server. TestChangePasswordForm, TestChangePasswordPolicyHeader,
+//     goipa.TestContractSetPasswordResults.
 //   - Q5: login_password answers 401 with X-IPA-Rejection-Reason
 //     invalid-password (unknown user, no password, wrong password),
 //     password-expired (Expired, or PasswdExpire not in the future) or
 //     user-locked (disabled and preserved accounts too).
-//     TestLoginFormRejections.
+//     TestLoginFormRejections, goipa.TestContractLoginRejection.
 //   - Q6: after 6 wrong passwords (krbpwdmaxfailure) even the right one is
 //     user-locked; a successful login resets the count.
-//     TestLoginFormRejections.
+//     TestLoginFormRejections, goipa.TestContractLockout.
 //   - Q7: disabling or deleting the last enabled OTP token of a user whose
 //     ipauserauthtype is exactly "otp" fails with 4203 DatabaseError "Can't
-//     delete last active token while OTP is enabled". TestOTPLastTokenGuard.
+//     delete last active token while OTP is enabled". TestOTPLastTokenGuard,
+//     goipa.TestContractLastOTPToken.
 //   - Q8: otptoken_add reads ipatokennotbefore and ipatokennotafter as
 //     {"__datetime__": "YYYYmmddHHMMSSZ"} in UTC; any other format fails with
-//     3009 ValidationError. TestOTPNotBeforeRecorded, TestOTPBadDatetime.
+//     3009 ValidationError. TestOTPNotBeforeRecorded, TestOTPBadDatetime,
+//     goipa.TestContractOTPLifecycle.
 //   - Q9: passwd with a wrong current_password fails with 2100 ACIError
-//     "Insufficient access: Invalid credentials". TestPasswdByAdminExpires.
+//     "Insufficient access: Invalid credentials". TestPasswdByAdminExpires,
+//     goipa.TestContractChangePasswordWrongCurrent.
 //   - Q10: user_add of an existing uid fails with 4002 DuplicateEntry.
-//     TestUserAddModDel.
+//     TestUserAddModDel, goipa.TestContractDuplicateUser.
 //   - Q11: user_mod that changes nothing fails with 4202 EmptyModlist.
-//     TestUserAddModDel.
+//     TestUserAddModDel, goipa.TestContractUserModNoChange.
 //   - Q12: a request without a Referer starting with https://<host>/ipa is
 //     refused: JSON-RPC with error 911 RefererError ("Missing or invalid HTTP
 //     Referer, <referer>") in an HTTP 200 envelope, form endpoints with HTTP
-//     400. TestRefererJSONRPC.
+//     400. TestRefererJSONRPC, goipa.TestContractReferer.
 //   - Q13: /ipa/session/json without a known ipa_session cookie answers HTTP
-//     401, as for an expired session. TestSessionsNotShared.
+//     401, as for an expired session. TestSessionsNotShared,
+//     goipa.TestContractInvalidSession.
 //   - Q14: an unknown command fails with 905 CommandError ("unknown command
-//     '<name>'"). TestUnknownCommand.
+//     '<name>'"). TestUnknownCommand, goipa.TestContractUnknownCommand.
 //   - Q15: session cookies are "ipa_session=MagBearerToken=...; Path=/ipa;
-//     Secure; HttpOnly". TestNegotiateUser.
+//     Secure; HttpOnly". TestNegotiateUser,
+//     goipa.TestContractSessionCookieFormat.
 //   - Q16: LDAP attributes are lists ("uid": ["x"]); nsaccountlock,
 //     has_password, has_keytab, preserved and randompassword are scalars;
 //     datetimes are [{"__datetime__": "YYYYmmddHHMMSSZ"}] in UTC; empty
-//     attributes are left out. TestUserFieldsRoundTrip.
+//     attributes are left out. TestUserFieldsRoundTrip,
+//     goipa.TestContractAttributeShapes.
 //   - Q17: user_disable of a disabled user fails with 4010 AlreadyInactive,
 //     user_enable of an enabled one with 4009 AlreadyActive.
-//     TestUserDisableEnable.
+//     TestUserDisableEnable, goipa.TestContractAlreadyInactive.
 //   - Q18: a command's output is not always {result, value, summary}: hbactest
 //     has no result key, and member commands put failed next to result. A
 //     HandlerFunc returns the whole output, which is sent verbatim.
 //     user_del returns {result: {failed: [...]}, value: [deleted...],
 //     summary}; user_find returns {result: [...], count, truncated,
-//     summary}. TestHandleWholeResultObject, TestUserAddModDel.
+//     summary}. TestHandleWholeResultObject, TestUserAddModDel,
+//     goipa.TestContractResultShapes.
 //
 // A response's version is the server release, 4.13.4, and its principal is
 // <uid>@TEST.LOCAL. An error a HandlerFunc returns without a Name gets the
