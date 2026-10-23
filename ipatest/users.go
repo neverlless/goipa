@@ -28,23 +28,32 @@ const (
 
 // User is a user account of the fake server.
 type User struct {
-	Password     string   // "" = no password: login always invalid-password, has_password false
-	Locked       bool     // nsaccountlock (user_disable)
-	Preserved    bool     // set by user_del preserve=true
-	Groups       []string // memberof_group
-	AuthTypes    []string // ipauserauthtype
-	Email        string
-	First        string
-	Last         string
-	DisplayName  string
-	Category     string
-	Telephone    string
-	Mobile       string
-	Shell        string
-	HomeDir      string
-	SSHPubKeys   []string // ipasshpubkey, authorized_keys lines
-	FailedLogins int
-	PasswdExpire time.Time // krbpasswordexpiration; non-zero and not after now = expired
+	Password          string   // "" = no password: login always invalid-password, has_password false
+	Locked            bool     // nsaccountlock (user_disable)
+	Preserved         bool     // set by user_del preserve=true
+	Groups            []string // memberof_group
+	AuthTypes         []string // ipauserauthtype
+	Email             string   // first mail value
+	Emails            []string // all mail values; when set it is rendered instead of Email
+	First             string
+	Last              string
+	DisplayName       string
+	Category          string
+	Telephone         string
+	Mobile            string
+	Shell             string
+	HomeDir           string
+	SSHPubKeys        []string // ipasshpubkey, authorized_keys lines
+	Passkeys          []string // ipapasskey
+	Street            string   // street, l, st, postalcode and preferredlanguage need all: true
+	City              string
+	State             string
+	PostalCode        string
+	PreferredLanguage string
+	Title             string
+	OrgUnit           string
+	FailedLogins      int
+	PasswdExpire      time.Time // krbpasswordexpiration; non-zero and not after now = expired
 }
 
 // userRec is a stored user plus the attributes the server assigns.
@@ -60,6 +69,8 @@ func (u User) clone() User {
 	u.Groups = cloneStrs(u.Groups)
 	u.AuthTypes = cloneStrs(u.AuthTypes)
 	u.SSHPubKeys = cloneStrs(u.SSHPubKeys)
+	u.Emails = cloneStrs(u.Emails)
+	u.Passkeys = cloneStrs(u.Passkeys)
 	return u
 }
 
@@ -85,6 +96,9 @@ func (s *Server) putUser(uid string, u User) *userRec {
 		if *p == "" {
 			*p = v
 		}
+	}
+	if u.Email == "" && len(u.Emails) > 0 {
+		u.Email = u.Emails[0]
 	}
 	def(&u.Email, uid+"@example.com")
 	def(&u.First, "Test")
@@ -163,7 +177,7 @@ func (r *userRec) render(s *Server, uid string, find, all bool) map[string]any {
 		"givenname":       {r.First},
 		"sn":              {r.Last},
 		"displayname":     {r.DisplayName},
-		"mail":            {r.Email},
+		"mail":            r.mails(),
 		"homedirectory":   {r.HomeDir},
 		"loginshell":      {r.Shell},
 		"telephonenumber": {r.Telephone},
@@ -171,10 +185,21 @@ func (r *userRec) render(s *Server, uid string, find, all bool) map[string]any {
 		"userclass":       {r.Category},
 		"ipasshpubkey":    r.SSHPubKeys,
 		"ipauserauthtype": r.AuthTypes,
+		"ipapasskey":      r.Passkeys,
+		"title":           {r.Title},
+		"ou":              {r.OrgUnit},
 	} {
 		v = slices.DeleteFunc(slices.Clone(v), func(s string) bool { return s == "" })
 		if len(v) > 0 {
 			out[k] = v
+		}
+	}
+	if all { // U4
+		for k, v := range map[string]string{"street": r.Street, "l": r.City, "st": r.State,
+			"postalcode": r.PostalCode, "preferredlanguage": r.PreferredLanguage} {
+			if v != "" {
+				out[k] = []string{v}
+			}
 		}
 	}
 	direct := s.userGroups(uid, r)
@@ -196,6 +221,14 @@ func (r *userRec) render(s *Server, uid string, find, all bool) map[string]any {
 		out["krbpasswordexpiration"] = []map[string]string{{"__datetime__": r.PasswdExpire.UTC().Format(ipa.IpaDatetimeFormat)}}
 	}
 	return out
+}
+
+// mails is the mail attribute: Emails, else the single Email.
+func (u User) mails() []string {
+	if len(u.Emails) > 0 {
+		return u.Emails
+	}
+	return []string{u.Email}
 }
 
 // strs reads an option that is a string or a list of strings; "" is no value.
@@ -229,8 +262,11 @@ func flag(c Call, name string) bool {
 func (u *User) apply(opts map[string]any) {
 	for k, v := range opts {
 		switch k {
-		case "mail":
-			u.Email = str(v)
+		case "mail": // replaces the whole set (U5)
+			u.Email, u.Emails = str(v), strs(v)
+			if len(u.Emails) < 2 {
+				u.Emails = nil
+			}
 		case "givenname":
 			u.First = str(v)
 		case "sn":
@@ -247,6 +283,20 @@ func (u *User) apply(opts map[string]any) {
 			u.Mobile = str(v)
 		case "userclass":
 			u.Category = str(v)
+		case "street":
+			u.Street = str(v)
+		case "l":
+			u.City = str(v)
+		case "st":
+			u.State = str(v)
+		case "postalcode":
+			u.PostalCode = str(v)
+		case "preferredlanguage":
+			u.PreferredLanguage = str(v)
+		case "title":
+			u.Title = str(v)
+		case "ou":
+			u.OrgUnit = str(v)
 		case "ipasshpubkey":
 			u.SSHPubKeys = strs(v)
 		case "ipauserauthtype":
@@ -288,7 +338,7 @@ func (r *userRec) withRandom(s *Server, c Call, uid string) map[string]any {
 	if random {
 		r.Password, r.PasswdExpire = randomPassword(), expiredNow()
 	}
-	rec := r.render(s, uid, false, false)
+	rec := r.render(s, uid, false, flag(c, "all"))
 	if random {
 		rec["randompassword"] = r.Password
 	}
@@ -300,7 +350,7 @@ func userShow(s *Server, c Call) (any, *ipa.IpaError) {
 	if err != nil {
 		return nil, err
 	}
-	return entry(uid, r.render(s, uid, false, false), ""), nil
+	return entry(uid, r.render(s, uid, false, flag(c, "all")), ""), nil
 }
 
 func userFind(s *Server, c Call) (any, *ipa.IpaError) {

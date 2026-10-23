@@ -13,6 +13,7 @@ import (
 	"maps"
 	"net/http"
 	"net/url"
+	"slices"
 	"strings"
 	"time"
 
@@ -52,6 +53,24 @@ type User struct {
 	LastLoginSuccess time.Time           `json:"krblastsuccessfulauth"`
 	LastLoginFail    time.Time           `json:"krblastfailedauth"`
 	RandomPassword   string              `json:"randompassword"`
+
+	// Emails holds every mail value; Email is the first. UserMod and UserAdd
+	// send Email first, then Emails[1:] (see ToOptions).
+	Emails []string `json:"emails"`
+	// IndirectGroups: nested groups; filled by UserShow only, UserFind puts
+	// nested groups in Groups (FreeIPA).
+	IndirectGroups []string `json:"memberofindirect_group"`
+	// Street, City, State, PostalCode and PreferredLanguage are returned only
+	// with all, which UserShow and UserFind send.
+	Street            string `json:"street"`
+	City              string `json:"l"`
+	State             string `json:"st"`
+	PostalCode        string `json:"postalcode"`
+	PreferredLanguage string `json:"preferredlanguage"`
+	Title             string `json:"title"`
+	OrgUnit           string `json:"ou"`
+	// Passkeys: FreeIPA 4.11+, format passkey:<id>,<key>[,<userid>].
+	Passkeys []string `json:"ipapasskey"`
 }
 
 // SSH Public Key
@@ -95,7 +114,7 @@ func (k *SSHAuthorizedKey) MarshalJSON() ([]byte, error) {
 
 func (u *User) ToOptions() Options {
 	options := Options{
-		"mail":            u.Email,
+		"mail":            u.mailOption(),
 		"givenname":       u.First,
 		"sn":              u.Last,
 		"homedirectory":   u.HomeDir,
@@ -108,6 +127,27 @@ func (u *User) ToOptions() Options {
 	}
 
 	return options
+}
+
+// mailOption is Email followed by Emails[1:] without repeats of Email, as a
+// string when it is one value (the v0.0.7 wire form) and "" when none.
+func (u *User) mailOption() any {
+	var mail []string
+	if u.Email != "" {
+		mail = append(mail, u.Email)
+	}
+	for _, e := range u.Emails[min(1, len(u.Emails)):] {
+		if e != "" && !slices.ContainsFunc(mail, func(m string) bool { return strings.EqualFold(m, e) }) {
+			mail = append(mail, e)
+		}
+	}
+	switch len(mail) {
+	case 0:
+		return ""
+	case 1:
+		return mail[0]
+	}
+	return mail
 }
 
 func (u *User) fromJSON(raw []byte) error {
@@ -132,6 +172,13 @@ func (u *User) fromJSON(raw []byte) error {
 	u.Preserved = res.Get("preserved").Bool()
 	u.HomeDir = res.Get("homedirectory.0").String()
 	u.Email = res.Get("mail.0").String()
+	u.Street = res.Get("street.0").String()
+	u.City = res.Get("l.0").String()
+	u.State = res.Get("st.0").String()
+	u.PostalCode = res.Get("postalcode.0").String()
+	u.PreferredLanguage = res.Get("preferredlanguage.0").String()
+	u.Title = res.Get("title.0").String()
+	u.OrgUnit = res.Get("ou.0").String()
 	u.Mobile = res.Get("mobile.0").String()
 	u.TelephoneNumber = res.Get("telephonenumber.0").String()
 	u.Shell = res.Get("loginshell.0").String()
@@ -146,6 +193,7 @@ func (u *User) fromJSON(raw []byte) error {
 		u.Groups = append(u.Groups, value.String())
 		return true
 	})
+	u.Emails, u.IndirectGroups, u.Passkeys = strList(res, "mail"), strList(res, "memberofindirect_group"), strList(res, "ipapasskey")
 	res.Get("ipasshpubkey").ForEach(func(key, value gjson.Result) bool {
 		k, err := NewSSHAuthorizedKey(value.String())
 		if err == nil {

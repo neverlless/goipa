@@ -150,6 +150,11 @@
 //     memberof_group and has no memberofindirect_group. Membership is the
 //     union of User.Groups and Group.Members.
 //     TestUserShow_IndirectGroups, TestUserFind_NestedGroupsFlattened.
+//   - Q26: street, l, st, postalcode and preferredlanguage come back only
+//     with all true; title, ou and ipapasskey always. mail lists
+//     User.Emails, else User.Email; user_add and user_mod take mail as a
+//     string or a list and replace the whole set.
+//     TestIpatest_AddressNeedsAll, goipa.TestUserMod_KeepsExtras.
 //
 // A response's version is the server release, 4.13.4, and its principal is
 // <uid>@TEST.LOCAL. An error a HandlerFunc returns without a Name gets the

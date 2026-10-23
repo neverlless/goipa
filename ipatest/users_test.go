@@ -69,6 +69,8 @@ func TestUserFieldsRoundTrip(t *testing.T) {
 		Email: "j@example.org", First: "Jesse", Last: "Pinkman", DisplayName: "Jesse P",
 		Category: "gold", Telephone: "+1 555", Mobile: "+1 666", Shell: "/bin/zsh", HomeDir: "/h/jesse",
 		SSHPubKeys: []string{sshLine(t)}, PasswdExpire: expire,
+		Emails: []string{"j@example.org", "j2@example.org"}, Street: "1 Main", City: "Town", State: "ST",
+		PostalCode: "12345", PreferredLanguage: "en", Title: "Dr", OrgUnit: "Lab", Passkeys: []string{"passkey:a,b"},
 	})
 	got, err := s.ClientAs("admin").UserShow("jesse")
 	if err != nil {
@@ -85,6 +87,7 @@ func TestUserFieldsRoundTrip(t *testing.T) {
 		"LastLoginFail":    "not modelled",
 		"LastPasswdChange": "not modelled",
 		"RandomPassword":   "only in add/mod responses",
+		"IndirectGroups":   "derived from group records",
 	}
 	v := reflect.ValueOf(*got)
 	for i := 0; i < v.NumField(); i++ {
