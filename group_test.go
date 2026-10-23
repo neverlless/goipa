@@ -8,6 +8,7 @@ import (
 	"context"
 	"errors"
 	"reflect"
+	"strings"
 	"testing"
 
 	ipa "github.com/neverlless/goipa"
@@ -225,5 +226,132 @@ func TestGroupDelete_NoNames(t *testing.T) {
 	s, c := newFake(t)
 	if err := c.GroupDelete(); err == nil || len(s.Calls()) != 0 {
 		t.Errorf("err = %v, calls = %d", err, len(s.Calls()))
+	}
+}
+
+func memberSetup(t *testing.T) (*ipatest.Server, *ipa.Client) {
+	s, c := newFake(t)
+	s.AddUser("u1", ipatest.User{})
+	s.AddUser("bob", ipatest.User{})
+	s.AddGroup("g", ipatest.Group{})
+	s.AddGroup("g2", ipatest.Group{})
+	return s, c
+}
+
+func TestGroupAddMember(t *testing.T) {
+	_, c := memberSetup(t)
+	g, err := c.GroupAddMember("g", []string{"u1"}, []string{"g2"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(g.Users, []string{"u1"}) || !reflect.DeepEqual(g.Groups, []string{"g2"}) {
+		t.Errorf("got %+v", g)
+	}
+}
+
+func TestGroupAddMember_PartialFailure(t *testing.T) {
+	_, c := memberSetup(t)
+	g, err := c.GroupAddMember("g", []string{"u1", "ghost"}, nil)
+	var me *ipa.MemberError
+	if !errors.As(err, &me) {
+		t.Fatalf("err = %v", err)
+	}
+	want := []ipa.MemberFailure{{Kind: "member", Type: "user", Name: "ghost", Message: "no such entry"}}
+	if !reflect.DeepEqual(me.Failures, want) {
+		t.Errorf("failures = %+v", me.Failures)
+	}
+	if g == nil || !reflect.DeepEqual(g.Users, []string{"u1"}) {
+		t.Errorf("group = %+v", g)
+	}
+}
+
+func TestGroupAddMember_NotManagerIsMemberError(t *testing.T) {
+	s, _ := memberSetup(t)
+	_, err := s.ClientAs("bob").GroupAddMember("g", []string{"u1"}, nil)
+	var me *ipa.MemberError
+	if !errors.As(err, &me) {
+		t.Fatalf("err = %v", err)
+	}
+	if !strings.HasPrefix(me.Failures[0].Message, "Insufficient access") {
+		t.Errorf("message = %q", me.Failures[0].Message)
+	}
+	if errors.Is(err, ipa.ErrACI) {
+		t.Error("err is ErrACI")
+	}
+}
+
+func TestGroupAddMember_GroupNotFound(t *testing.T) {
+	_, c := memberSetup(t)
+	g, err := c.GroupAddMember("nope", []string{"u1"}, nil)
+	if g != nil || !errors.Is(err, ipa.ErrNotFound) {
+		t.Fatalf("g = %v, err = %v", g, err)
+	}
+	if _, ok := err.(*ipa.IpaError); !ok {
+		t.Errorf("err is %T", err)
+	}
+}
+
+func TestGroupAddMember_NoMembers(t *testing.T) {
+	s, c := memberSetup(t)
+	if _, err := c.GroupAddMember("g", nil, nil); err == nil || len(s.Calls()) != 0 {
+		t.Errorf("err = %v, calls = %d", err, len(s.Calls()))
+	}
+}
+
+func TestGroupRemoveMember_NotMember(t *testing.T) {
+	_, c := memberSetup(t)
+	_, err := c.GroupRemoveMember("g", []string{"u1"}, nil)
+	var me *ipa.MemberError
+	if !errors.As(err, &me) || me.Failures[0].Message != "This entry is not a member" {
+		t.Fatalf("err = %v", err)
+	}
+}
+
+func TestGroupAddMemberManager(t *testing.T) {
+	s, c := memberSetup(t)
+	g, err := c.GroupAddMemberManager("g", []string{"bob"}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(g.ManagerUsers, []string{"bob"}) {
+		t.Errorf("got %+v", g)
+	}
+	if _, err := s.ClientAs("bob").GroupAddMember("g", []string{"u1"}, nil); err != nil {
+		t.Errorf("manager add: %v", err)
+	}
+}
+
+func TestGroupRemoveMemberManager_Kind(t *testing.T) {
+	_, c := memberSetup(t)
+	_, err := c.GroupRemoveMemberManager("g", []string{"bob"}, nil)
+	var me *ipa.MemberError
+	if !errors.As(err, &me) || me.Failures[0].Kind != "membermanager" {
+		t.Fatalf("err = %v", err)
+	}
+}
+
+func TestMemberError_Error(t *testing.T) {
+	one := &ipa.MemberError{Failures: []ipa.MemberFailure{{Kind: "member", Type: "user", Name: "bob", Message: "This entry is already a member"}}}
+	if got, want := one.Error(), "ipa: 1 member failure: user bob: This entry is already a member"; got != want {
+		t.Errorf("got %q", got)
+	}
+	two := &ipa.MemberError{Failures: append(one.Failures, ipa.MemberFailure{Kind: "member", Type: "group", Name: "g2", Message: "no such entry"})}
+	if got, want := two.Error(), "ipa: 2 member failures: user bob: This entry is already a member; group g2: no such entry"; got != want {
+		t.Errorf("got %q", got)
+	}
+}
+
+func TestParseMemberFailures_NullAndEmpty(t *testing.T) {
+	_, c := memberSetup(t)
+	// ipatest answers {"member":{"user":[],"group":[],...}}: empty lists must not fail the call.
+	if _, err := c.GroupAddMember("g", []string{"u1"}, nil); err != nil {
+		t.Fatal(err)
+	}
+	s := ipatest.NewServer(t)
+	s.Handle("group_add_member", func(ipatest.Call) (any, *ipa.IpaError) {
+		return map[string]any{"result": map[string]any{"cn": []string{"g"}}, "completed": 1, "failed": nil}, nil
+	})
+	if _, err := s.ClientAs("admin").GroupAddMember("g", []string{"u1"}, nil); err != nil {
+		t.Errorf("null failed: %v", err)
 	}
 }

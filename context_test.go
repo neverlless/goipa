@@ -110,6 +110,22 @@ func twinCalls() []twinCall {
 		{"GroupDeleteContext", func(ctx context.Context, c *ipa.Client) error {
 			return c.GroupDeleteContext(ctx, "g")
 		}},
+		{"GroupAddMemberContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.GroupAddMemberContext(ctx, "g", []string{"u"}, nil)
+			return err
+		}},
+		{"GroupRemoveMemberContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.GroupRemoveMemberContext(ctx, "g", []string{"u"}, nil)
+			return err
+		}},
+		{"GroupAddMemberManagerContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.GroupAddMemberManagerContext(ctx, "g", []string{"u"}, nil)
+			return err
+		}},
+		{"GroupRemoveMemberManagerContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.GroupRemoveMemberManagerContext(ctx, "g", []string{"u"}, nil)
+			return err
+		}},
 	}
 }
 

@@ -64,3 +64,57 @@ func TestIntegrationGroupCRUD(t *testing.T) {
 	_, err = c.GroupShow(posix)
 	require.ErrorIs(t, err, ipa.ErrNotFound)
 }
+
+func TestIntegrationGroupMembers(t *testing.T) {
+	c, err := newTestClientCCache()
+	require.NoError(t, err)
+
+	n := time.Now().UnixNano()
+	group := fmt.Sprintf("goipa-it-%d-g", n)
+	u1, mgr, third, stranger := fmt.Sprintf("goipait%da", n), fmt.Sprintf("goipait%db", n), fmt.Sprintf("goipait%dc", n), fmt.Sprintf("goipait%dd", n)
+	_, err = c.GroupAdd(&ipa.Group{Name: group})
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		_ = c.GroupDelete(group)
+		_ = c.UserDelete(false, false, u1, mgr, third, stranger)
+	})
+	for _, u := range []string{u1, third} {
+		_, err := c.UserAdd(&ipa.User{Username: u, First: "Go", Last: "IPA"}, false)
+		require.NoError(t, err)
+	}
+	const pass = "Secret-pw-1-goipa"
+	for _, u := range []string{mgr, stranger} {
+		_, err := c.UserAddWithPassword(&ipa.User{Username: u, First: "Go", Last: "IPA"}, pass)
+		require.NoError(t, err)
+	}
+
+	g, err := c.GroupAddMember(group, []string{u1}, nil)
+	require.NoError(t, err)
+	require.Equal(t, []string{u1}, g.Users)
+
+	var me *ipa.MemberError
+	_, err = c.GroupAddMember(group, []string{u1}, nil)
+	require.ErrorAs(t, err, &me)
+	require.Contains(t, me.Failures[0].Message, "already a member")
+
+	_, err = c.GroupAddMember(group, []string{fmt.Sprintf("nonexistent-%d", n)}, nil)
+	require.ErrorAs(t, err, &me)
+
+	_, err = c.GroupAddMemberManager(group, []string{mgr}, nil)
+	require.NoError(t, err)
+
+	asMgr := ipa.NewDefaultClient()
+	require.NoError(t, asMgr.RemoteLogin(mgr, pass))
+	_, err = asMgr.GroupAddMember(group, []string{third}, nil)
+	require.NoError(t, err)
+
+	asStranger := ipa.NewDefaultClient()
+	require.NoError(t, asStranger.RemoteLogin(stranger, pass))
+	_, err = asStranger.GroupAddMember(group, []string{stranger}, nil)
+	require.ErrorAs(t, err, &me)
+
+	_, err = c.GroupRemoveMember(group, []string{u1, third}, nil)
+	require.NoError(t, err)
+	_, err = c.GroupRemoveMemberManager(group, []string{mgr}, nil)
+	require.NoError(t, err)
+}
