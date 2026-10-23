@@ -59,6 +59,11 @@ var (
 )
 
 // FreeIPA Client
+//
+// Methods with a Context suffix bound the HTTP request with the given
+// context. Kerberos login and SPNEGO header generation are not cancellable
+// (gokrb5 has no context support), so Login, LoginWithKeytab and
+// LoginFromCCache have no Context twins.
 type Client struct {
 	host       string
 	realm      string
@@ -350,7 +355,12 @@ func (c *Client) RPCContext(ctx context.Context, method string, args []string, o
 
 // Ping FreeIPA server to check connection
 func (c *Client) Ping() (*Response, error) {
-	res, err := c.rpc(context.Background(), "ping", []string{}, nil)
+	return c.PingContext(context.Background())
+}
+
+// PingContext is like Ping but bounds the request with ctx.
+func (c *Client) PingContext(ctx context.Context) (*Response, error) {
+	res, err := c.rpc(ctx, "ping", []string{}, nil)
 
 	if err != nil {
 		return nil, err
@@ -426,10 +436,15 @@ func (c *Client) setSessionID(res *http.Response) error {
 // Login to FreeIPA using web API with uid/passwd and set the FreeIPA session
 // id on the client for subsequent requests.
 func (c *Client) RemoteLogin(uid, passwd string) error {
+	return c.RemoteLoginContext(context.Background(), uid, passwd)
+}
+
+// RemoteLoginContext is like RemoteLogin but bounds the request with ctx.
+func (c *Client) RemoteLoginContext(ctx context.Context, uid, passwd string) error {
 	ipaUrl := fmt.Sprintf("https://%s/ipa/session/login_password", c.host)
 
 	form := url.Values{"user": {uid}, "password": {passwd}}
-	req, err := http.NewRequest("POST", ipaUrl, strings.NewReader(form.Encode()))
+	req, err := http.NewRequestWithContext(ctx, "POST", ipaUrl, strings.NewReader(form.Encode()))
 	if err != nil {
 		return err
 	}
