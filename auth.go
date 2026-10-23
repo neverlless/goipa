@@ -14,7 +14,6 @@ import (
 	"strings"
 
 	"github.com/jcmturner/gokrb5/v8/client"
-	"github.com/jcmturner/gokrb5/v8/config"
 	"github.com/jcmturner/gokrb5/v8/credentials"
 	"github.com/jcmturner/gokrb5/v8/keytab"
 )
@@ -134,7 +133,7 @@ func (c *Client) RemoteLoginContext(ctx context.Context, uid, passwd string) err
 
 // Login to FreeIPA using local kerberos login username and password
 func (c *Client) Login(username, password string) error {
-	cfg, err := config.Load(DefaultKerbConf)
+	cfg, err := loadKrb5Config(DefaultKerbConf)
 	if err != nil {
 		return err
 	}
@@ -153,7 +152,7 @@ func (c *Client) Login(username, password string) error {
 
 // Login to FreeIPA using local kerberos login with keytab and username
 func (c *Client) LoginWithKeytab(ktab, username string) error {
-	cfg, err := config.Load(DefaultKerbConf)
+	cfg, err := loadKrb5Config(DefaultKerbConf)
 	if err != nil {
 		return err
 	}
@@ -177,7 +176,7 @@ func (c *Client) LoginWithKeytab(ktab, username string) error {
 
 // Login to FreeIPA using credentials cache
 func (c *Client) LoginFromCCache(cpath string) error {
-	cfg, err := config.Load(DefaultKerbConf)
+	cfg, err := loadKrb5Config(DefaultKerbConf)
 	if err != nil {
 		return err
 	}
