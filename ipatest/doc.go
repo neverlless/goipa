@@ -155,6 +155,14 @@
 //     User.Emails, else User.Email; user_add and user_mod take mail as a
 //     string or a list and replace the whole set.
 //     TestIpatest_AddressNeedsAll, goipa.TestUserMod_KeepsExtras.
+//   - Q27: host_show returns members (memberof_hostgroup, managedby_host)
+//     unless no_members is true (all overrides it); host_find returns them
+//     only with no_members false or all true. krbprincipalname is
+//     host/<fqdn>@TEST.LOCAL; has_keytab and has_password are scalar bools;
+//     a missing host is 4001 "<fqdn>: host not found". Every new server
+//     already holds its own host, ipa.test.local, with a keytab.
+//     TestHostFind_HidesMembersByDefault, TestHostShow_Shape,
+//     TestHostShow_NotFound.
 //
 // A response's version is the server release, 4.13.4, and its principal is
 // <uid>@TEST.LOCAL. An error a HandlerFunc returns without a Name gets the
