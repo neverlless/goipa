@@ -102,6 +102,7 @@ krb5.conf) can drop the workaround.
       (`almalinux-8-4.9.13`, `almalinux-9-4.12.2`, `almalinux-9-4.13.4`); the
       same contract tests run against `ipatest` and the real server
 - [ ] Replace the CentOS 7 `container/` setup with a `docker run` script
+- [x] pkg.go.dev examples for the login modes and the `RPC` escape hatch
 
 Accept: `go test ./...` coverage ≥ 80 %; the nightly job is green on all
 three FreeIPA versions.
@@ -153,7 +154,6 @@ against `ipatest` and an integration test.
 
 - [ ] API review: deprecations marked, error model and context policy final,
       `ipatest` API final
-- [ ] pkg.go.dev examples for every login mode and common task
 - [ ] Listed in [awesome-go](https://github.com/avelino/awesome-go) (Third-party APIs)
 - [ ] Invite authors of active forks to contribute here
 
