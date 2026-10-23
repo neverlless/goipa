@@ -236,13 +236,18 @@ func (u *User) FormatSSHAuthorizedKeys() []string {
 
 // Fetch user details by call the FreeIPA user-show method
 func (c *Client) UserShow(username string) (*User, error) {
+	return c.UserShowContext(context.Background(), username)
+}
+
+// UserShowContext is like UserShow but bounds the request with ctx.
+func (c *Client) UserShowContext(ctx context.Context, username string) (*User, error) {
 
 	options := Options{
 		"no_members": false,
 		"all":        true,
 	}
 
-	res, err := c.rpc(context.Background(), "user_show", []string{username}, options)
+	res, err := c.rpc(ctx, "user_show", []string{username}, options)
 
 	if err != nil {
 		return nil, err
@@ -259,6 +264,11 @@ func (c *Client) UserShow(username string) (*User, error) {
 
 // Find users.
 func (c *Client) UserFind(options Options) ([]*User, error) {
+	return c.UserFindContext(context.Background(), options)
+}
+
+// UserFindContext is like UserFind but bounds the request with ctx.
+func (c *Client) UserFindContext(ctx context.Context, options Options) ([]*User, error) {
 	options = maps.Clone(options)
 	if options == nil {
 		options = Options{}
@@ -267,7 +277,7 @@ func (c *Client) UserFind(options Options) ([]*User, error) {
 	options["no_members"] = false
 	options["all"] = true
 
-	res, err := c.rpc(context.Background(), "user_find", []string{""}, options)
+	res, err := c.rpc(ctx, "user_find", []string{""}, options)
 
 	if err != nil {
 		return nil, err
@@ -290,13 +300,18 @@ func (c *Client) UserFind(options Options) ([]*User, error) {
 
 // Reset user password and return new random password
 func (c *Client) ResetPassword(username string) (string, error) {
+	return c.ResetPasswordContext(context.Background(), username)
+}
+
+// ResetPasswordContext is like ResetPassword but bounds the request with ctx.
+func (c *Client) ResetPasswordContext(ctx context.Context, username string) (string, error) {
 
 	options := Options{
 		"no_members": false,
 		"random":     true,
 		"all":        true}
 
-	res, err := c.rpc(context.Background(), "user_mod", []string{username}, options)
+	res, err := c.rpc(ctx, "user_mod", []string{username}, options)
 
 	if err != nil {
 		return "", err
@@ -318,6 +333,11 @@ func (c *Client) ResetPassword(username string) (string, error) {
 // Change user password. This will run the passwd ipa command. Optionally
 // provide an OTP if required
 func (c *Client) ChangePassword(username, old_passwd, new_passwd, otpcode string) error {
+	return c.ChangePasswordContext(context.Background(), username, old_passwd, new_passwd, otpcode)
+}
+
+// ChangePasswordContext is like ChangePassword but bounds the request with ctx.
+func (c *Client) ChangePasswordContext(ctx context.Context, username, old_passwd, new_passwd, otpcode string) error {
 
 	options := Options{
 		"current_password": old_passwd,
@@ -328,7 +348,7 @@ func (c *Client) ChangePassword(username, old_passwd, new_passwd, otpcode string
 		options["otp"] = otpcode
 	}
 
-	_, err := c.rpc(context.Background(), "passwd", []string{username}, options)
+	_, err := c.rpc(ctx, "passwd", []string{username}, options)
 
 	if err != nil {
 		return err
@@ -348,6 +368,11 @@ func (c *Client) ChangePassword(username, old_passwd, new_passwd, otpcode string
 // https://www.freeipa.org/page/Self-Service_Password_Reset for security issues
 // and possible weaknesses of this approach.
 func (c *Client) SetPassword(username, old_passwd, new_passwd, otpcode string) error {
+	return c.SetPasswordContext(context.Background(), username, old_passwd, new_passwd, otpcode)
+}
+
+// SetPasswordContext is like SetPassword but bounds the request with ctx.
+func (c *Client) SetPasswordContext(ctx context.Context, username, old_passwd, new_passwd, otpcode string) error {
 	ipaUrl := fmt.Sprintf("https://%s/ipa/session/change_password", c.host)
 
 	form := url.Values{
@@ -357,7 +382,7 @@ func (c *Client) SetPassword(username, old_passwd, new_passwd, otpcode string) e
 		"new_password": {new_passwd},
 	}
 
-	req, err := http.NewRequest("POST", ipaUrl, strings.NewReader(form.Encode()))
+	req, err := http.NewRequestWithContext(ctx, "POST", ipaUrl, strings.NewReader(form.Encode()))
 	if err != nil {
 		return err
 	}
@@ -388,6 +413,11 @@ func (c *Client) SetPassword(username, old_passwd, new_passwd, otpcode string) e
 
 // Update user authentication types.
 func (c *Client) SetAuthTypes(username string, types []string) error {
+	return c.SetAuthTypesContext(context.Background(), username, types)
+}
+
+// SetAuthTypesContext is like SetAuthTypes but bounds the request with ctx.
+func (c *Client) SetAuthTypesContext(ctx context.Context, username string, types []string) error {
 	options := Options{
 		"no_members":      false,
 		"ipauserauthtype": types,
@@ -398,7 +428,7 @@ func (c *Client) SetAuthTypes(username string, types []string) error {
 		options["ipauserauthtype"] = ""
 	}
 
-	_, err := c.rpc(context.Background(), "user_mod", []string{username}, options)
+	_, err := c.rpc(ctx, "user_mod", []string{username}, options)
 
 	if err != nil {
 		return err
@@ -409,7 +439,12 @@ func (c *Client) SetAuthTypes(username string, types []string) error {
 
 // Disable User Account
 func (c *Client) UserDisable(username string) error {
-	_, err := c.rpc(context.Background(), "user_disable", []string{username}, nil)
+	return c.UserDisableContext(context.Background(), username)
+}
+
+// UserDisableContext is like UserDisable but bounds the request with ctx.
+func (c *Client) UserDisableContext(ctx context.Context, username string) error {
+	_, err := c.rpc(ctx, "user_disable", []string{username}, nil)
 
 	if err != nil {
 		return err
@@ -420,7 +455,12 @@ func (c *Client) UserDisable(username string) error {
 
 // Enable User Account
 func (c *Client) UserEnable(username string) error {
-	_, err := c.rpc(context.Background(), "user_enable", []string{username}, nil)
+	return c.UserEnableContext(context.Background(), username)
+}
+
+// UserEnableContext is like UserEnable but bounds the request with ctx.
+func (c *Client) UserEnableContext(ctx context.Context, username string) error {
+	_, err := c.rpc(ctx, "user_enable", []string{username}, nil)
 
 	if err != nil {
 		return err
@@ -432,6 +472,11 @@ func (c *Client) UserEnable(username string) error {
 // Add new user and set password. Note this requires "User Administrators"
 // Privilege in FreeIPA.
 func (c *Client) UserAddWithPassword(user *User, password string) (*User, error) {
+	return c.UserAddWithPasswordContext(context.Background(), user, password)
+}
+
+// UserAddWithPasswordContext is like UserAddWithPassword but bounds the request with ctx.
+func (c *Client) UserAddWithPasswordContext(ctx context.Context, user *User, password string) (*User, error) {
 	if user.Username == "" {
 		return nil, errors.New("username is required")
 	}
@@ -439,12 +484,12 @@ func (c *Client) UserAddWithPassword(user *User, password string) (*User, error)
 		return nil, errors.New("password is required")
 	}
 
-	rec, err := c.UserAdd(user, true)
+	rec, err := c.UserAddContext(ctx, user, true)
 	if err != nil {
 		return nil, err
 	}
 
-	err = c.SetPassword(rec.Username, rec.RandomPassword, password, "")
+	err = c.SetPasswordContext(ctx, rec.Username, rec.RandomPassword, password, "")
 	if err != nil {
 		return nil, err
 	}
@@ -455,6 +500,11 @@ func (c *Client) UserAddWithPassword(user *User, password string) (*User, error)
 // Add new user. If random is true a random password will be created for the
 // user. Note this requires "User Administrators" Privilege in FreeIPA.
 func (c *Client) UserAdd(user *User, random bool) (*User, error) {
+	return c.UserAddContext(context.Background(), user, random)
+}
+
+// UserAddContext is like UserAdd but bounds the request with ctx.
+func (c *Client) UserAddContext(ctx context.Context, user *User, random bool) (*User, error) {
 	if user.Username == "" {
 		return nil, errors.New("username is required")
 	}
@@ -465,7 +515,7 @@ func (c *Client) UserAdd(user *User, random bool) (*User, error) {
 		options["random"] = true
 	}
 
-	res, err := c.rpc(context.Background(), "user_add", []string{user.Username}, options)
+	res, err := c.rpc(ctx, "user_add", []string{user.Username}, options)
 	if err != nil {
 		if errors.Is(err, ErrDuplicateEntry) {
 			return nil, ErrUserExists
@@ -486,12 +536,17 @@ func (c *Client) UserAdd(user *User, random bool) (*User, error) {
 // true the users is moved to the Delete container. If stopOnError is false the
 // operation will be in continuous mode otherwise it will stop on errors
 func (c *Client) UserDelete(preserve, stopOnError bool, usernames ...string) error {
+	return c.UserDeleteContext(context.Background(), preserve, stopOnError, usernames...)
+}
+
+// UserDeleteContext is like UserDelete but bounds the request with ctx.
+func (c *Client) UserDeleteContext(ctx context.Context, preserve, stopOnError bool, usernames ...string) error {
 	var options = Options{
 		"continue": !stopOnError,
 		"preserve": preserve,
 	}
 
-	_, err := c.rpc(context.Background(), "user_del", usernames, options)
+	_, err := c.rpc(ctx, "user_del", usernames, options)
 	if err != nil {
 		return err
 	}
@@ -503,13 +558,18 @@ func (c *Client) UserDelete(preserve, stopOnError bool, usernames ...string) err
 // givenname, sn, homedirectory, loginshell, displayname, ipasshpubkey,
 // telephonenumber, and mobile
 func (c *Client) UserMod(user *User) (*User, error) {
+	return c.UserModContext(context.Background(), user)
+}
+
+// UserModContext is like UserMod but bounds the request with ctx.
+func (c *Client) UserModContext(ctx context.Context, user *User) (*User, error) {
 	if user.Username == "" {
 		return nil, errors.New("username is required")
 	}
 
 	options := user.ToOptions()
 
-	res, err := c.rpc(context.Background(), "user_mod", []string{user.Username}, options)
+	res, err := c.rpc(ctx, "user_mod", []string{user.Username}, options)
 	if err != nil {
 		if errors.Is(err, ErrEmptyModlist) {
 			return user, nil
