@@ -37,6 +37,18 @@ func TestUserAddValidation(t *testing.T) {
 	}
 }
 
+func TestUserAddOmitsEmptyAttributes(t *testing.T) {
+	c, f := newFakeIPA(t, 200, envelope(`{"result":{"uid":["eve"]},"value":"eve","summary":""}`))
+	if _, err := c.UserAdd(&ipa.User{Username: "eve", First: "Eve", Last: "E"}, false); err != nil {
+		t.Fatal(err)
+	}
+	opts := f.Calls()[0].Options
+	delete(opts, "version")
+	if want := map[string]any{"givenname": "Eve", "sn": "E"}; !reflect.DeepEqual(opts, want) {
+		t.Errorf("options %v, want %v", opts, want)
+	}
+}
+
 func TestUserAddWithPasswordLogsIn(t *testing.T) {
 	s, c := newFake(t)
 	u := &ipa.User{Username: "carol", First: "Carol", Last: "C", Email: "carol@example.com"}

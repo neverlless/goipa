@@ -510,6 +510,13 @@ func (c *Client) UserAddContext(ctx context.Context, user *User, random bool) (*
 	}
 
 	options := user.ToOptions()
+	// FreeIPA reads "" as "no value", which on user_add drops its defaults:
+	// an empty homedirectory fails with 4205 ObjectclassViolation.
+	for k, v := range options {
+		if s, ok := v.([]string); v == "" || ok && len(s) == 0 {
+			delete(options, k)
+		}
+	}
 
 	if random {
 		options["random"] = true

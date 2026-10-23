@@ -335,6 +335,9 @@ func userAdd(s *Server, c Call) (any, *ipa.IpaError) {
 	if s.users[uid] != nil { // Q10
 		return nil, &ipa.IpaError{Code: ipa.CodeDuplicateEntry, Message: fmt.Sprintf("user with name %q already exists", uid)}
 	}
+	if v, ok := c.Options["homedirectory"]; ok && str(v) == "" { // Q19
+		return nil, &ipa.IpaError{Code: 4205, Name: "ObjectclassViolation", Message: `missing attribute "homeDirectory" required by object class "posixAccount"`}
+	}
 	var u User
 	u.apply(c.Options)
 	if u.First == "" {

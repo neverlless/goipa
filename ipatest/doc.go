@@ -102,6 +102,10 @@
 //     summary}; user_find returns {result: [...], count, truncated,
 //     summary}. TestHandleWholeResultObject, TestUserAddModDel,
 //     goipa.TestContractResultShapes.
+//   - Q19: user_add with an explicit empty homedirectory fails with 4205
+//     ObjectclassViolation, as "" means no value and homeDirectory is
+//     required by posixAccount; leaving the option out gets /home/<uid>.
+//     TestUserAddEmptyHomeDir, goipa.TestContractUserAddDefaults.
 //
 // A response's version is the server release, 4.13.4, and its principal is
 // <uid>@TEST.LOCAL. An error a HandlerFunc returns without a Name gets the
