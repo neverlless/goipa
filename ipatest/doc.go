@@ -51,6 +51,12 @@
 //   - Q6: after 6 wrong passwords (krbpwdmaxfailure) even the right one is
 //     user-locked; a successful login resets the count.
 //     TestLoginFormRejections.
+//   - Q7: disabling or deleting the last enabled OTP token of a user whose
+//     ipauserauthtype is exactly "otp" fails with 4203 DatabaseError "Can't
+//     delete last active token while OTP is enabled". TestOTPLastTokenGuard.
+//   - Q8: otptoken_add reads ipatokennotbefore and ipatokennotafter as
+//     {"__datetime__": "YYYYmmddHHMMSSZ"} in UTC; any other format fails with
+//     3009 ValidationError. TestOTPNotBeforeRecorded, TestOTPBadDatetime.
 //   - Q9: passwd with a wrong current_password fails with 2100 ACIError
 //     "Insufficient access: Invalid credentials". TestPasswdByAdminExpires.
 //   - Q10: user_add of an existing uid fails with 4002 DuplicateEntry.

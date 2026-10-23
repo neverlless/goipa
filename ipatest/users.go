@@ -430,7 +430,7 @@ func loginPassword(s *Server, w http.ResponseWriter, r *http.Request) {
 	switch {
 	case u == nil || u.Password == "":
 		reject("invalid-password")
-	case u.Locked || u.Preserved || u.FailedLogins >= maxFailures: // Q6, Q8
+	case u.Locked || u.Preserved || u.FailedLogins >= maxFailures: // Q6
 		reject("user-locked")
 	case u.Password != pw:
 		u.FailedLogins++
