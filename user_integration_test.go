@@ -7,6 +7,7 @@
 package ipa_test
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -251,4 +252,75 @@ func TestUserFind(t *testing.T) {
 
 	err = c.UserDelete(false, false, username)
 	assert.NoErrorf(err, "Failed to remove user")
+}
+
+// serverAtLeast reports whether the FreeIPA release in version is major.minor or later.
+func serverAtLeast(version string, major, minor int) bool {
+	var ma, mi int
+	if _, err := fmt.Sscanf(version, "%d.%d", &ma, &mi); err != nil {
+		return false
+	}
+	return ma > major || ma == major && mi >= minor
+}
+
+func TestIntegrationUserFields(t *testing.T) {
+	c, err := newTestClientCCache()
+	require.NoError(t, err)
+
+	username := strings.ToLower(gofakeit.Username())
+	_, err = addTestUser(c, username, "")
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = c.UserDelete(false, false, username) })
+
+	_, err = c.RPC("user_mod", []string{username}, ipa.Options{
+		"street": "1 Main St", "l": "Town", "st": "ST", "postalcode": "12345",
+		"preferredlanguage": "en", "title": "Dr", "ou": "Lab",
+		"mail": []string{username + "@example.com", username + "-2@example.com"},
+	})
+	require.NoError(t, err)
+
+	inner, outer := "goipa-it-"+username+"-in", "goipa-it-"+username+"-out"
+	_, err = c.GroupAdd(&ipa.Group{Name: inner})
+	require.NoError(t, err)
+	_, err = c.GroupAdd(&ipa.Group{Name: outer})
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = c.GroupDelete(inner, outer) })
+	_, err = c.GroupAddMember(inner, []string{username}, nil)
+	require.NoError(t, err)
+	_, err = c.GroupAddMember(outer, nil, []string{inner})
+	require.NoError(t, err)
+
+	u, err := c.UserShow(username)
+	require.NoError(t, err)
+	require.Equal(t, "1 Main St", u.Street)
+	require.Equal(t, "Town", u.City)
+	require.Equal(t, "ST", u.State)
+	require.Equal(t, "12345", u.PostalCode)
+	require.Equal(t, "en", u.PreferredLanguage)
+	require.Equal(t, "Dr", u.Title)
+	require.Equal(t, "Lab", u.OrgUnit)
+	require.Equal(t, []string{username + "@example.com", username + "-2@example.com"}, u.Emails)
+	require.Equal(t, username+"@example.com", u.Email)
+	require.Contains(t, u.Groups, inner)
+	require.Contains(t, u.IndirectGroups, outer)
+
+	found, err := c.UserFind(ipa.Options{"uid": username})
+	require.NoError(t, err)
+	require.Len(t, found, 1)
+	require.Contains(t, found[0].Groups, outer)
+	require.Empty(t, found[0].IndirectGroups)
+
+	res, err := c.RPC("ping", nil, nil)
+	require.NoError(t, err)
+	if !serverAtLeast(res.Version, 4, 11) {
+		t.Skipf("passkeys need FreeIPA 4.11, server is %s", res.Version)
+	}
+	// A fixed P-256 SubjectPublicKeyInfo, base64.
+	const spki = "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEZw0A2dEyoq1uZTqwF0n1Q1o0Y9m7mbbu2Jx0P0E1Sv8kqH0r5Y2o0Ew8Hn1j8V9uMPeZqk8cD5kXz0h3vN8tQ=="
+	_, err = c.RPC("user_add_passkey", []string{username, "passkey:goipa-test-id," + spki}, nil)
+	require.NoError(t, err)
+	u, err = c.UserShow(username)
+	require.NoError(t, err)
+	require.Len(t, u.Passkeys, 1)
+	require.True(t, strings.HasPrefix(u.Passkeys[0], "passkey:"))
 }
