@@ -71,3 +71,33 @@ func TestUserModEmptyModlist(t *testing.T) {
 		t.Errorf("got %v, %v", got, err)
 	}
 }
+
+func TestRPCHTTPError(t *testing.T) {
+	c, _ := newFakeIPA(t, http.StatusServiceUnavailable, "busy")
+	_, err := c.RPC("ping", nil, nil)
+	var herr *ipa.HTTPError
+	if !errors.As(err, &herr) {
+		t.Fatalf("err = %v, want *HTTPError", err)
+	}
+	if herr.StatusCode != 503 || herr.Status != "503 Service Unavailable" {
+		t.Errorf("got %+v", herr)
+	}
+	if errors.Is(err, ipa.ErrUnauthorized) {
+		t.Error("503 must not match ErrUnauthorized")
+	}
+	if want := "IPA RPC called failed with HTTP status code: 503"; err.Error() != want {
+		t.Errorf("Error() = %q, want %q", err.Error(), want)
+	}
+}
+
+func TestRPCExpiredSession401(t *testing.T) {
+	c, _ := newFakeIPA(t, http.StatusUnauthorized, "")
+	_, err := c.RPC("ping", nil, nil)
+	if !errors.Is(err, ipa.ErrUnauthorized) {
+		t.Errorf("err = %v, want ErrUnauthorized", err)
+	}
+	var herr *ipa.HTTPError
+	if !errors.As(err, &herr) || herr.StatusCode != 401 {
+		t.Errorf("err = %v, want *HTTPError 401", err)
+	}
+}
