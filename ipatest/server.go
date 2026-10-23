@@ -89,6 +89,8 @@ type Server struct {
 	negotiate string
 	calls     []Call
 	handlers  map[string]HandlerFunc
+	users     map[string]*userRec
+	nextID    int // last uidnumber handed out
 }
 
 // NewServer starts a server and closes it with tb.Cleanup.
@@ -97,6 +99,8 @@ func NewServer(tb testing.TB) *Server {
 	s := &Server{
 		sessions: map[string]string{},
 		handlers: map[string]HandlerFunc{},
+		users:    map[string]*userRec{},
+		nextID:   firstID - 1,
 	}
 	mux := http.NewServeMux()
 	mux.HandleFunc("/ipa/session/json", s.serveSessionJSON)
@@ -266,6 +270,9 @@ func (s *Server) serveRPC(w http.ResponseWriter, r *http.Request, uid string) {
 	}
 	if err == nil && len(req.Params) > 1 {
 		err = json.Unmarshal(req.Params[1], &c.Options)
+	}
+	if c.Options == nil { // params[1] was null
+		c.Options = map[string]any{}
 	}
 	if err != nil {
 		http.Error(w, "bad JSON-RPC request: "+err.Error(), http.StatusBadRequest)

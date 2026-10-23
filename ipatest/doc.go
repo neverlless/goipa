@@ -28,10 +28,36 @@
 //
 // Each item is pinned by the test named after it.
 //
+//   - Q1: user_find leaves out userclass unless all is true; user_show always
+//     has it. TestUserFindFilters.
 //   - Q2: /ipa/json, the Kerberos endpoint, answers 401 with
 //     "WWW-Authenticate: Negotiate" unless SetNegotiateUser was called; then it
 //     serves the call as that user and sets a new session cookie.
 //     TestNegotiateUser.
+//   - Q3: user_add and user_mod with random=true return randompassword in
+//     that response only, and the password is expired; so is a password
+//     that passwd sets for another user. TestUserAddModDel,
+//     TestPasswdByAdminExpires.
+//   - Q4: change_password always answers HTTP 200; the outcome is in
+//     X-IPA-Pwchange-Result (ok, invalid-password, policy-error), with the
+//     policy text in X-IPA-Pwchange-Policy-Error. The "error" result is not
+//     emitted; goipa's unknown-status branch is tested with a plain httptest
+//     server. TestChangePasswordForm, TestChangePasswordPolicyHeader.
+//   - Q5: login_password answers 401 with X-IPA-Rejection-Reason
+//     invalid-password (unknown user, no password, wrong password) or
+//     password-expired (Expired, or PasswdExpire not in the future).
+//     TestLoginFormRejections.
+//   - Q6: a disabled or preserved user gets user-locked.
+//     TestLoginFormRejections.
+//   - Q8: after 6 wrong passwords (krbpwdmaxfailure) even the right one is
+//     user-locked; a successful login resets the count.
+//     TestLoginFormRejections.
+//   - Q9: passwd with a wrong current_password fails with 2100 ACIError
+//     "Insufficient access: Invalid credentials". TestPasswdByAdminExpires.
+//   - Q10: user_add of an existing uid fails with 4002 DuplicateEntry.
+//     TestUserAddModDel.
+//   - Q11: user_mod that changes nothing fails with 4202 EmptyModlist.
+//     TestUserAddModDel.
 //   - Q12: a request without a Referer starting with https://<host>/ipa is
 //     refused: JSON-RPC with error 911 RefererError ("Missing or invalid HTTP
 //     Referer, <referer>") in an HTTP 200 envelope, form endpoints with HTTP
@@ -42,10 +68,19 @@
 //     '<name>'"). TestUnknownCommand.
 //   - Q15: session cookies are "ipa_session=MagBearerToken=...; Path=/ipa;
 //     Secure; HttpOnly". TestNegotiateUser.
+//   - Q16: LDAP attributes are lists ("uid": ["x"]); nsaccountlock,
+//     has_password, has_keytab, preserved and randompassword are scalars;
+//     datetimes are [{"__datetime__": "YYYYmmddHHMMSSZ"}] in UTC; empty
+//     attributes are left out. TestUserFieldsRoundTrip.
+//   - Q17: user_disable of a disabled user fails with 4010 AlreadyInactive,
+//     user_enable of an enabled one with 4009 AlreadyActive.
+//     TestUserDisableEnable.
 //   - Q18: a command's output is not always {result, value, summary}: hbactest
 //     has no result key, and member commands put failed next to result. A
 //     HandlerFunc returns the whole output, which is sent verbatim.
-//     TestHandleWholeResultObject.
+//     user_del returns {result: {failed: [...]}, value: [deleted...],
+//     summary}; user_find returns {result: [...], count, truncated,
+//     summary}. TestHandleWholeResultObject, TestUserAddModDel.
 //
 // A response's version is the server release, 4.13.4, and its principal is
 // <uid>@TEST.LOCAL. An error a HandlerFunc returns without a Name gets the
