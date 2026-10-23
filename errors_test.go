@@ -5,6 +5,7 @@
 package ipa_test
 
 import (
+	"encoding/json"
 	"errors"
 	"net/http"
 	"testing"
@@ -107,5 +108,37 @@ func TestRPCExpiredSession401(t *testing.T) {
 	var herr *ipa.HTTPError
 	if !errors.As(err, &herr) || herr.StatusCode != 401 {
 		t.Errorf("err = %v, want *HTTPError 401", err)
+	}
+}
+
+func TestIpaErrorMarshalJSON(t *testing.T) {
+	for _, in := range []ipa.IpaError{
+		{Code: 4001, Name: "NotFound", Message: "bob: user not found", Data: `{"reason":"bob: user not found"}`},
+		{Code: 905, Name: "CommandError", Message: "unknown command 'x'"},
+	} {
+		b, err := json.Marshal(&in)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var shape map[string]json.RawMessage
+		if err := json.Unmarshal(b, &shape); err != nil {
+			t.Fatal(err)
+		}
+		for _, k := range []string{"code", "message", "name", "data"} {
+			if _, ok := shape[k]; !ok {
+				t.Errorf("%s: key %q missing", b, k)
+			}
+		}
+		var out ipa.IpaError
+		if err := json.Unmarshal(b, &out); err != nil {
+			t.Fatal(err)
+		}
+		want := in
+		if want.Data == "" {
+			want.Data = "{}"
+		}
+		if out != want {
+			t.Errorf("round trip: got %+v, want %+v", out, want)
+		}
 	}
 }
