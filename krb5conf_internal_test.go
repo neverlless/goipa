@@ -8,7 +8,6 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
-	"sort"
 	"strings"
 	"testing"
 
@@ -22,27 +21,38 @@ func writeKrb5File(t *testing.T, path, content string) {
 	}
 }
 
-func realmKDCs(t *testing.T, cfg *config.Config, realm string) []string {
+func mkdirKrb5(t *testing.T, path string) {
 	t.Helper()
-	_, kdcs, err := cfg.GetKDCs(realm, true)
-	if err != nil {
-		t.Fatalf("GetKDCs(%s): %v", realm, err)
+	if err := os.MkdirAll(path, 0o750); err != nil {
+		t.Fatal(err)
 	}
-	var out []string
-	for _, k := range kdcs {
-		out = append(out, k)
-	}
-	sort.Strings(out)
-	return out
 }
 
-// Layout written by ipa-client-install 4.13 (ipa-client-4.13.4-1.el9).
+// realmKDCs returns the kdc list of the only entry for realm, in file order.
+func realmKDCs(t *testing.T, cfg *config.Config, realm string) []string {
+	t.Helper()
+	var kdcs []string
+	n := 0
+	for _, r := range cfg.Realms {
+		if r.Realm == realm {
+			kdcs = r.KDC
+			n++
+		}
+	}
+	if n != 1 {
+		t.Fatalf("%d entries for realm %s, want 1", n, realm)
+	}
+	return kdcs
+}
+
+// Layout written by ipa-client-install 4.13 (ipa-client-4.13.4-1.el9) and
+// sssd-client.
 func TestLoadKrb5ConfigIPAClient413(t *testing.T) {
 	dir := t.TempDir()
 	confd := filepath.Join(dir, "krb5.conf.d")
-	if err := os.Mkdir(confd, 0o750); err != nil {
-		t.Fatal(err)
-	}
+	pubconf := filepath.Join(dir, "pubconf", "krb5.include.d")
+	mkdirKrb5(t, confd)
+	mkdirKrb5(t, pubconf)
 
 	main := filepath.Join(dir, "krb5.conf")
 	writeKrb5File(t, main, `#File modified by ipa-client-install
@@ -68,6 +78,8 @@ includedir `+confd+`/
   .mokey.test = MOKEY.TEST
 `)
 	writeKrb5File(t, filepath.Join(confd, "sssd_enable_idp"), "[plugins]\n  clpreauth = {\n    module = idp:/usr/lib64/sssd/modules/sssd_krb5_idp_plugin.so\n  }\n")
+	writeKrb5File(t, filepath.Join(confd, "enable_sssd_conf_dir"), "includedir "+pubconf+"/\n")
+	writeKrb5File(t, filepath.Join(pubconf, "domain_realm_mokey_test"), "[domain_realm]\n  .sssd.mokey.test = MOKEY.TEST\n")
 	// Skipped by MIT krb5, so it must not override the realm
 	writeKrb5File(t, filepath.Join(confd, "freeipa-realm.rpmsave"), "[realms]\n  MOKEY.TEST = {\n    kdc = stale.mokey.test:88\n  }\n")
 
@@ -87,6 +99,9 @@ includedir `+confd+`/
 	}
 	if got := cfg.ResolveRealm("host.mokey.test"); got != "MOKEY.TEST" {
 		t.Errorf("ResolveRealm = %q", got)
+	}
+	if got := cfg.ResolveRealm("host.sssd.mokey.test"); got != "MOKEY.TEST" {
+		t.Errorf("sssd include: ResolveRealm = %q", got)
 	}
 }
 
@@ -132,7 +147,7 @@ func TestLoadKrb5ConfigNoIncludes(t *testing.T) {
 }
 
 // MIT krb5 takes the first single value it meets (includes expanded in
-// place) and merges a realm defined twice, keeping every kdc.
+// place) and merges a realm defined twice, keeping every kdc in order.
 func TestLoadKrb5ConfigFirstValueWins(t *testing.T) {
 	for _, tc := range []struct {
 		name, main string
@@ -140,9 +155,8 @@ func TestLoadKrb5ConfigFirstValueWins(t *testing.T) {
 		kdcs       []string
 	}{
 		{
-			name: "include before libdefaults",
-			main: "include @INC@\n[libdefaults]\n  default_realm = MAIN.TEST\n  dns_lookup_kdc = true\n[realms]\n  INC.TEST = {\n    kdc = main.inc.test:88\n  }\n",
-			// included file comes first
+			name:  "include before libdefaults",
+			main:  "include @INC@\n[libdefaults]\n  default_realm = MAIN.TEST\n  dns_lookup_kdc = true\n[realms]\n  INC.TEST = {\n    kdc = main.inc.test:88\n  }\n",
 			realm: "INC.TEST",
 			kdcs:  []string{"inc.inc.test:88", "main.inc.test:88"},
 		},
@@ -150,7 +164,7 @@ func TestLoadKrb5ConfigFirstValueWins(t *testing.T) {
 			name:  "include after libdefaults",
 			main:  "[libdefaults]\n  default_realm = MAIN.TEST\n  dns_lookup_kdc = true\n[realms]\n  INC.TEST = {\n    kdc = main.inc.test:88\n  }\ninclude @INC@\n",
 			realm: "MAIN.TEST",
-			kdcs:  []string{"inc.inc.test:88", "main.inc.test:88"},
+			kdcs:  []string{"main.inc.test:88", "inc.inc.test:88"},
 		},
 		{
 			name: "include inside libdefaults",
@@ -198,19 +212,88 @@ func TestLoadKrb5ConfigFirstValueWins(t *testing.T) {
 			t.Errorf("ResolveRealm = %q, want MAIN.TEST", got)
 		}
 	})
+
+	t.Run("default_domain", func(t *testing.T) {
+		dir := t.TempDir()
+		inc := filepath.Join(dir, "inc")
+		writeKrb5File(t, inc, "[realms]\n  X.TEST = {\n    default_domain = inc.test\n  }\n")
+		main := filepath.Join(dir, "krb5.conf")
+		writeKrb5File(t, main, "[realms]\n  X.TEST = {\n    default_domain = main.test\n  }\ninclude "+inc+"\n")
+
+		cfg, err := loadKrb5Config(main)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(cfg.Realms) != 1 || cfg.Realms[0].DefaultDomain != "main.test" {
+			t.Errorf("realms = %+v, want one X.TEST with default_domain main.test", cfg.Realms)
+		}
+	})
+}
+
+// MIT ignores lines before a file's first section header, in an included
+// file and in the parent after an include that precedes any header.
+func TestLoadKrb5ConfigLinesBeforeSection(t *testing.T) {
+	dir := t.TempDir()
+	inc := filepath.Join(dir, "inc")
+	writeKrb5File(t, inc, "  dns_lookup_kdc = true\n[realms]\n  X.TEST = {\n    kdc = x.test:88\n  }\n")
+	main := filepath.Join(dir, "krb5.conf")
+	writeKrb5File(t, main, "[libdefaults]\n  default_realm = X.TEST\ninclude "+inc+"\n")
+
+	cfg, err := loadKrb5Config(main)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.LibDefaults.DNSLookupKDC {
+		t.Error("included line before [realms] leaked into krb5.conf's [libdefaults]")
+	}
+
+	writeKrb5File(t, inc, "[libdefaults]\n  default_realm = X.TEST\n")
+	writeKrb5File(t, main, "include "+inc+"\n  dns_lookup_kdc = true\n")
+	if cfg, err = loadKrb5Config(main); err != nil {
+		t.Fatal(err)
+	}
+	if cfg.LibDefaults.DNSLookupKDC {
+		t.Error("krb5.conf line before any section leaked into the included [libdefaults]")
+	}
+}
+
+func TestLoadKrb5ConfigIncludedirNames(t *testing.T) {
+	dir := t.TempDir()
+	confd := filepath.Join(dir, "conf.d")
+	mkdirKrb5(t, confd)
+	for _, name := range []string{"b.conf", "a", "a.conf", "x~", ".hidden.conf", "freeipa-realm.rpmsave"} {
+		writeKrb5File(t, filepath.Join(confd, name), "[libdefaults]\n  default_realm = "+name+"\n[realms]\n  X.TEST = {\n    kdc = "+name+":88\n  }\n")
+	}
+	mkdirKrb5(t, filepath.Join(confd, "subdir"))
+	main := filepath.Join(dir, "krb5.conf")
+	writeKrb5File(t, main, "includedir "+confd+"\n")
+
+	cfg, err := loadKrb5Config(main)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.LibDefaults.DefaultRealm != "a" {
+		t.Errorf("default realm = %q, want a (first file in name order)", cfg.LibDefaults.DefaultRealm)
+	}
+	want := []string{"a:88", "a.conf:88", "b.conf:88"}
+	if got := realmKDCs(t, cfg, "X.TEST"); !reflect.DeepEqual(got, want) {
+		t.Errorf("KDCs = %v, want %v", got, want)
+	}
 }
 
 func TestLoadKrb5ConfigNestedInclude(t *testing.T) {
 	dir := t.TempDir()
 	confd := filepath.Join(dir, "conf.d")
-	if err := os.Mkdir(confd, 0o750); err != nil {
-		t.Fatal(err)
-	}
+	mkdirKrb5(t, confd)
 	writeKrb5File(t, filepath.Join(confd, "realm.conf"), "[realms]\n  NEST.TEST = {\n    kdc = kdc.nest.test:88\n  }\n")
 	mid := filepath.Join(dir, "mid")
 	writeKrb5File(t, mid, "[libdefaults]\n  default_realm = NEST.TEST\nincludedir "+confd+"\n")
+	link := filepath.Join(dir, "mid-link")
+	if err := os.Symlink(mid, link); err != nil {
+		t.Fatal(err)
+	}
 	main := filepath.Join(dir, "krb5.conf")
-	writeKrb5File(t, main, "include "+mid+"\n")
+	writeKrb5File(t, main, "include "+link+"\n")
 
 	cfg, err := loadKrb5Config(main)
 	if err != nil {
@@ -224,20 +307,31 @@ func TestLoadKrb5ConfigNestedInclude(t *testing.T) {
 	}
 }
 
-func TestLoadKrb5ConfigMissingIncludedir(t *testing.T) {
+// Unlike MIT, a missing include is skipped so that a container with only
+// /etc/krb5.conf mounted keeps working.
+func TestLoadKrb5ConfigMissingIncludeSkipped(t *testing.T) {
 	dir := t.TempDir()
-	missing := filepath.Join(dir, "krb5.conf.d")
-	main := filepath.Join(dir, "krb5.conf")
-	writeKrb5File(t, main, "includedir "+missing+"/\n[libdefaults]\n  default_realm = X.TEST\n")
-
-	_, err := loadKrb5Config(main)
-	if err == nil || !strings.Contains(err.Error(), missing) {
-		t.Errorf("err = %v, want an error naming %s", err, missing)
+	confd := filepath.Join(dir, "conf.d")
+	mkdirKrb5(t, confd)
+	if err := os.Symlink(filepath.Join(dir, "gone"), filepath.Join(confd, "dangling")); err != nil {
+		t.Fatal(err)
 	}
+	writeKrb5File(t, filepath.Join(confd, "realm"), "[realms]\n  X.TEST = {\n    kdc = x.test:88\n  }\n")
+	main := filepath.Join(dir, "krb5.conf")
+	writeKrb5File(t, main, "includedir "+filepath.Join(dir, "krb5.conf.d")+"/\n"+
+		"include "+filepath.Join(dir, "missing.conf")+"\n"+
+		"includedir "+confd+"\n"+
+		"[libdefaults]\n  default_realm = X.TEST\n")
 
-	writeKrb5File(t, main, "include "+filepath.Join(dir, "gone")+"\n")
-	if _, err := loadKrb5Config(main); err == nil || !strings.Contains(err.Error(), "gone") {
-		t.Errorf("missing include: err = %v", err)
+	cfg, err := loadKrb5Config(main)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.LibDefaults.DefaultRealm != "X.TEST" {
+		t.Errorf("default realm = %q", cfg.LibDefaults.DefaultRealm)
+	}
+	if got := realmKDCs(t, cfg, "X.TEST"); !reflect.DeepEqual(got, []string{"x.test:88"}) {
+		t.Errorf("KDCs = %v", got)
 	}
 }
 
