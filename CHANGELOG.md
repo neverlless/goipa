@@ -8,7 +8,8 @@ existing exported identifiers keep their signatures).
 ## [Unreleased]
 
 - Keytab, password and ccache logins work on ipa-client 4.13 hosts:
-  `include` and `includedir` in krb5.conf are resolved as MIT krb5 does
+  `include` and `includedir` in krb5.conf are resolved as MIT krb5 does,
+  except that a missing include file or includedir is skipped
 
 ## [v0.2.0] - 2026-10-23
 

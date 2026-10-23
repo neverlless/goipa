@@ -76,9 +76,12 @@ _kerberos._tcp.<REALM> ... no such host`. ipa-client-install 4.13 writes
       reads only file names matching `[A-Za-z0-9_-]+` or `*.conf` (skips
       `.rpmsave`, editor backups), in sorted order; nesting is bounded. No
       API change; a krb5.conf without includes is parsed exactly as before
-- [x] Value precedence matches MIT krb5 (first value wins) for a realm or
-      libdefault defined both in krb5.conf and an included file; verify
-      against gokrb5's merge order and pin it with a test
+- [x] Value precedence matches MIT krb5 for settings defined both in
+      krb5.conf and an included file (includes expanded in place): the
+      first value wins for single values (`[libdefaults]` keys,
+      `[domain_realm]`); a realm defined in several files is merged and
+      all its `kdc` entries are used, krb5.conf's first. Verified against
+      gokrb5's merge order and pinned with a test
 - [x] Tests on the ipa-client 4.13.4 layout (`freeipa-realm`,
       `sssd_enable_idp`, a stale `.rpmsave`), a file without includes,
       nested `include`, a missing `includedir`, and an include loop
