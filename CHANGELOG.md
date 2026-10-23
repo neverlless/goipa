@@ -35,6 +35,8 @@ existing exported identifiers keep their signatures).
   FreeIPA, not error 911; a `MagBearerToken` it did not issue closes the
   connection (goipa returns EOF), as the real server's httpd crashes on it
 - `ipatest` models user_add with an empty homedirectory (4205, Q19)
+- `ipatest.Server.ExpireSession` ends a session; calls with it get 401
+  (`ErrUnauthorized`), as for an expired session on FreeIPA
 - `scripts/ipa-up.sh` sets `forwardable = true` in krb5.conf; without it
   every Kerberos call fails 2100 "Credential cache is empty"
 - Contract tests expect invalid-password for locked users before FreeIPA
