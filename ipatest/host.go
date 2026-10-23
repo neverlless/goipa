@@ -5,6 +5,7 @@
 package ipatest
 
 import (
+	"slices"
 	"sort"
 	"strings"
 
@@ -51,7 +52,7 @@ func (s *Server) renderHost(fqdn string, h Host, members, all bool) map[string]a
 	}
 	set := func(k string, v []string) {
 		if len(v) > 0 {
-			out[k] = v
+			out[k] = slices.Clone(v) // writeEnvelope marshals after s.mu is released
 		}
 	}
 	for k, v := range map[string]string{"description": h.Description, "l": h.Locality, "nshostlocation": h.Location,

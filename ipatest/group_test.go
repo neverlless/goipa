@@ -9,6 +9,7 @@ import (
 	"errors"
 	"slices"
 	"strings"
+	"sync"
 	"testing"
 
 	ipa "github.com/neverlless/goipa"
@@ -118,9 +119,10 @@ func TestGroupAddMember_ManagerGroupAndAdminsAllowed(t *testing.T) {
 func TestGroupRemoveMember(t *testing.T) {
 	s := memberServer(t)
 	s.AddUser("u2", ipatest.User{Groups: []string{"g"}})
-	s.AddGroup("g", ipatest.Group{Members: []string{"u1"}, MemberGroups: []string{"g"}})
+	s.AddGroup("h", ipatest.Group{})
+	s.AddGroup("g", ipatest.Group{Members: []string{"u1"}, MemberGroups: []string{"h"}})
 	c := s.ClientAs("admin")
-	res := rpc(t, c, "group_remove_member", []string{"g"}, ipa.Options{"user": []string{"u1", "u2", "bob", "ghost"}, "group": []string{"g"}})
+	res := rpc(t, c, "group_remove_member", []string{"g"}, ipa.Options{"user": []string{"u1", "u2", "bob", "ghost"}, "group": []string{"h"}})
 	if res.Result.Completed != 3 {
 		t.Errorf("Completed = %d", res.Result.Completed)
 	}
@@ -355,4 +357,55 @@ func TestGroupAccessorsReturnCopies(t *testing.T) {
 	if _, ok := s.Group("nope"); ok {
 		t.Error("Group(nope) ok")
 	}
+}
+
+func TestGroupAddMember_Self(t *testing.T) {
+	s := memberServer(t)
+	res := rpc(t, s.ClientAs("admin"), "group_add_member", []string{"g"}, ipa.Options{"group": []string{"g"}})
+	if res.Result.Completed != 0 || gjson.GetBytes(res.Result.Failed, "member.group").Raw != `[["g","A group may not be added as a member of itself"]]` {
+		t.Errorf("Completed = %d, failed = %s", res.Result.Completed, res.Result.Failed)
+	}
+}
+
+func TestMemberManagerDenialNamesMember(t *testing.T) {
+	s := memberServer(t)
+	res := rpc(t, s.ClientAs("bob"), "group_add_member_manager", []string{"g"}, ipa.Options{"user": []string{"u1"}})
+	if m := gjson.GetBytes(res.Result.Failed, "membermanager.user.0.1").String(); !strings.Contains(m, "to the 'member' attribute") {
+		t.Errorf("message = %q", m)
+	}
+}
+
+func TestUserDel_LeavesGroups(t *testing.T) {
+	for _, preserve := range []bool{false, true} {
+		s := memberServer(t)
+		s.AddGroup("g", ipatest.Group{Members: []string{"u1", "bob"}, ManagerUsers: []string{"u1"}})
+		rpc(t, s.ClientAs("admin"), "user_del", []string{"u1"}, ipa.Options{"preserve": preserve})
+		if g, _ := s.Group("g"); !slices.Equal(g.Members, []string{"bob"}) || len(g.ManagerUsers) != 0 {
+			t.Errorf("preserve=%v: group = %+v", preserve, g)
+		}
+	}
+}
+
+func TestRender_ConcurrentMemberChanges(t *testing.T) {
+	s := memberServer(t)
+	s.AddGroup("a", ipatest.Group{})
+	s.AddGroup("b", ipatest.Group{})
+	s.AddGroup("g", ipatest.Group{MemberGroups: []string{"a", "b"}})
+	c := s.ClientAs("admin")
+	var wg sync.WaitGroup
+	wg.Add(2)
+	go func() {
+		defer wg.Done()
+		for i := 0; i < 400; i++ {
+			_, _ = c.RPC("group_show", []string{"g"}, ipa.Options{"all": true})
+		}
+	}()
+	go func() {
+		defer wg.Done()
+		for i := 0; i < 400; i++ {
+			_, _ = c.RPC("group_remove_member", []string{"g"}, ipa.Options{"group": []string{"a"}})
+			_, _ = c.RPC("group_add_member", []string{"g"}, ipa.Options{"group": []string{"a"}})
+		}
+	}()
+	wg.Wait()
 }
