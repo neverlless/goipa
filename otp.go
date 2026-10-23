@@ -131,53 +131,54 @@ func (c *Client) FetchOTPTokens(owner string) ([]*OTPToken, error) {
 
 // Add OTP token. Returns new OTPToken
 func (c *Client) AddOTPToken(token *OTPToken) (*OTPToken, error) {
-	if token == nil {
-		token = DefaultTOTPToken
+	t := *DefaultTOTPToken
+	if token != nil {
+		t = *token
 	}
-	if token.Type == "" {
-		token.Type = DefaultTOTPToken.Type
+	if t.Type == "" {
+		t.Type = DefaultTOTPToken.Type
 	}
-	if token.Algorithm == "" {
-		token.Algorithm = DefaultTOTPToken.Algorithm
+	if t.Algorithm == "" {
+		t.Algorithm = DefaultTOTPToken.Algorithm
 	}
-	if token.Digits == 0 {
-		token.Digits = DefaultTOTPToken.Digits
+	if t.Digits == 0 {
+		t.Digits = DefaultTOTPToken.Digits
 	}
-	if token.TimeStep == 0 {
-		token.TimeStep = DefaultTOTPToken.TimeStep
+	if t.TimeStep == 0 {
+		t.TimeStep = DefaultTOTPToken.TimeStep
 	}
 
 	options := Options{
-		"type":                 token.Type,
-		"ipatokenotpalgorithm": token.Algorithm,
-		"ipatokenotpdigits":    token.Digits,
-		"ipatokentotptimestep": token.TimeStep,
+		"type":                 t.Type,
+		"ipatokenotpalgorithm": t.Algorithm,
+		"ipatokenotpdigits":    t.Digits,
+		"ipatokentotptimestep": t.TimeStep,
 		"no_qrcode":            true,
 		"qrcode":               false,
 		"no_members":           false,
 		"all":                  true,
 	}
 
-	if token.Description != "" {
-		options["description"] = token.Description
+	if t.Description != "" {
+		options["description"] = t.Description
 	}
-	if token.Vendor != "" {
-		options["ipatokenvendor"] = token.Vendor
+	if t.Vendor != "" {
+		options["ipatokenvendor"] = t.Vendor
 	}
-	if token.Model != "" {
-		options["ipatokenmodel"] = token.Model
+	if t.Model != "" {
+		options["ipatokenmodel"] = t.Model
 	}
-	if token.Serial != "" {
-		options["ipatokenserial"] = token.Serial
+	if t.Serial != "" {
+		options["ipatokenserial"] = t.Serial
 	}
-	if !token.NotBefore.IsZero() {
+	if !t.NotBefore.IsZero() {
 		options["ipatokennotbefore"] = map[string]interface{}{
-			"__datetime__": token.NotBefore.Format(IpaDatetimeFormat),
+			"__datetime__": t.NotBefore.UTC().Format(IpaDatetimeFormat),
 		}
 	}
-	if !token.NotAfter.IsZero() {
+	if !t.NotAfter.IsZero() {
 		options["ipatokennotafter"] = map[string]interface{}{
-			"__datetime__": token.NotAfter.Format(IpaDatetimeFormat),
+			"__datetime__": t.NotAfter.UTC().Format(IpaDatetimeFormat),
 		}
 	}
 
