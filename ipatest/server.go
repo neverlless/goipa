@@ -91,6 +91,7 @@ type Server struct {
 
 	mu        sync.Mutex
 	sessions  map[string]string // session id -> uid
+	expired   map[string]bool   // session ids from ExpireSession
 	negotiate string
 	calls     []Call
 	handlers  map[string]HandlerFunc
@@ -112,6 +113,7 @@ func NewServer(tb testing.TB) *Server {
 func New() *Server {
 	s := &Server{
 		sessions: map[string]string{},
+		expired:  map[string]bool{},
 		handlers: map[string]HandlerFunc{},
 		users:    map[string]*userRec{},
 		nextID:   firstID - 1,
@@ -168,6 +170,15 @@ func (s *Server) Session(uid string) string {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	return s.newSession(uid)
+}
+
+// ExpireSession ends session sid. Calls with it get HTTP 401, FreeIPA's answer
+// for an expired session, which mod_session treats as no session.
+func (s *Server) ExpireSession(sid string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	delete(s.sessions, sid)
+	s.expired[sid] = true
 }
 
 // newSession needs s.mu held.
@@ -231,13 +242,14 @@ func (s *Server) refererOK(r *http.Request) bool {
 func (s *Server) serveSessionJSON(w http.ResponseWriter, r *http.Request) {
 	ck, err := r.Cookie("ipa_session")
 	var uid string
-	ok := false
+	ok, expired := false, false
 	if err == nil {
 		s.mu.Lock()
 		uid, ok = s.sessions[ck.Value]
+		expired = s.expired[ck.Value]
 		s.mu.Unlock()
 	}
-	if !ok && err == nil && strings.HasPrefix(ck.Value, "MagBearerToken=") && ck.Value != "MagBearerToken=" {
+	if !ok && !expired && err == nil && strings.HasPrefix(ck.Value, "MagBearerToken=") && ck.Value != "MagBearerToken=" {
 		dropConnection(w) // Q13
 		return
 	}
@@ -251,10 +263,8 @@ func (s *Server) serveSessionJSON(w http.ResponseWriter, r *http.Request) {
 
 // dropConnection closes the connection without a response, as the httpd
 // child of a real server does when it crashes on a token it cannot decrypt.
-func dropConnection(w http.ResponseWriter) {
-	if conn, _, err := http.NewResponseController(w).Hijack(); err == nil {
-		_ = conn.Close()
-	}
+func dropConnection(http.ResponseWriter) {
+	panic(http.ErrAbortHandler)
 }
 
 func (s *Server) serveNegotiateJSON(w http.ResponseWriter, r *http.Request) {

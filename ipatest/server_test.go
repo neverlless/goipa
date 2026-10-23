@@ -192,6 +192,15 @@ func TestUnknownSession(t *testing.T) {
 	}
 }
 
+func TestExpireSession(t *testing.T) {
+	s := ipatest.NewServer(t)
+	c := s.ClientAs("admin")
+	s.ExpireSession(c.SessionID())
+	if _, err := c.Ping(); !errors.Is(err, ipa.ErrUnauthorized) {
+		t.Fatalf("err = %v, want ErrUnauthorized", err)
+	}
+}
+
 func post(t *testing.T, s *ipatest.Server, body, referer string) *http.Response {
 	t.Helper()
 	req, err := http.NewRequest(http.MethodPost, s.URL()+"/ipa/session/json", strings.NewReader(body))
