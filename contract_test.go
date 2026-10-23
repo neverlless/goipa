@@ -9,6 +9,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -407,6 +408,9 @@ func TestContractInvalidSession(t *testing.T) {
 		c := b.client()
 		c.SetSessionID("MagBearerToken=bogus")
 		_, err := c.Ping()
+		wantIs(t, err, io.EOF)
+		c.SetSessionID("0123456789abcdef0123456789abcdef")
+		_, err = c.Ping()
 		wantIs(t, err, ipa.ErrUnauthorized)
 	})
 }
@@ -443,14 +447,8 @@ func TestContractReferer(t *testing.T) {
 			t.Fatal(err)
 		}
 		defer jr.Body.Close()
-		var env struct {
-			Error *struct{ Code int } `json:"error"`
-		}
-		if err := json.NewDecoder(jr.Body).Decode(&env); err != nil {
-			t.Fatal(err)
-		}
-		if env.Error == nil || env.Error.Code != 911 {
-			t.Fatalf("ping without Referer: error %+v, want code 911", env.Error)
+		if jr.StatusCode != 400 || !strings.HasPrefix(jr.Header.Get("Content-Type"), "text/html") {
+			t.Fatalf("ping without Referer: HTTP %d %q, want 400 text/html", jr.StatusCode, jr.Header.Get("Content-Type"))
 		}
 	})
 }

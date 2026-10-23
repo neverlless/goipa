@@ -9,6 +9,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
 	"maps"
 	"net/http"
 	"net/http/httptest"
@@ -121,7 +122,7 @@ func New() *Server {
 	for path, h := range forms {
 		mux.HandleFunc(path, func(w http.ResponseWriter, r *http.Request) {
 			if !s.refererOK(r) {
-				http.Error(w, "Missing or invalid HTTP Referer", http.StatusBadRequest)
+				denied(w)
 				return
 			}
 			s.mu.Lock()
@@ -215,6 +216,14 @@ func (s *Server) Handle(method string, fn HandlerFunc) {
 	s.handlers[method] = fn
 }
 
+// denied is FreeIPA's answer to a missing or foreign Referer (Q12).
+func denied(w http.ResponseWriter) {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Header().Set("Connection", "close")
+	w.WriteHeader(http.StatusBadRequest)
+	_, _ = io.WriteString(w, "<html>\n<head>\n<title>400 Bad Request</title>\n</head>\n<body>\n<h1>Bad Request</h1>\n<p>\n<strong>denied</strong>\n</p>\n</body>\n</html>")
+}
+
 func (s *Server) refererOK(r *http.Request) bool {
 	return strings.HasPrefix(r.Referer(), "https://"+r.Host+"/ipa")
 }
@@ -228,11 +237,24 @@ func (s *Server) serveSessionJSON(w http.ResponseWriter, r *http.Request) {
 		uid, ok = s.sessions[ck.Value]
 		s.mu.Unlock()
 	}
+	if !ok && err == nil && strings.HasPrefix(ck.Value, "MagBearerToken=") && ck.Value != "MagBearerToken=" {
+		dropConnection(w) // Q13
+		return
+	}
 	if !ok {
+		w.Header().Set("WWW-Authenticate", "Negotiate")
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 	s.serveRPC(w, r, uid)
+}
+
+// dropConnection closes the connection without a response, as the httpd
+// child of a real server does when it crashes on a token it cannot decrypt.
+func dropConnection(w http.ResponseWriter) {
+	if conn, _, err := http.NewResponseController(w).Hijack(); err == nil {
+		_ = conn.Close()
+	}
 }
 
 func (s *Server) serveNegotiateJSON(w http.ResponseWriter, r *http.Request) {
@@ -254,11 +276,7 @@ func (s *Server) serveNegotiateJSON(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) serveRPC(w http.ResponseWriter, r *http.Request, uid string) {
 	if !s.refererOK(r) {
-		referer := r.Referer()
-		if referer == "" {
-			referer = "missing"
-		}
-		writeEnvelope(w, uid, nil, &ipa.IpaError{Code: ipa.CodeReferer, Message: "Missing or invalid HTTP Referer, " + referer})
+		denied(w)
 		return
 	}
 
