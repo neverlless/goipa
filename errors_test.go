@@ -22,7 +22,7 @@ func TestIpaErrorFields(t *testing.T) {
 	if ierr.Code != 4001 || ierr.Name != "NotFound" || ierr.Message != "bob: user not found" {
 		t.Errorf("got %+v", ierr)
 	}
-	if got := string(ierr.Data); got != `{"reason":"bob: user not found"}` {
+	if got := ierr.Data; got != `{"reason":"bob: user not found"}` {
 		t.Errorf("Data = %s", got)
 	}
 }
