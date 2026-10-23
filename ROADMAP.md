@@ -61,6 +61,33 @@ The foundation every typed call builds on.
 Accept: every v0.0.7 call site compiles unchanged; `RPC` works against a
 server whose CA is only in the client's pool.
 
+## v0.2.1 — Kerberos login on FreeIPA 4.13 clients
+
+Keytab, password and ccache logins fail on hosts enrolled with
+ipa-client 4.13 (RHEL / CentOS Stream 9 and 10) unless the realm publishes
+DNS SRV records: `failed to communicate with KDC ... lookup
+_kerberos._tcp.<REALM> ... no such host`. ipa-client-install 4.13 writes
+`[realms]` to `/etc/krb5.conf.d/freeipa-realm` and leaves only
+`includedir /etc/krb5.conf.d/` and `dns_lookup_kdc = true` in
+`/etc/krb5.conf`, and gokrb5 ignores `include`/`includedir`.
+
+- [ ] `Login`, `LoginWithKeytab` and `LoginFromCCache` resolve `include` and
+      `includedir` in `DefaultKerbConf` the way MIT krb5 does: `includedir`
+      reads only file names matching `[A-Za-z0-9_-]+` or `*.conf` (skips
+      `.rpmsave`, editor backups), in sorted order; nesting is bounded. No
+      API change; a krb5.conf without includes is parsed exactly as before
+- [ ] Value precedence matches MIT krb5 (first value wins) for a realm or
+      libdefault defined both in krb5.conf and an included file; verify
+      against gokrb5's merge order and pin it with a test
+- [ ] Tests on the ipa-client 4.13.4 layout (`freeipa-realm`,
+      `sssd_enable_idp`, a stale `.rpmsave`), a file without includes,
+      nested `include`, a missing `includedir`, and an include loop
+
+Accept: `LoginWithKeytab` finds the KDC from `/etc/krb5.conf.d/freeipa-realm`
+with `dns_lookup_kdc = true` and no SRV records. Applications that worked
+around it (mokey's container entrypoint appends the realm file to
+krb5.conf) can drop the workaround.
+
 ## v0.3.0 — Test infrastructure
 
 - [ ] `ipatest`: exported fake FreeIPA server (`NewServer(t)`, seed helpers,
@@ -111,7 +138,9 @@ against `ipatest` and an integration test.
 
 - [ ] `New(opts ...Option) (*Client, error)` with `WithHost`, `WithRealm`,
       `WithCACert`, `WithHTTPClient`, `WithKrb5Config`; no file I/O at import
-      time. Old constructors stay
+      time. Old constructors stay. `WithKrb5Config` takes a path (includes
+      resolved as in v0.2.1) or a `*config.Config`, since `DefaultKerbConf`
+      is a const and stays one
 - [ ] Kerberos login from in-memory config, keytab or credential cache, for
       containers and secret stores (idea from sitnikovv's fork); `WhoAmI`
 - [ ] Expired session: clear it and retry once through Kerberos when the
