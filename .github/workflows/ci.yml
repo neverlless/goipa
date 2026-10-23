@@ -23,6 +23,9 @@ jobs:
   test:
     name: Build and test
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -51,7 +54,19 @@ jobs:
         run: go build ./...
 
       - name: Test
-        run: go test -race ./...
+        run: go test -race -coverpkg=./... -coverprofile=coverage.out ./...
+
+      - name: Coverage gate (80 %)
+        run: |
+          go tool cover -func=coverage.out | awk '/^total:/ { sub("%", "", $3); print "coverage " $3 "%"; if ($3 + 0 < 80) exit 1 }'
+
+      - name: Upload coverage
+        if: github.event_name == 'push'
+        uses: codecov/codecov-action@v7
+        with:
+          files: coverage.out
+          use_oidc: true
+          fail_ci_if_error: false
 
   security:
     name: Security scan

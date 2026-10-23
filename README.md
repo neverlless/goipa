@@ -3,6 +3,7 @@
 **Go client library for the FreeIPA / Red Hat IdM JSON-RPC API.**
 
 [![CI](https://github.com/neverlless/goipa/actions/workflows/ci.yml/badge.svg)](https://github.com/neverlless/goipa/actions/workflows/ci.yml)
+[![Coverage](https://codecov.io/gh/neverlless/goipa/branch/main/graph/badge.svg)](https://codecov.io/gh/neverlless/goipa)
 [![Go Reference](https://pkg.go.dev/badge/github.com/neverlless/goipa.svg)](https://pkg.go.dev/github.com/neverlless/goipa)
 [![Release](https://img.shields.io/github/v/release/neverlless/goipa)](https://github.com/neverlless/goipa/releases)
 [![Go version](https://img.shields.io/github/go-mod/go-version/neverlless/goipa)](go.mod)
