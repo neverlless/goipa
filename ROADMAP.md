@@ -109,19 +109,19 @@ three FreeIPA versions.
 
 ## v0.4.0 — Users and groups
 
-- [ ] Groups: `GroupShow`, `GroupFind`, `GroupAdd`, `GroupMod`, `GroupDelete`,
+- [x] Groups: `GroupShow`, `GroupFind`, `GroupAdd`, `GroupMod`, `GroupDelete`,
       `GroupAddMember`/`GroupRemoveMember` (users and groups),
       `GroupAddMemberManager`/`GroupRemoveMemberManager`; per-member failures
       surface as errors. Based on ubccr/goipa#9 by @earthquakesan, #14 by
       @ivanovilia96 and #17 by @m-vinc
-- [ ] User fields: all `mail` values as `Emails` (`Email` stays the first;
+- [x] User fields: all `mail` values as `Emails` (`Email` stays the first;
       ubccr/goipa#10), `IndirectGroups` (`memberofindirect_group`, as in
       fajo-de's fork), address (`street`, `l`, `st`, `postalcode`),
       `PreferredLanguage`, `Title`, `OrgUnit`, passkey mappings
-- [ ] `UserMod` no longer drops additional mail addresses
-- [ ] `SetPassword` omits an empty OTP; `randompassword` parsed in every form
+- [x] `UserMod` no longer drops additional mail addresses
+- [x] `SetPassword` omits an empty OTP; `randompassword` parsed in every form
       servers return (both found by tubby1981)
-- [ ] `HostShow`, `HostFind` (ubccr/goipa#11)
+- [x] `HostShow`, `HostFind` (ubccr/goipa#11)
 
 ## v0.5.0 — Account lifecycle and access
 

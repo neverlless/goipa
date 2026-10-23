@@ -7,6 +7,29 @@ existing exported identifiers keep their signatures).
 
 ## [Unreleased]
 
+- Groups: `GroupShow`, `GroupFind`, `GroupAdd`, `GroupMod`, `GroupDelete`,
+  `GroupAddMember`, `GroupRemoveMember`, `GroupAddMemberManager` and
+  `GroupRemoveMemberManager`, each with a `Context` twin. Per-member
+  failures, including insufficient access, are returned as `*MemberError`
+  (FreeIPA reports them with no error); the updated group is returned with
+  it. Based on ubccr/goipa#9 by @earthquakesan, #14 by @ivanovilia96 and
+  #17 by @m-vinc
+- `User.Emails` (all `mail` values, ubccr/goipa#10), `IndirectGroups`
+  (from `user_show`; idea from fajo-de), `Street`, `City`, `State`,
+  `PostalCode`, `PreferredLanguage`, `Title`, `OrgUnit` (title/ou as in
+  tubby1981's fork) and `Passkeys`. These are read-only: `UserMod` does
+  not write them
+- `HostShow` and `HostFind` (ubccr/goipa#11)
+- `ipatest` models groups, member managers, nested groups, hosts and the
+  new user attributes in FreeIPA's response shapes; contract tests pin
+  them against the real server in the nightly run
+- `UserMod` dropped every `mail` value but the first. `Email` is still the
+  first address and replaces it; the rest of `Emails` is kept. A single
+  address is sent exactly as before
+- `SetPassword` no longer posts an empty `otp` field; `randompassword` is
+  read whether the server returns a string or a list (both found by
+  tubby1981)
+
 ## [v0.3.0] - 2026-10-23
 
 Test infrastructure: an in-memory FreeIPA server for unit tests, and the
