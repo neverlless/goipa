@@ -130,7 +130,7 @@ Consumers can test their own code without a FreeIPA server using the fake in
 Integration tests run against a real FreeIPA in a container (Linux, Docker, sudo):
 
 ```sh
-scripts/ipa-up.sh && go test -tags integration ./... ; scripts/ipa-up.sh down
+scripts/ipa-up.sh && (set -a; . ./.env; set +a; go test -race -tags integration -count=1 ./...) ; scripts/ipa-up.sh down
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) before sending a pull request.
