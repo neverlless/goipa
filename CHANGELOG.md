@@ -26,7 +26,7 @@ existing exported identifiers keep their signatures).
   session) matches `errors.Is(err, ipa.ErrUnauthorized)`. The message text is
   unchanged.
 - `…Context` twins of every method that talks to the server (`PingContext`,
-  `RemoteLoginContext`, …). Kerberos `Login*` have none: gokrb5 cannot be
+  `RemoteLoginContext`, `UserShowContext`, …). Kerberos `Login*` have none: gokrb5 cannot be
   cancelled.
 - `SetSessionID` restores a saved session on any client.
 - Logging in again on the same `Client` destroys the previous Kerberos client
