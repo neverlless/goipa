@@ -288,6 +288,14 @@ func TestUserAddModDel(t *testing.T) {
 	}
 }
 
+func TestUserAddEmptyHomeDir(t *testing.T) {
+	c := ipatest.NewServer(t).ClientAs("admin")
+	_, err := c.RPC("user_add", []string{"x"}, ipa.Options{"givenname": "X", "sn": "Y", "homedirectory": ""})
+	if ipaCode(t, err) != 4205 {
+		t.Errorf("empty homedirectory: %v", err)
+	}
+}
+
 func TestUserDisableEnable(t *testing.T) {
 	s := ipatest.NewServer(t)
 	s.AddUser("jesse", ipatest.User{})

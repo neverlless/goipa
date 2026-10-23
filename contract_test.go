@@ -125,6 +125,26 @@ func TestContractUserNotFound(t *testing.T) {
 	})
 }
 
+// TestContractUserAddDefaults pins Q19: UserAdd leaves unset attributes to
+// the server's defaults instead of sending "".
+func TestContractUserAddDefaults(t *testing.T) {
+	forEachBackend(t, func(t *testing.T, b backend) {
+		uid := newUID(t, b)
+		rec, err := b.admin.UserAdd(&ipa.User{Username: uid, First: "Go", Last: "Test"}, false)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if rec.HomeDir != "/home/"+uid {
+			t.Errorf("homedirectory %q", rec.HomeDir)
+		}
+		_, err = b.admin.RPC("user_add", []string{newUID(t, b)}, ipa.Options{"givenname": "Go", "sn": "Test", "homedirectory": ""})
+		var ie *ipa.IpaError
+		if !errors.As(err, &ie) || ie.Code != 4205 {
+			t.Fatalf("empty homedirectory: got %v, want error 4205", err)
+		}
+	})
+}
+
 // TestContractDuplicateUser pins Q10.
 func TestContractDuplicateUser(t *testing.T) {
 	forEachBackend(t, func(t *testing.T, b backend) {
