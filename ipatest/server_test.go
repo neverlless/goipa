@@ -238,3 +238,12 @@ func TestRefererJSONRPC(t *testing.T) {
 		t.Errorf("%d calls recorded, want 0 for rejected requests", n)
 	}
 }
+
+func TestNewWithoutTB(t *testing.T) {
+	s := ipatest.New()
+	if _, err := s.ClientAs("admin").Ping(); err != nil {
+		t.Fatal(err)
+	}
+	s.Close()
+	s.Close()
+}

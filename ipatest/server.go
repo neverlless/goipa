@@ -97,6 +97,14 @@ type Server struct {
 // NewServer starts a server and closes it with tb.Cleanup.
 func NewServer(tb testing.TB) *Server {
 	tb.Helper()
+	s := New()
+	tb.Cleanup(s.Close)
+	return s
+}
+
+// New starts a server for use outside tests (examples, local development).
+// Call Close when done.
+func New() *Server {
 	s := &Server{
 		sessions: map[string]string{},
 		handlers: map[string]HandlerFunc{},
@@ -118,7 +126,6 @@ func NewServer(tb testing.TB) *Server {
 		})
 	}
 	s.srv = httptest.NewTLSServer(mux)
-	tb.Cleanup(s.Close)
 	return s
 }
 

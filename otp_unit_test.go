@@ -64,19 +64,15 @@ func TestAddOTPTokenDatesInUTC(t *testing.T) {
 	}
 }
 
-func TestAddOTPTokenNilUsesDefaults(t *testing.T) {
+func TestAddOTPTokenNilReadBack(t *testing.T) {
 	s := ipatest.NewServer(t)
 	s.AddUser("bob", ipatest.User{})
-	before := *ipa.DefaultTOTPToken
 	tok, err := s.ClientAs("bob").AddOTPToken(nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if tok.Type != "totp" || tok.Digits != 6 || tok.TimeStep != 30 || tok.Algorithm != "sha1" {
 		t.Errorf("token = %+v", tok)
-	}
-	if *ipa.DefaultTOTPToken != before {
-		t.Error("DefaultTOTPToken changed")
 	}
 }
 

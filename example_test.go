@@ -7,7 +7,6 @@ package ipa_test
 import (
 	"fmt"
 	"log"
-	"testing"
 
 	ipa "github.com/neverlless/goipa"
 	"github.com/neverlless/goipa/ipatest"
@@ -27,18 +26,8 @@ func Example_login() {
 	fmt.Println(u.Username, u.Email)
 }
 
-// stubTB lets an example run ipatest, which wants a testing.TB.
-type stubTB struct {
-	testing.TB
-	cleanups []func()
-}
-
-func (*stubTB) Helper()             {}
-func (b *stubTB) Cleanup(fn func()) { b.cleanups = append(b.cleanups, fn) }
-
 func ExampleClient_RPC() {
-	tb := &stubTB{}
-	s := ipatest.NewServer(tb)
+	s := ipatest.New()
 	defer s.Close()
 
 	res, err := s.ClientAs("admin").RPC("ping", nil, nil)

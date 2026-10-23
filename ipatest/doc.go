@@ -12,6 +12,9 @@
 //	s := ipatest.NewServer(t)
 //	c := s.ClientAs("admin")
 //
+// New starts a server without a testing.TB, for examples and local
+// development; call Close when done.
+//
 // Calls records every JSON-RPC call the server accepted. Handle overrides one
 // method, to inject an error or to serve a command ipatest does not model.
 // Separate servers share no state, so parallel tests each get their own.

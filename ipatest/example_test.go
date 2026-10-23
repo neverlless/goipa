@@ -6,30 +6,31 @@ package ipatest_test
 
 import (
 	"errors"
-	"testing"
+	"fmt"
 
 	ipa "github.com/neverlless/goipa"
 	"github.com/neverlless/goipa/ipatest"
 )
 
 func ExampleNewServer() {
-	var t *testing.T // the *testing.T of the test using the server
+	s := ipatest.New() // in a test: ipatest.NewServer(t)
+	defer s.Close()
 
-	s := ipatest.NewServer(t)
-	c := s.ClientAs("admin")
-	if _, err := c.Ping(); err != nil {
-		t.Fatal(err)
+	res, err := s.ClientAs("admin").Ping()
+	if err != nil {
+		panic(err)
 	}
+	fmt.Println(res.Principal)
+	// Output: admin@TEST.LOCAL
 }
 
 func ExampleServer_Handle() {
-	var t *testing.T // the *testing.T of the test using the server
-
-	s := ipatest.NewServer(t)
+	s := ipatest.New()
+	defer s.Close()
 	s.Handle("user_show", func(ipatest.Call) (any, *ipa.IpaError) {
 		return nil, &ipa.IpaError{Code: 4001, Message: "jesse: user not found"}
 	})
-	if _, err := s.ClientAs("admin").UserShow("jesse"); !errors.Is(err, ipa.ErrNotFound) {
-		t.Fatalf("err = %v, want ErrNotFound", err)
-	}
+	_, err := s.ClientAs("admin").UserShow("jesse")
+	fmt.Println(errors.Is(err, ipa.ErrNotFound))
+	// Output: true
 }
