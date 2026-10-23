@@ -79,3 +79,25 @@ func TestClientConcurrentUse(t *testing.T) {
 	}
 	wg.Wait()
 }
+
+func TestSetSessionID(t *testing.T) {
+	c, f := newFakeIPA(t, 200, envelope(`{"summary":"ok"}`))
+	c.SetSessionID("MagBearerToken=" + testSession)
+	if got := c.SessionID(); got != "MagBearerToken="+testSession {
+		t.Fatalf("SessionID = %q", got)
+	}
+	if _, err := c.Ping(); err != nil {
+		t.Fatal(err)
+	}
+	if got := f.Calls()[0]; got.Path != "/ipa/session/json" || got.Cookie != "ipa_session=MagBearerToken="+testSession {
+		t.Errorf("call 0 = %+v", got)
+	}
+
+	c.SetSessionID("")
+	if _, err := c.Ping(); err != nil {
+		t.Fatal(err)
+	}
+	if got := f.Calls()[1].Path; got != "/ipa/json" {
+		t.Errorf("call 1 path = %q, want /ipa/json", got)
+	}
+}

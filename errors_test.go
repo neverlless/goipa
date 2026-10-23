@@ -91,8 +91,12 @@ func TestRPCHTTPError(t *testing.T) {
 }
 
 func TestRPCExpiredSession401(t *testing.T) {
-	c, _ := newFakeIPA(t, http.StatusUnauthorized, "")
+	c, f := newFakeIPA(t, http.StatusUnauthorized, "")
+	c.SetSessionID("MagBearerToken=x")
 	_, err := c.RPC("ping", nil, nil)
+	if got := f.Calls()[0].Path; got != "/ipa/session/json" {
+		t.Errorf("path = %q, want /ipa/session/json", got)
+	}
 	if !errors.Is(err, ipa.ErrUnauthorized) {
 		t.Errorf("err = %v, want ErrUnauthorized", err)
 	}

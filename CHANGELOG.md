@@ -25,6 +25,9 @@ existing exported identifiers keep their signatures).
 - Non-200 JSON-RPC responses return `*HTTPError`; HTTP 401 (e.g. an expired
   session) matches `errors.Is(err, ipa.ErrUnauthorized)`. The message text is
   unchanged.
+- `SetSessionID` restores a saved session on any client.
+- Logging in again on the same `Client` destroys the previous Kerberos client
+  instead of leaking its renewal goroutine and credentials.
 
 ## [v0.1.0] - 2026-10-22
 
