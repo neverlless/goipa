@@ -93,15 +93,15 @@ krb5.conf) can drop the workaround.
 
 ## v0.3.0 — Test infrastructure
 
-- [ ] `ipatest`: exported fake FreeIPA server (`NewServer(t)`, seed helpers,
+- [x] `ipatest`: exported fake FreeIPA server (`NewServer(t)`, seed helpers,
       `Client()`/`ClientAs(uid)`, call log, `Handle` for error injection),
       with documented FreeIPA quirks, each pinned by a test
-- [ ] Unit tests for the whole existing API against `ipatest`; coverage
+- [x] Unit tests for the whole existing API against `ipatest`; coverage
       ≥ 80 % with Codecov
 - [ ] Nightly integration workflow against real FreeIPA containers
       (`almalinux-8-4.9.13`, `almalinux-9-4.12.2`, `almalinux-9-4.13.4`); the
       same contract tests run against `ipatest` and the real server
-- [ ] Replace the CentOS 7 `container/` setup with a `docker run` script
+- [x] Replace the CentOS 7 `container/` setup with a `docker run` script
 - [x] pkg.go.dev examples for the login modes and the `RPC` escape hatch
 
 Accept: `go test ./...` coverage ≥ 80 %; the nightly job is green on all
