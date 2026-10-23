@@ -38,8 +38,11 @@
 //     serves the call as that user and sets a new session cookie.
 //     TestNegotiateUser.
 //   - Q3: user_add and user_mod with random=true return randompassword in
-//     that response only, and the password is expired; so is a password
-//     that passwd sets for another user. TestUserAddModDel,
+//     that response only, and the password is expired (PasswdExpire, the
+//     krbpasswordexpiration attribute, set to now); so is a password that
+//     passwd sets for another user. A password users set for themselves
+//     (change_password, or passwd on their own account) expires in 90 days.
+//     TestUserAddModDel,
 //     TestPasswdByAdminExpires, goipa.TestContractRandomPasswordExpired.
 //   - Q4: change_password always answers HTTP 200; the outcome is in
 //     X-IPA-Pwchange-Result (ok, invalid-password, policy-error), with the
@@ -49,7 +52,7 @@
 //     goipa.TestContractSetPasswordResults.
 //   - Q5: login_password answers 401 with X-IPA-Rejection-Reason
 //     invalid-password (unknown user, no password, wrong password),
-//     password-expired (Expired, or PasswdExpire not in the future) or
+//     password-expired (PasswdExpire set and not in the future) or
 //     user-locked (disabled and preserved accounts too).
 //     TestLoginFormRejections, goipa.TestContractLoginRejection.
 //   - Q6: after 6 wrong passwords (krbpwdmaxfailure) even the right one is

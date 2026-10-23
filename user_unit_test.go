@@ -10,6 +10,7 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+	"time"
 
 	ipa "github.com/neverlless/goipa"
 	"github.com/neverlless/goipa/ipatest"
@@ -73,7 +74,7 @@ func TestResetPasswordUnit(t *testing.T) {
 	if err != nil || pw == "" {
 		t.Fatalf("pw = %q, err = %v", pw, err)
 	}
-	if u, _ := s.User("erin"); !u.Expired {
+	if u, _ := s.User("erin"); u.PasswdExpire.IsZero() || u.PasswdExpire.After(time.Now()) {
 		t.Error("user not expired")
 	}
 }

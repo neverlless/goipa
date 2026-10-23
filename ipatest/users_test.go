@@ -218,7 +218,7 @@ func TestUserAddModDel(t *testing.T) {
 	if rec.RandomPassword == "" || rec.Uid == "" || rec.UUID == "" || rec.Principal != "walt@TEST.LOCAL" || !rec.HasPassword {
 		t.Errorf("add: %+v", rec)
 	}
-	if st, _ := s.User("walt"); !st.Expired || st.Email != "walt@example.com" || st.HomeDir != "/home/walt" || st.Shell != "/bin/sh" {
+	if st, _ := s.User("walt"); !expired(st) || st.Email != "walt@example.com" || st.HomeDir != "/home/walt" || st.Shell != "/bin/sh" {
 		t.Errorf("stored: %+v", st)
 	}
 	if _, err := c.UserAdd(u, false); !errors.Is(err, ipa.ErrUserExists) {
@@ -317,7 +317,7 @@ func TestLoginFormRejections(t *testing.T) {
 	past := time.Now().Add(-time.Hour)
 	s.AddUser("ok", ipatest.User{Password: "right"})
 	s.AddUser("nopw", ipatest.User{})
-	s.AddUser("expired", ipatest.User{Password: "right", Expired: true})
+	s.AddUser("expired", ipatest.User{Password: "right", PasswdExpire: time.Now()})
 	s.AddUser("pastexp", ipatest.User{Password: "right", PasswdExpire: past})
 	s.AddUser("locked", ipatest.User{Password: "right", Locked: true})
 	s.AddUser("preserved", ipatest.User{Password: "right", Preserved: true})
@@ -372,7 +372,7 @@ func TestLoginFormRejections(t *testing.T) {
 
 func TestChangePasswordForm(t *testing.T) {
 	s := ipatest.NewServer(t)
-	s.AddUser("jesse", ipatest.User{Password: "oldpass12", Expired: true, PasswdExpire: time.Now().Add(-time.Hour)})
+	s.AddUser("jesse", ipatest.User{Password: "oldpass12", PasswdExpire: time.Now().Add(-time.Hour)})
 	c := s.Client()
 	if err := c.SetPassword("jesse", "wrong", "newpass12", ""); !errors.Is(err, ipa.ErrInvalidPassword) {
 		t.Errorf("wrong old: %v", err)
@@ -387,7 +387,7 @@ func TestChangePasswordForm(t *testing.T) {
 		t.Fatal(err)
 	}
 	u, _ := s.User("jesse")
-	if u.Password != "newpass12" || u.Expired || !u.PasswdExpire.IsZero() {
+	if u.Password != "newpass12" || expired(u) || u.PasswdExpire.Before(time.Now().Add(89*24*time.Hour)) {
 		t.Errorf("after change: %+v", u)
 	}
 	if err := c.RemoteLogin("jesse", "newpass12"); err != nil {
@@ -404,19 +404,23 @@ func TestChangePasswordPolicyHeader(t *testing.T) {
 	}
 }
 
+func expired(u ipatest.User) bool {
+	return !u.PasswdExpire.IsZero() && !u.PasswdExpire.After(time.Now())
+}
+
 func TestPasswdByAdminExpires(t *testing.T) {
 	s := ipatest.NewServer(t)
 	s.AddUser("bob", ipatest.User{Password: "old"})
 	if err := s.ClientAs("admin").ChangePassword("bob", "old", "newpass12", ""); err != nil {
 		t.Fatal(err)
 	}
-	if u, _ := s.User("bob"); !u.Expired || u.Password != "newpass12" {
+	if u, _ := s.User("bob"); !expired(u) || u.Password != "newpass12" {
 		t.Errorf("by admin: %+v", u)
 	}
 	if err := s.ClientAs("bob").ChangePassword("bob", "newpass12", "another12", ""); err != nil {
 		t.Fatal(err)
 	}
-	if u, _ := s.User("bob"); u.Expired {
+	if u, _ := s.User("bob"); expired(u) || u.PasswdExpire.IsZero() {
 		t.Errorf("by self: %+v", u)
 	}
 	err := s.ClientAs("bob").ChangePassword("bob", "wrong", "x", "")
