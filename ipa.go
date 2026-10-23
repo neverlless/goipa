@@ -293,7 +293,7 @@ func (c *Client) rpc(ctx context.Context, method string, params []string, option
 	defer res.Body.Close()
 
 	if res.StatusCode != 200 {
-		return nil, fmt.Errorf("IPA RPC called failed with HTTP status code: %d", res.StatusCode)
+		return nil, &HTTPError{StatusCode: res.StatusCode, Status: res.Status}
 	}
 
 	if err = c.setSessionID(res); err != nil {

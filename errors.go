@@ -4,6 +4,11 @@
 
 package ipa
 
+import (
+	"fmt"
+	"net/http"
+)
+
 // FreeIPA error codes (ipalib.errors).
 const (
 	CodeVersion              = 901
@@ -37,4 +42,21 @@ var (
 func (e *IpaError) Is(target error) bool {
 	t, ok := target.(*IpaError)
 	return ok && t.Code == e.Code
+}
+
+// HTTPError is returned when the server answers a JSON-RPC call with a
+// status other than 200. HTTP 401 (for example an expired session) also
+// matches ErrUnauthorized with errors.Is.
+type HTTPError struct {
+	StatusCode int
+	Status     string
+}
+
+func (e *HTTPError) Error() string {
+	return fmt.Sprintf("IPA RPC called failed with HTTP status code: %d", e.StatusCode)
+}
+
+// Is reports whether target is ErrUnauthorized and the status is 401.
+func (e *HTTPError) Is(target error) bool {
+	return target == ErrUnauthorized && e.StatusCode == http.StatusUnauthorized
 }
