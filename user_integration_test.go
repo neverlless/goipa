@@ -315,9 +315,10 @@ func TestIntegrationUserFields(t *testing.T) {
 	if !serverAtLeast(res.Version, 4, 11) {
 		t.Skipf("passkeys need FreeIPA 4.11, server is %s", res.Version)
 	}
-	// A fixed P-256 SubjectPublicKeyInfo, base64.
-	const spki = "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEZw0A2dEyoq1uZTqwF0n1Q1o0Y9m7mbbu2Jx0P0E1Sv8kqH0r5Y2o0Ew8Hn1j8V9uMPeZqk8cD5kXz0h3vN8tQ=="
-	_, err = c.RPC("user_add_passkey", []string{username, "passkey:goipa-test-id," + spki}, nil)
+	// A fixed P-256 SubjectPublicKeyInfo; FreeIPA requires the credential id
+	// to be base64 too ("invalid id" otherwise).
+	const spki = "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEgJ0OGh7RCx0W7lUgaq4bbkS5+r9uuEXFc8lWWhNH0uphy0Xv4/2mTD9h4KbXWYcpr0bxLYvifagCSgDbVZZlcg=="
+	_, err = c.RPC("user_add_passkey", []string{username, "passkey:Z29pcGEtdGVzdC1pZA==," + spki}, nil)
 	require.NoError(t, err)
 	u, err = c.UserShow(username)
 	require.NoError(t, err)
