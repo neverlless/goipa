@@ -134,7 +134,7 @@ func (c *Client) rpc(ctx context.Context, method string, params []string, option
 	}
 	defer res.Body.Close()
 
-	if res.StatusCode != 200 {
+	if res.StatusCode != http.StatusOK {
 		return nil, &HTTPError{StatusCode: res.StatusCode, Status: res.Status}
 	}
 
