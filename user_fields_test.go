@@ -144,3 +144,66 @@ func TestIpatest_UserFieldsRoundTrip(t *testing.T) {
 		}
 	}
 }
+
+func TestToOptions_SingleEmailIsString(t *testing.T) {
+	if got := (&ipa.User{Email: "a@x"}).ToOptions()["mail"]; got != "a@x" {
+		t.Errorf("mail = %#v, want string a@x", got)
+	}
+}
+
+func TestToOptions_NoEmailClears(t *testing.T) {
+	if got := (&ipa.User{}).ToOptions()["mail"]; got != "" {
+		t.Errorf("mail = %#v, want empty string", got)
+	}
+}
+
+func TestToOptions_Extras(t *testing.T) {
+	got := (&ipa.User{Email: "a@x", Emails: []string{"a@x", "b@x"}}).ToOptions()["mail"]
+	if !reflect.DeepEqual(got, []string{"a@x", "b@x"}) {
+		t.Errorf("mail = %#v", got)
+	}
+}
+
+func TestToOptions_DedupCaseInsensitive(t *testing.T) {
+	if got := (&ipa.User{Email: "B@x", Emails: []string{"a@x", "b@x"}}).ToOptions()["mail"]; got != "B@x" {
+		t.Errorf("mail = %#v, want string B@x", got)
+	}
+}
+
+func TestUserMod_KeepsExtras(t *testing.T) {
+	s, c := newFake(t)
+	s.AddUser("jdoe", ipatest.User{Emails: []string{"a@x", "b@x"}})
+	u, err := c.UserShow("jdoe")
+	if err != nil {
+		t.Fatal(err)
+	}
+	u.Mobile = "1"
+	if _, err := c.UserMod(u); err != nil {
+		t.Fatal(err)
+	}
+	got, _ := s.User("jdoe")
+	if !slices.Equal(got.Emails, []string{"a@x", "b@x"}) || got.Mobile != "1" {
+		t.Errorf("server Emails/Mobile = %v %q", got.Emails, got.Mobile)
+	}
+}
+
+func TestUserMod_ReplacePrimaryKeepsExtras(t *testing.T) {
+	s, c := newFake(t)
+	s.AddUser("jdoe", ipatest.User{Emails: []string{"a@x", "b@x"}})
+	u, err := c.UserShow("jdoe")
+	if err != nil {
+		t.Fatal(err)
+	}
+	u.Email = "c@x"
+	ret, err := c.UserMod(u)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []string{"c@x", "b@x"}
+	if got, _ := s.User("jdoe"); !slices.Equal(got.Emails, want) {
+		t.Errorf("server Emails = %v, want %v", got.Emails, want)
+	}
+	if ret.Email != "c@x" || !slices.Equal(ret.Emails, want) {
+		t.Errorf("returned Email/Emails = %q %v", ret.Email, ret.Emails)
+	}
+}

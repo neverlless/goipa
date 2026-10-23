@@ -609,8 +609,8 @@ func (c *Client) UserDeleteContext(ctx context.Context, preserve, stopOnError bo
 	return nil
 }
 
-// Modify user. Currently only modifies a subset of user attributes: mail,
-// givenname, sn, homedirectory, loginshell, displayname, ipasshpubkey,
+// Modify user. Currently only modifies a subset of user attributes: mail (all
+// values, see Emails), givenname, sn, homedirectory, loginshell, displayname, ipasshpubkey,
 // telephonenumber, and mobile
 func (c *Client) UserMod(user *User) (*User, error) {
 	return c.UserModContext(context.Background(), user)

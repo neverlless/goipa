@@ -324,3 +324,33 @@ func TestIntegrationUserFields(t *testing.T) {
 	require.Len(t, u.Passkeys, 1)
 	require.True(t, strings.HasPrefix(u.Passkeys[0], "passkey:"))
 }
+
+func TestIntegrationUserModMail(t *testing.T) {
+	c, err := newTestClientCCache()
+	require.NoError(t, err)
+
+	username := strings.ToLower(gofakeit.Username())
+	_, err = addTestUser(c, username, "")
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = c.UserDelete(false, false, username) })
+
+	a, b := username+"@example.com", username+"-2@example.com"
+	_, err = c.RPC("user_mod", []string{username}, ipa.Options{"mail": []string{a, b}})
+	require.NoError(t, err)
+
+	u, err := c.UserShow(username)
+	require.NoError(t, err)
+	u.Mobile = "555"
+	_, err = c.UserMod(u)
+	require.NoError(t, err)
+	u, err = c.UserShow(username)
+	require.NoError(t, err)
+	require.Equal(t, []string{a, b}, u.Emails)
+
+	// The v0.0.7 behaviour UserMod works around (U5).
+	_, err = c.RPC("user_mod", []string{username}, ipa.Options{"mail": a})
+	require.NoError(t, err)
+	u, err = c.UserShow(username)
+	require.NoError(t, err)
+	require.Equal(t, []string{a}, u.Emails)
+}
