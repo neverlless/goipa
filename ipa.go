@@ -366,6 +366,26 @@ func (c *Client) SessionID() string {
 	return c.sessionID
 }
 
+// SetSessionID restores a session saved from SessionID (for example in a web
+// session store) on any client. An empty string clears it.
+func (c *Client) SetSessionID(sessionID string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.sessionID = sessionID
+}
+
+// setKrbClient destroys the replaced client: gokrb5 runs a renewal goroutine
+// per login and keeps the key material.
+func (c *Client) setKrbClient(cl *client.Client) {
+	c.mu.Lock()
+	old := c.krbClient
+	c.krbClient = cl
+	c.mu.Unlock()
+	if old != nil {
+		old.Destroy()
+	}
+}
+
 // Clears out FreeIPA session id
 func (c *Client) ClearSession() {
 	c.mu.Lock()
@@ -459,9 +479,7 @@ func (c *Client) Login(username, password string) error {
 		return err
 	}
 
-	c.mu.Lock()
-	c.krbClient = cl
-	c.mu.Unlock()
+	c.setKrbClient(cl)
 
 	return nil
 }
@@ -485,9 +503,7 @@ func (c *Client) LoginWithKeytab(ktab, username string) error {
 		return err
 	}
 
-	c.mu.Lock()
-	c.krbClient = cl
-	c.mu.Unlock()
+	c.setKrbClient(cl)
 
 	return nil
 }
@@ -514,9 +530,7 @@ func (c *Client) LoginFromCCache(cpath string) error {
 		return err
 	}
 
-	c.mu.Lock()
-	c.krbClient = cl
-	c.mu.Unlock()
+	c.setKrbClient(cl)
 
 	return nil
 }
