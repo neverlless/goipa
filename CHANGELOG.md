@@ -7,6 +7,12 @@ existing exported identifiers keep their signatures).
 
 ## [Unreleased]
 
+## [v0.2.0] - 2026-10-23
+
+A generic `RPC` call for any FreeIPA command, typed errors and
+`context.Context` support. All changes are additive: code written for
+v0.1.0 or ubccr/goipa v0.0.7 compiles unchanged, and CI now enforces that.
+
 - `(*Client).RPC` and `RPCContext` call any FreeIPA command with the
   client's TLS settings, session or Kerberos auth and API version
   (ubccr/goipa#11)
@@ -39,6 +45,10 @@ existing exported identifiers keep their signatures).
   UTC (they were sent in the caller's zone with a `Z` suffix)
 - Logging in again on the same `Client` destroys the previous Kerberos
   client instead of leaking its renewal goroutine and credentials
+- Package documentation on pkg.go.dev: login modes, concurrency, errors,
+  context support
+- `gjson` 1.17.1 → 1.20.0; test-only `testify`, `godotenv` and `gofakeit`
+  updated (#1)
 - CI fails on any incompatible API change against the latest tag (apidiff)
 
 ## [v0.1.0] - 2026-10-22
@@ -91,5 +101,6 @@ v0.0.1 – v0.0.7 were released by Andrew E. Bruno as
 [ubccr/goipa](https://github.com/ubccr/goipa/tags). This repository keeps
 that history.
 
-[Unreleased]: https://github.com/neverlless/goipa/compare/v0.1.0...HEAD
-[v0.1.0]: https://github.com/neverlless/goipa/compare/v0.0.7...v0.1.0
+[Unreleased]: https://github.com/neverlless/goipa/compare/v0.2.0...HEAD
+[v0.2.0]: https://github.com/neverlless/goipa/compare/v0.1.0...v0.2.0
+[v0.1.0]: https://github.com/neverlless/goipa/releases/tag/v0.1.0
