@@ -6,6 +6,7 @@ package ipa_test
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -66,4 +67,8 @@ func (f *fakeIPA) Calls() []rpcCall {
 
 func envelope(result string) string {
 	return `{"error":null,"id":0,"principal":"admin@EXAMPLE.COM","version":"4.13.4","result":` + result + `}`
+}
+
+func errorBody(code int, name, message string) string {
+	return fmt.Sprintf(`{"result":null,"error":{"code":%d,"message":%q,"name":%q,"data":{"reason":%q}},"id":0,"principal":"admin@EXAMPLE.COM","version":"4.13.4"}`, code, message, name, message)
 }

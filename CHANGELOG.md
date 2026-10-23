@@ -18,6 +18,10 @@ existing exported identifiers keep their signatures).
 - A response without `result` and `error` is an error instead of a
   nil-pointer panic.
 - Responses over 64 MiB are rejected.
+- FreeIPA error code constants (`CodeNotFound`, ...), `IpaError.Name` and
+  `IpaError.Data`, and `errors.Is(err, ipa.ErrNotFound)` (also
+  `ErrDuplicateEntry`, `ErrACI`, `ErrEmptyModlist`). Errors are still a bare
+  `*IpaError`, so `err.(*ipa.IpaError)` keeps working.
 
 ## [v0.1.0] - 2026-10-22
 

@@ -467,10 +467,8 @@ func (c *Client) UserAdd(user *User, random bool) (*User, error) {
 
 	res, err := c.rpc(context.Background(), "user_add", []string{user.Username}, options)
 	if err != nil {
-		if ierr, ok := err.(*IpaError); ok {
-			if ierr.Code == 4002 {
-				return nil, ErrUserExists
-			}
+		if errors.Is(err, ErrDuplicateEntry) {
+			return nil, ErrUserExists
 		}
 		return nil, err
 	}
@@ -513,11 +511,8 @@ func (c *Client) UserMod(user *User) (*User, error) {
 
 	res, err := c.rpc(context.Background(), "user_mod", []string{user.Username}, options)
 	if err != nil {
-		if ierr, ok := err.(*IpaError); ok {
-			// error 4202 - no modifications to be performed
-			if ierr.Code == 4202 {
-				return user, nil
-			}
+		if errors.Is(err, ErrEmptyModlist) {
+			return user, nil
 		}
 		return nil, err
 	}
