@@ -91,7 +91,12 @@ func (t *OTPToken) fromJSON(raw []byte) error {
 
 // Remove OTP token
 func (c *Client) RemoveOTPToken(tokenUUID string) error {
-	_, err := c.rpc(context.Background(), "otptoken_del", []string{tokenUUID}, nil)
+	return c.RemoveOTPTokenContext(context.Background(), tokenUUID)
+}
+
+// RemoveOTPTokenContext is like RemoveOTPToken but bounds the request with ctx.
+func (c *Client) RemoveOTPTokenContext(ctx context.Context, tokenUUID string) error {
+	_, err := c.rpc(ctx, "otptoken_del", []string{tokenUUID}, nil)
 
 	if err != nil {
 		return err
@@ -102,12 +107,17 @@ func (c *Client) RemoveOTPToken(tokenUUID string) error {
 
 // Fetch OTP tokens by owner.
 func (c *Client) FetchOTPTokens(owner string) ([]*OTPToken, error) {
+	return c.FetchOTPTokensContext(context.Background(), owner)
+}
+
+// FetchOTPTokensContext is like FetchOTPTokens but bounds the request with ctx.
+func (c *Client) FetchOTPTokensContext(ctx context.Context, owner string) ([]*OTPToken, error) {
 	options := Options{
 		"ipatokenowner": owner,
 		"all":           true,
 	}
 
-	res, err := c.rpc(context.Background(), "otptoken_find", []string{}, options)
+	res, err := c.rpc(ctx, "otptoken_find", []string{}, options)
 
 	if err != nil {
 		return nil, err
@@ -131,6 +141,11 @@ func (c *Client) FetchOTPTokens(owner string) ([]*OTPToken, error) {
 
 // Add OTP token. Returns new OTPToken
 func (c *Client) AddOTPToken(token *OTPToken) (*OTPToken, error) {
+	return c.AddOTPTokenContext(context.Background(), token)
+}
+
+// AddOTPTokenContext is like AddOTPToken but bounds the request with ctx.
+func (c *Client) AddOTPTokenContext(ctx context.Context, token *OTPToken) (*OTPToken, error) {
 	t := *DefaultTOTPToken
 	if token != nil {
 		t = *token
@@ -182,7 +197,7 @@ func (c *Client) AddOTPToken(token *OTPToken) (*OTPToken, error) {
 		}
 	}
 
-	res, err := c.rpc(context.Background(), "otptoken_add", []string{}, options)
+	res, err := c.rpc(ctx, "otptoken_add", []string{}, options)
 
 	if err != nil {
 		return nil, err
@@ -199,24 +214,34 @@ func (c *Client) AddOTPToken(token *OTPToken) (*OTPToken, error) {
 
 // Enable OTP token.
 func (c *Client) EnableOTPToken(tokenUUID string) error {
+	return c.EnableOTPTokenContext(context.Background(), tokenUUID)
+}
+
+// EnableOTPTokenContext is like EnableOTPToken but bounds the request with ctx.
+func (c *Client) EnableOTPTokenContext(ctx context.Context, tokenUUID string) error {
 	options := Options{
 		"ipatokendisabled": false,
 		"all":              false,
 	}
 
-	_, err := c.rpc(context.Background(), "otptoken_mod", []string{tokenUUID}, options)
+	_, err := c.rpc(ctx, "otptoken_mod", []string{tokenUUID}, options)
 
 	return err
 }
 
 // Disable OTP token.
 func (c *Client) DisableOTPToken(tokenUUID string) error {
+	return c.DisableOTPTokenContext(context.Background(), tokenUUID)
+}
+
+// DisableOTPTokenContext is like DisableOTPToken but bounds the request with ctx.
+func (c *Client) DisableOTPTokenContext(ctx context.Context, tokenUUID string) error {
 	options := Options{
 		"ipatokendisabled": true,
 		"all":              false,
 	}
 
-	_, err := c.rpc(context.Background(), "otptoken_mod", []string{tokenUUID}, options)
+	_, err := c.rpc(ctx, "otptoken_mod", []string{tokenUUID}, options)
 
 	return err
 }

@@ -7,6 +7,8 @@ package ipa_test
 import (
 	"context"
 	"errors"
+	"reflect"
+	"strings"
 	"testing"
 
 	ipa "github.com/neverlless/goipa"
@@ -72,6 +74,23 @@ func twinCalls() []twinCall {
 			_, err := c.UserModContext(ctx, &ipa.User{Username: "bob"})
 			return err
 		}},
+		{"RemoveOTPTokenContext", func(ctx context.Context, c *ipa.Client) error {
+			return c.RemoveOTPTokenContext(ctx, "u")
+		}},
+		{"FetchOTPTokensContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.FetchOTPTokensContext(ctx, "bob")
+			return err
+		}},
+		{"AddOTPTokenContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.AddOTPTokenContext(ctx, nil)
+			return err
+		}},
+		{"EnableOTPTokenContext", func(ctx context.Context, c *ipa.Client) error {
+			return c.EnableOTPTokenContext(ctx, "u")
+		}},
+		{"DisableOTPTokenContext", func(ctx context.Context, c *ipa.Client) error {
+			return c.DisableOTPTokenContext(ctx, "u")
+		}},
 	}
 }
 
@@ -88,5 +107,26 @@ func TestContextCancelReachesTransport(t *testing.T) {
 	}
 	if n := len(f.Calls()); n != 0 {
 		t.Fatalf("%d requests reached the server", n)
+	}
+}
+
+// Methods that do no network I/O, or cannot honour ctx (gokrb5).
+var noTwin = map[string]bool{"Host": true, "Realm": true, "SessionID": true, "SetSessionID": true,
+	"ClearSession": true, "StickySession": true, "Login": true, "LoginWithKeytab": true, "LoginFromCCache": true}
+
+func TestEveryMethodHasContextTwin(t *testing.T) {
+	typ := reflect.TypeFor[*ipa.Client]()
+	rows := map[string]bool{}
+	for _, tc := range twinCalls() {
+		rows[tc.name] = true
+	}
+	for m := range typ.Methods() {
+		if strings.HasSuffix(m.Name, "Context") {
+			if !rows[m.Name] {
+				t.Errorf("%s has no row in twinCalls", m.Name)
+			}
+		} else if _, ok := typ.MethodByName(m.Name + "Context"); !ok && !noTwin[m.Name] {
+			t.Errorf("%s has no Context twin", m.Name)
+		}
 	}
 }
