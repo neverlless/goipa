@@ -159,6 +159,55 @@ against `ipatest` and an integration test.
       saved session. Says plainly that `Login` is Kerberos and shows the
       CA setup for hosts not enrolled in FreeIPA
 
+## v0.7.0 — Breadth without a generated API
+
+Generated clients such as [go-freeipa](https://github.com/ccin2p3/go-freeipa)
+type all of FreeIPA's ~460 commands as pointer-heavy argument structs. goipa
+keeps a hand-written API for the common objects and makes every other
+command just as safe to call. Code generation is used only for data (the
+command catalogue), never for the public call API.
+
+- [ ] Typed escape hatch: a generic `Call[T any](ctx, c, method, args,
+      opts) (T, *Result, error)` that decodes `result` into the caller's
+      struct, and an `Entry` type with `Str`, `Strs`, `Bool`, `Int`,
+      `Time` and `DN` accessors that understand FreeIPA's attribute lists,
+      `__datetime__` and `__base64__` values, so no caller parses gjson by hand
+- [ ] Command catalogue generated from FreeIPA's `API.txt` for each supported
+      release (4.9 to 4.13): command names, positional args, option names
+      and types, and the release that introduced each. `RPC` and `Call` can
+      validate a method and its options against it (opt-in), and
+      `ipa.Commands` lets callers discover what a server version supports.
+      `go generate` refreshes it; a CI job fails when a new FreeIPA release
+      adds commands that the catalogue lacks
+- [ ] Server version awareness: `ServerVersion` from the first response
+      (the envelope carries it), and typed calls for features newer than
+      the server (passkeys 4.11, sub-IDs 4.9.7, password-quality credits
+      4.13) return `ErrNotSupported` instead of a confusing server error
+- [ ] Attribute-level updates for any object: `Modify(ctx, c, command,
+      pkey).Set(attr, v).Add(attr, v).Del(attr, v)` over FreeIPA's
+      `setattr`/`addattr`/`delattr`, so a single field changes without the
+      read-modify-write that `UserMod` needs today
+- [ ] `batch` support: several commands in one round trip, with per-command
+      results and errors
+- [ ] Paging helpers for `*_find`: report `Truncated` as an error option or
+      iterate with an explicit `sizelimit`, so large directories don't
+      silently return 100 entries
+- [ ] Typed APIs for the objects users ask for most, each with a `Context`
+      twin, an `ipatest` model and contract tests on real FreeIPA, in this
+      order: host groups; services and keytab metadata; HBAC and sudo rule
+      management (create, members, enable/disable); certificates
+      (`cert_request`, `cert_show`, `cert_revoke`); DNS zones and records;
+      automember rules; roles, privileges and permissions (read)
+- [ ] `ipatest` record/replay: record raw responses from a real server in
+      the nightly run (`IPATEST_RECORD=dir`) and replay them for commands
+      it doesn't model, so tests of unwrapped commands use real shapes
+- [ ] Comparison table in the README (goipa vs generated clients) that says
+      plainly when go-freeipa is the better fit
+
+Accept: any FreeIPA command can be called with typed decoding and option
+validation, without hand-written JSON parsing; the listed objects have
+typed APIs verified nightly on FreeIPA 4.9, 4.12 and 4.13.
+
 ## v1.0.0 — Stable API
 
 - [ ] API review: deprecations marked, error model and context policy final,
