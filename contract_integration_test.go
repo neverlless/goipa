@@ -11,6 +11,7 @@ import (
 	"crypto/x509"
 	"net/http"
 	"os"
+	"sync"
 	"testing"
 	"time"
 
@@ -19,20 +20,35 @@ import (
 
 func init() { extraBackends = realBackends }
 
-func skipped(t *testing.T, why string) []backend {
-	t.Run("freeipa", func(t *testing.T) { t.Skip(why) })
-	return nil
+var (
+	realOnce sync.Once
+	realB    backend
+	realSkip string
+)
+
+// realBackends connects once per test binary: a wrong IPA_ADMIN_PASS must
+// cost one failed login, not one per test (FreeIPA locks at 6).
+func realBackends(t *testing.T) []backend {
+	realOnce.Do(func() { realB, realSkip = connectReal() })
+	if realSkip != "" {
+		t.Run("freeipa", func(t *testing.T) { t.Skip(realSkip) })
+		return nil
+	}
+	return []backend{realB}
 }
 
-// realBackends returns the FreeIPA the IPA_* environment points at, or skips.
-func realBackends(t *testing.T) []backend {
+func connectReal() (backend, string) {
 	pass := getenv("IPA_ADMIN_PASS", "")
 	if pass == "" {
-		return skipped(t, "IPA_ADMIN_PASS not set")
+		return backend{}, "IPA_ADMIN_PASS not set"
 	}
 	ca, err := os.ReadFile("/etc/ipa/ca.crt")
 	if err != nil {
-		return skipped(t, "/etc/ipa/ca.crt missing")
+		return backend{}, "/etc/ipa/ca.crt missing"
+	}
+	def := ipa.NewDefaultClient()
+	if def.Host() == "" {
+		return backend{}, "/etc/ipa/default.conf missing"
 	}
 	pool := x509.NewCertPool()
 	pool.AppendCertsFromPEM(ca)
@@ -40,11 +56,10 @@ func realBackends(t *testing.T) []backend {
 		Timeout:   30 * time.Second,
 		Transport: &http.Transport{TLSClientConfig: &tls.Config{RootCAs: pool}},
 	}
-	def := ipa.NewDefaultClient()
 	b := backend{name: "freeipa", host: def.Host(), realm: def.Realm(), http: hc}
 	b.admin = b.client()
 	if err := b.admin.RemoteLogin(getenv("IPA_ADMIN_USER", "admin"), pass); err != nil {
-		t.Fatal(err)
+		return backend{}, "admin login failed: " + err.Error()
 	}
-	return []backend{b}
+	return b, ""
 }
