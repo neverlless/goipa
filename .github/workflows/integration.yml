@@ -27,13 +27,15 @@ jobs:
           go-version-file: go.mod
 
       - name: Install Kerberos client
-        run: sudo apt-get install -y krb5-user
+        run: sudo apt-get update && sudo apt-get install -y krb5-user
 
       - name: Start FreeIPA
         run: IMAGE=${{ matrix.image }} scripts/ipa-up.sh
 
+      # ipa-up.sh writes the credentials to .env; CI=true makes the contract
+      # tests fail instead of skipping when they are missing.
       - name: Test
-        run: go test -race -tags integration -count=1 ./...
+        run: set -a; . ./.env; set +a; go test -race -tags integration -count=1 ./...
 
       - name: Container logs
         if: failure()

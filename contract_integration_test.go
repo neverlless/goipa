@@ -31,6 +31,10 @@ var (
 func realBackends(t *testing.T) []backend {
 	realOnce.Do(func() { realB, realSkip = connectReal() })
 	if realSkip != "" {
+		// In CI a missing server is a broken nightly, not a reason to skip.
+		if os.Getenv("CI") != "" {
+			t.Fatal("real FreeIPA unavailable: " + realSkip)
+		}
 		t.Run("freeipa", func(t *testing.T) { t.Skip(realSkip) })
 		return nil
 	}

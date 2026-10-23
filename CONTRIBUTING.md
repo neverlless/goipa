@@ -31,7 +31,7 @@ Integration tests talk to a real FreeIPA and are behind the `integration`
 build tag. On Linux with Docker:
 
 ```sh
-scripts/ipa-up.sh && go test -tags integration ./... ; scripts/ipa-up.sh down
+scripts/ipa-up.sh && (set -a; . ./.env; set +a; go test -race -tags integration -count=1 ./...) ; scripts/ipa-up.sh down
 ```
 
 ## Adding a FreeIPA command
