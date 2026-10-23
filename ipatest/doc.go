@@ -25,10 +25,11 @@
 //
 // # Auth model
 //
-// Every authenticated caller may run every command; ACIs are not evaluated,
-// so where FreeIPA answers 2100 ACIError ipatest runs the command: an
-// ordinary user deleting a missing OTP token gets 4001 NotFound here and
-// "2100 Insufficient access" from FreeIPA. OTP codes are not checked. A caller is authenticated by a session from
+// Every authenticated caller may run every command; ACIs are not evaluated
+// except the group member checks of Q24, so where FreeIPA answers 2100
+// ACIError ipatest runs the command: an ordinary user deleting a missing OTP
+// token gets 4001 NotFound here and "2100 Insufficient access" from FreeIPA.
+// OTP codes are not checked. A caller is authenticated by a session from
 // Session, ClientAs or a login, or, on /ipa/json, by SetNegotiateUser.
 //
 // # FreeIPA behaviour kept
@@ -117,6 +118,38 @@
 //     ObjectclassViolation, as "" means no value and homeDirectory is
 //     required by posixAccount; leaving the option out gets /home/<uid>.
 //     TestUserAddEmptyHomeDir, goipa.TestContractUserAddDefaults.
+//   - Q20: group_show returns members unless no_members is true (all
+//     overrides it); group_find returns them only with no_members false or
+//     all true. Empty member lists are left out; gidnumber only on POSIX
+//     groups; objectclass, ipauniqueid and dn only with all. TestGroupFind_HidesMembersByDefault,
+//     TestGroupShow_Shape, TestGroupObjectClasses.
+//   - Q21: group_add of an existing cn fails with 4002 ("group with name
+//     "<cn>" already exists"); a POSIX group without gidnumber gets the next
+//     one from 1000000; nonposix and external groups get none; group_mod that
+//     changes nothing fails with 4202; a missing group is 4001
+//     "<cn>: group not found". TestGroupAddModDel, TestGroupShow_NotFound.
+//   - Q22: group_del returns {result: {failed: []}, value: [cns], summary}
+//     and drops the group from other groups and from users. TestGroupDel_Shape.
+//   - Q23: group_{add,remove}_member and the _member_manager commands report
+//     per-member problems ("This entry is already a member", "This entry is
+//     not a member", "no such entry") in failed, next to result, as
+//     {member|membermanager: {user: [[name, msg]], group: [...]}} (member
+//     also carries empty service and idoverrideuser) with error null.
+//     TestGroupAddMember_FailedIsSiblingOfResult,
+//     TestGroupAddMember_AlreadyMember, TestGroupAddMemberManager_FailedKey.
+//   - Q24: member commands are allowed for uid admin, members of admins,
+//     ManagerUsers and members of a ManagerGroups group; manager commands for
+//     admins only. A caller who is not allowed gets no error: every requested
+//     member lands in failed with "Insufficient access: Insufficient 'write'
+//     privilege to the 'member' attribute of entry '<dn>'.".
+//     TestGroupAddMember_DeniedGoesToFailed, TestGroupAddMember_ManagerAllowed.
+//   - Q25: nesting is transitive: memberindirect_user and
+//     memberindirect_group list what comes through member groups, memberof_group
+//     the direct parents. user_show has memberof_group (direct) and
+//     memberofindirect_group; user_find with all folds the nested groups into
+//     memberof_group and has no memberofindirect_group. Membership is the
+//     union of User.Groups and Group.Members.
+//     TestUserShow_IndirectGroups, TestUserFind_NestedGroupsFlattened.
 //
 // A response's version is the server release, 4.13.4, and its principal is
 // <uid>@TEST.LOCAL. An error a HandlerFunc returns without a Name gets the
@@ -124,7 +157,7 @@
 //
 // # Not modelled
 //
-// Groups (planned for v0.4); stage users, lockout status and unlock, password
+// Stage users, lockout status and unlock, password
 // policy, subordinate IDs, HBAC and sudo rules, hbactest and passkeys
 // (planned for v0.5). Until then, Handle is the way to reach them. Kerberos,
 // LDAP search filters, size limits, replication and HTTP fault injection are
