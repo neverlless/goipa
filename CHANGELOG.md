@@ -19,15 +19,15 @@ existing exported identifiers keep their signatures).
   (`code`, `message`, `name`, `data`); `Data` that is not JSON becomes `{}`
 - Unit tests for the whole API against `ipatest`, coverage above 80 %
   (gated in CI) and Codecov upload
-- Nightly integration tests against FreeIPA 4.9.13, 4.12.2 and 4.13.4; the
-  same contract tests run against `ipatest` and the real server. The
+- Integration tests run nightly against FreeIPA 4.9.13, 4.12.2 and 4.13.4;
+  the same contract tests run against `ipatest` and the real server. The
   integration tests are now named `*_integration_test.go`
 - pkg.go.dev examples for the login modes and the `RPC` escape hatch
 - Removed the CentOS 7 `container/`, `docker-compose.yml` and `.env.sample`;
   `scripts/ipa-up.sh` starts a FreeIPA container instead
-- Note for tests built on `ipatest`: `/ipa/json` (the Kerberos endpoint)
-  answers 401 unless `SetNegotiateUser` is called, as a real server does
-  without a ticket
+- Testing with `ipatest`: it answers `/ipa/json` (the Kerberos endpoint)
+  with 401 unless `SetNegotiateUser` is set, like a server without Kerberos
+  credentials; log in with `RemoteLogin` or `ClientAs` instead
 
 ## [v0.2.1] - 2026-10-23
 
