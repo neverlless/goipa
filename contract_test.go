@@ -149,6 +149,13 @@ func TestContractRandomPasswordExpired(t *testing.T) {
 		if rec.RandomPassword == "" {
 			t.Fatal("no random password")
 		}
+		shown, err := b.admin.UserShow(uid)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if shown.PasswdExpire.IsZero() || shown.PasswdExpire.After(time.Now()) {
+			t.Errorf("PasswdExpire %v after random password, want set and not after now", shown.PasswdExpire)
+		}
 		wantIs(t, b.client().RemoteLogin(uid, rec.RandomPassword), ipa.ErrExpiredPassword)
 		if err := b.client().SetPassword(uid, rec.RandomPassword, goodPW, ""); err != nil {
 			t.Fatal(err)

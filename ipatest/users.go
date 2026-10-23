@@ -28,8 +28,7 @@ const (
 
 // User is a user account of the fake server.
 type User struct {
-	Password     string // "" = no password: login always invalid-password, has_password false
-	Expired      bool
+	Password     string   // "" = no password: login always invalid-password, has_password false
 	Locked       bool     // nsaccountlock (user_disable)
 	Preserved    bool     // set by user_del preserve=true
 	Groups       []string // memberof_group
@@ -45,7 +44,7 @@ type User struct {
 	HomeDir      string
 	SSHPubKeys   []string // ipasshpubkey, authorized_keys lines
 	FailedLogins int
-	PasswdExpire time.Time
+	PasswdExpire time.Time // krbpasswordexpiration; non-zero and not after now = expired
 }
 
 // userRec is a stored user plus the attributes the server assigns.
@@ -254,14 +253,23 @@ func (s *Server) userArg(c Call) (string, *userRec, *ipa.IpaError) {
 	return uid, r, nil
 }
 
+const pwdMaxLife = 90 * 24 * time.Hour // krbmaxpwdlife
+
+// expiredNow is "now" as FreeIPA stores krbpasswordexpiration: UTC, whole seconds.
+func expiredNow() time.Time { return time.Now().UTC().Truncate(time.Second) }
+
 // withRandom implements Q3: random=true sets a random password, returned in
 // this response only, and expired.
-func (r *userRec) withRandom(c Call, rec map[string]any) {
-	if flag(c, "random") {
-		r.Password, r.Expired = randomPassword(), true
-		rec["randompassword"] = r.Password
-		rec["has_password"] = true
+func (r *userRec) withRandom(c Call, uid string) map[string]any {
+	random := flag(c, "random")
+	if random {
+		r.Password, r.PasswdExpire = randomPassword(), expiredNow()
 	}
+	rec := r.render(uid)
+	if random {
+		rec["randompassword"] = r.Password
+	}
+	return rec
 }
 
 func userShow(s *Server, c Call) (any, *ipa.IpaError) {
@@ -326,9 +334,7 @@ func userAdd(s *Server, c Call) (any, *ipa.IpaError) {
 	if u.Last == "" {
 		return nil, required("sn")
 	}
-	r := s.putUser(uid, u)
-	rec := r.render(uid)
-	r.withRandom(c, rec)
+	rec := s.putUser(uid, u).withRandom(c, uid)
 	return entry(uid, rec, fmt.Sprintf("Added user %q", uid)), nil
 }
 
@@ -344,8 +350,7 @@ func userMod(s *Server, c Call) (any, *ipa.IpaError) {
 		return nil, &ipa.IpaError{Code: ipa.CodeEmptyModlist, Message: "no modifications to be performed"}
 	}
 	r.User = next
-	rec := r.render(uid)
-	r.withRandom(c, rec)
+	rec := r.withRandom(c, uid)
 	return entry(uid, rec, fmt.Sprintf("Modified user %q", uid)), nil
 }
 
@@ -416,7 +421,11 @@ func passwd(s *Server, c Call) (any, *ipa.IpaError) {
 		return nil, required("password")
 	}
 	r.Password = pw
-	r.Expired = c.User != uid // Q3: a password set by someone else is expired
+	if c.User == uid { // Q3: a password set by someone else is expired
+		r.PasswdExpire = expiredNow().Add(pwdMaxLife)
+	} else {
+		r.PasswdExpire = expiredNow()
+	}
 	return map[string]any{"result": true, "value": uid, "summary": fmt.Sprintf("Changed password for %q", uid)}, nil
 }
 
@@ -435,7 +444,7 @@ func loginPassword(s *Server, w http.ResponseWriter, r *http.Request) {
 	case u.Password != pw:
 		u.FailedLogins++
 		reject("invalid-password")
-	case u.Expired || (!u.PasswdExpire.IsZero() && !u.PasswdExpire.After(time.Now())): // Q5
+	case !u.PasswdExpire.IsZero() && !u.PasswdExpire.After(time.Now()): // Q5
 		reject("password-expired")
 	default:
 		u.FailedLogins = 0
@@ -454,7 +463,7 @@ func changePassword(s *Server, w http.ResponseWriter, r *http.Request) {
 		result = "policy-error"
 		w.Header().Set("X-IPA-Pwchange-Policy-Error", "Constraint violation: Password is too short")
 	default:
-		u.Password, u.Expired, u.PasswdExpire = newPw, false, time.Time{}
+		u.Password, u.PasswdExpire = newPw, expiredNow().Add(pwdMaxLife)
 	}
 	w.Header().Set("X-IPA-Pwchange-Result", result)
 }
