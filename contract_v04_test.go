@@ -229,14 +229,20 @@ func TestContractChangePasswordEmptyOTP(t *testing.T) {
 			"empty":  {"otp": {""}},
 			"absent": {},
 		} {
-			uid := newUserWithPassword(t, b, goodPW)
-			form := url.Values{"user": {uid}, "old_password": {goodPW}, "new_password": {"Another-Passw0rd-2"}}
+			// A random (expired) password: a user-set one is under the
+			// minimum password lifetime, so changing it again is a policy-error.
+			uid := newUID(t, b)
+			rec, err := b.admin.UserAdd(&ipa.User{Username: uid, First: "Go", Last: "Test"}, true)
+			if err != nil {
+				t.Fatal(err)
+			}
+			form := url.Values{"user": {uid}, "old_password": {rec.RandomPassword}, "new_password": {"Another-Passw0rd-2"}}
 			for k, v := range otp {
 				form[k] = v
 			}
 			res := rawPost(t, b, "/ipa/session/change_password", form, true)
 			if got := res.Header.Get("X-IPA-Pwchange-Result"); got != "ok" {
-				t.Errorf("otp %s: X-IPA-Pwchange-Result = %q, want ok", name, got)
+				t.Errorf("otp %s: X-IPA-Pwchange-Result = %q (%s), want ok", name, got, res.Header.Get("X-IPA-Pwchange-Policy-Error"))
 			}
 		}
 	})
