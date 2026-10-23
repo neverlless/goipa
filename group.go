@@ -116,3 +116,85 @@ func (c *Client) GroupFindContext(ctx context.Context, options Options) ([]*Grou
 	}
 	return groups, nil
 }
+
+func groupResult(res *Response) (*Group, error) {
+	g := new(Group)
+	if err := g.fromJSON(res.Result.Data); err != nil {
+		return nil, err
+	}
+	return g, nil
+}
+
+// GroupAdd creates a group with `group_add` and returns it; it requires the
+// Group Administrators privilege (System: Add Groups). A zero Group creates a
+// POSIX group, as `ipa group-add` does; set NonPOSIX for a group without a
+// GID.
+func (c *Client) GroupAdd(group *Group) (*Group, error) {
+	return c.GroupAddContext(context.Background(), group)
+}
+
+// GroupAddContext is like GroupAdd but bounds the request with ctx.
+func (c *Client) GroupAddContext(ctx context.Context, group *Group) (*Group, error) {
+	if group == nil || group.Name == "" {
+		return nil, errors.New("ipa: group name is required")
+	}
+	options := Options{"all": true}
+	if group.Description != "" {
+		options["description"] = group.Description
+	}
+	if !group.NonPOSIX && group.GID != "" {
+		options["gidnumber"] = group.GID
+	}
+	if group.External {
+		options["external"] = true
+	} else if group.NonPOSIX {
+		options["nonposix"] = true
+	}
+	res, err := c.rpc(ctx, "group_add", []string{group.Name}, options)
+	if err != nil {
+		return nil, err
+	}
+	return groupResult(res)
+}
+
+// GroupMod changes a group's description (an empty one clears it) and, for a
+// POSIX group, its GID with `group_mod`; it requires the Group Administrators
+// privilege (System: Modify Groups). It returns group itself when nothing
+// changed. Conversion between group types and renames go through RPC.
+func (c *Client) GroupMod(group *Group) (*Group, error) {
+	return c.GroupModContext(context.Background(), group)
+}
+
+// GroupModContext is like GroupMod but bounds the request with ctx.
+func (c *Client) GroupModContext(ctx context.Context, group *Group) (*Group, error) {
+	if group == nil || group.Name == "" {
+		return nil, errors.New("ipa: group name is required")
+	}
+	options := Options{"all": true, "description": group.Description}
+	if !group.NonPOSIX && group.GID != "" {
+		options["gidnumber"] = group.GID
+	}
+	res, err := c.rpc(ctx, "group_mod", []string{group.Name}, options)
+	if err != nil {
+		if errors.Is(err, ErrEmptyModlist) {
+			return group, nil
+		}
+		return nil, err
+	}
+	return groupResult(res)
+}
+
+// GroupDelete deletes groups with `group_del`; it requires the Group
+// Administrators privilege (System: Remove Groups).
+func (c *Client) GroupDelete(names ...string) error {
+	return c.GroupDeleteContext(context.Background(), names...)
+}
+
+// GroupDeleteContext is like GroupDelete but bounds the request with ctx.
+func (c *Client) GroupDeleteContext(ctx context.Context, names ...string) error {
+	if len(names) == 0 {
+		return errors.New("ipa: group name is required")
+	}
+	_, err := c.rpc(ctx, "group_del", names, Options{"continue": false})
+	return err
+}
