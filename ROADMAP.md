@@ -71,15 +71,15 @@ _kerberos._tcp.<REALM> ... no such host`. ipa-client-install 4.13 writes
 `includedir /etc/krb5.conf.d/` and `dns_lookup_kdc = true` in
 `/etc/krb5.conf`, and gokrb5 ignores `include`/`includedir`.
 
-- [ ] `Login`, `LoginWithKeytab` and `LoginFromCCache` resolve `include` and
+- [x] `Login`, `LoginWithKeytab` and `LoginFromCCache` resolve `include` and
       `includedir` in `DefaultKerbConf` the way MIT krb5 does: `includedir`
       reads only file names matching `[A-Za-z0-9_-]+` or `*.conf` (skips
       `.rpmsave`, editor backups), in sorted order; nesting is bounded. No
       API change; a krb5.conf without includes is parsed exactly as before
-- [ ] Value precedence matches MIT krb5 (first value wins) for a realm or
+- [x] Value precedence matches MIT krb5 (first value wins) for a realm or
       libdefault defined both in krb5.conf and an included file; verify
       against gokrb5's merge order and pin it with a test
-- [ ] Tests on the ipa-client 4.13.4 layout (`freeipa-realm`,
+- [x] Tests on the ipa-client 4.13.4 layout (`freeipa-realm`,
       `sssd_enable_idp`, a stale `.rpmsave`), a file without includes,
       nested `include`, a missing `includedir`, and an include loop
 
