@@ -157,6 +157,12 @@ func TestGroupAdd_External(t *testing.T) {
 	if !g.External || !g.NonPOSIX {
 		t.Errorf("got %+v", g)
 	}
+	if _, err := c.GroupAdd(&ipa.Group{Name: "e", External: true, GID: "7000"}); err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := lastOpts(s)["gidnumber"]; ok {
+		t.Errorf("gidnumber sent for external: %v", lastOpts(s))
+	}
 }
 
 func TestGroupAdd_Duplicate(t *testing.T) {
@@ -183,6 +189,24 @@ func TestGroupMod(t *testing.T) {
 	}
 	if g.Description != "new" {
 		t.Errorf("got %+v", g)
+	}
+}
+
+func TestGroupMod_GIDOnlyWhenPOSIX(t *testing.T) {
+	s, c := newFake(t)
+	s.AddGroup("g", ipatest.Group{Description: "d", GID: "5000"})
+	if _, err := c.GroupMod(&ipa.Group{Name: "g", Description: "x", GID: "5001"}); err != nil {
+		t.Fatal(err)
+	}
+	if lastOpts(s)["gidnumber"] != "5001" {
+		t.Errorf("options = %v", lastOpts(s))
+	}
+	s.AddGroup("n", ipatest.Group{Description: "d", NonPOSIX: true})
+	if _, err := c.GroupMod(&ipa.Group{Name: "n", Description: "x", GID: "5002", NonPOSIX: true}); err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := lastOpts(s)["gidnumber"]; ok {
+		t.Errorf("options = %v", lastOpts(s))
 	}
 }
 
