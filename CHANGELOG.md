@@ -7,33 +7,35 @@ existing exported identifiers keep their signatures).
 
 ## [Unreleased]
 
-- CI fails on any incompatible API change against the latest tag (apidiff).
-- `(*Client).RPC` and `RPCContext` call any FreeIPA command with the client's
-  TLS settings, session or Kerberos auth and API version (ubccr/goipa#11).
-- `rpc` and `UserFind` no longer write `version`/`all`/`no_members` into the
-  caller's `Options` map (data race when shared).
-- `Result` keeps `Count`, `Truncated`, `Messages`, `Completed`, `Failed`, and
-  the whole result object in `Raw` (for shapes without a `result` key such
-  as `hbactest`).
-- A response without `result` and `error` is an error instead of a
-  nil-pointer panic.
-- Responses over 64 MiB are rejected.
+- `(*Client).RPC` and `RPCContext` call any FreeIPA command with the
+  client's TLS settings, session or Kerberos auth and API version
+  (ubccr/goipa#11)
+- `Result` keeps `Count`, `Truncated`, `Messages`, `Completed`, `Failed`
+  and the whole result object in `Raw` (for shapes without a `result` key
+  such as `hbactest`)
 - FreeIPA error code constants (`CodeNotFound`, ...), `IpaError.Name` and
   `IpaError.Data`, and `errors.Is(err, ipa.ErrNotFound)` (also
-  `ErrDuplicateEntry`, `ErrACI`, `ErrEmptyModlist`). Errors are still a bare
-  `*IpaError`, so `err.(*ipa.IpaError)` keeps working.
-- Non-200 JSON-RPC responses return `*HTTPError`; HTTP 401 (e.g. an expired
-  session) matches `errors.Is(err, ipa.ErrUnauthorized)`. The message text is
-  unchanged.
-- `…Context` twins of every method that talks to the server (`PingContext`,
-  `RemoteLoginContext`, `UserShowContext`, `AddOTPTokenContext`, …). Kerberos `Login*` have none: gokrb5 cannot be
-  cancelled.
-- `SetSessionID` restores a saved session on any client.
-- Logging in again on the same `Client` destroys the previous Kerberos client
-  instead of leaking its renewal goroutine and credentials.
-- `AddOTPToken` no longer writes defaults into `DefaultTOTPToken` (data race)
-  or into the token passed in; it sends `NotBefore`/`NotAfter` in UTC (they
-  were sent in the caller's zone with a `Z` suffix).
+  `ErrDuplicateEntry`, `ErrACI`, `ErrEmptyModlist`). Errors are still a
+  bare `*IpaError`, so `err.(*ipa.IpaError)` keeps working
+- Non-200 JSON-RPC responses return `*HTTPError`; HTTP 401 (e.g. an
+  expired session) matches `errors.Is(err, ipa.ErrUnauthorized)`. The
+  message text is unchanged
+- `SetSessionID` restores a saved session on any client
+- `...Context` twins of every method that talks to the server
+  (`PingContext`, `RemoteLoginContext`, `UserShowContext`,
+  `AddOTPTokenContext`, ...). Kerberos `Login*` have none: gokrb5 cannot
+  be cancelled
+- `rpc` and `UserFind` no longer write `version`/`all`/`no_members` into
+  the caller's `Options` map (data race when shared)
+- A response without `result` and `error` is an error instead of a
+  nil-pointer panic
+- Responses over 64 MiB are rejected
+- `AddOTPToken` no longer writes defaults into `DefaultTOTPToken` (data
+  race) or into the token passed in; it sends `NotBefore`/`NotAfter` in
+  UTC (they were sent in the caller's zone with a `Z` suffix)
+- Logging in again on the same `Client` destroys the previous Kerberos
+  client instead of leaking its renewal goroutine and credentials
+- CI fails on any incompatible API change against the latest tag (apidiff)
 
 ## [v0.1.0] - 2026-10-22
 

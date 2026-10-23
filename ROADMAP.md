@@ -39,24 +39,24 @@ to influence them.
 
 The foundation every typed call builds on.
 
-- [ ] `Result` keeps the whole FreeIPA result: `Count`, `Truncated`,
+- [x] `Result` keeps the whole FreeIPA result: `Count`, `Truncated`,
       `Messages`, `Completed`, `Failed`, and `Raw` for shapes without a
       `result` key (e.g. `hbactest`)
-- [ ] Exported `(*Client).RPC` and `RPCContext`: any FreeIPA command with the
+- [x] Exported `(*Client).RPC` and `RPCContext`: any FreeIPA command with the
       client's TLS pool, session or Kerberos auth, and API version
       (ubccr/goipa#11 and every "raw call" workaround)
-- [ ] Typed errors: FreeIPA error code constants, `IpaError.Name`/`Data`,
+- [x] Typed errors: FreeIPA error code constants, `IpaError.Name`/`Data`,
       `errors.Is(err, ipa.ErrNotFound)` and friends; `*IpaError` itself stays
       unwrapped
-- [ ] HTTP 401 matches `ErrUnauthorized`; other non-200 responses return
+- [x] HTTP 401 matches `ErrUnauthorized`; other non-200 responses return
       `*HTTPError`
-- [ ] Robustness: nil `result` is an error instead of a panic, response size
+- [x] Robustness: nil `result` is an error instead of a panic, response size
       cap, caller's `Options` map is not modified, `AddOTPToken` no longer
       writes into `DefaultTOTPToken` and sends token validity dates in UTC,
       replaced Kerberos clients are destroyed
-- [ ] `SetSessionID` to restore a saved session on any client
-- [ ] `…Context` twins of every existing method
-- [ ] CI: `apidiff` against the latest tag fails on incompatible changes
+- [x] `SetSessionID` to restore a saved session on any client
+- [x] `…Context` twins of every existing method
+- [x] CI: `apidiff` against the latest tag fails on incompatible changes
 
 Accept: every v0.0.7 call site compiles unchanged; `RPC` works against a
 server whose CA is only in the client's pool.
