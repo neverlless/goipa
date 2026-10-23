@@ -91,6 +91,14 @@ func twinCalls() []twinCall {
 		{"DisableOTPTokenContext", func(ctx context.Context, c *ipa.Client) error {
 			return c.DisableOTPTokenContext(ctx, "u")
 		}},
+		{"GroupShowContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.GroupShowContext(ctx, "g")
+			return err
+		}},
+		{"GroupFindContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.GroupFindContext(ctx, nil)
+			return err
+		}},
 	}
 }
 
