@@ -10,3 +10,4 @@ docs/
 .claude
 CLAUDE.md
 coverage.out
+svc.keytab
