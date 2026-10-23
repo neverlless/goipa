@@ -398,7 +398,7 @@ func TestContractSessionCookieFormat(t *testing.T) {
 // TestContractReferer pins Q12.
 func TestContractReferer(t *testing.T) {
 	forEachBackend(t, func(t *testing.T, b backend) {
-		res := rawPost(t, b, "/ipa/session/login_password", url.Values{"user": {"admin"}, "password": {"x"}}, false)
+		res := rawPost(t, b, "/ipa/session/login_password", url.Values{"user": {newUID(t, b)}, "password": {"x"}}, false)
 		if res.StatusCode != 400 {
 			t.Fatalf("login_password without Referer: HTTP %d, want 400", res.StatusCode)
 		}
@@ -475,6 +475,11 @@ func TestContractLastOTPToken(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
+		// Runs before newUID's user delete; the guard must be off to remove the token.
+		t.Cleanup(func() {
+			_ = b.admin.SetAuthTypes(uid, nil)
+			_ = b.admin.RemoveOTPToken(tok.UUID)
+		})
 		if err := b.admin.SetAuthTypes(uid, []string{"otp"}); err != nil {
 			t.Fatal(err)
 		}
