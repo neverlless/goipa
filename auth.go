@@ -37,6 +37,8 @@ func (c *Client) SetSessionID(sessionID string) {
 // setKrbClient destroys the replaced client: gokrb5 runs a renewal goroutine
 // per login and keeps the key material.
 func (c *Client) setKrbClient(cl *client.Client) {
+	c.krbMu.Lock()
+	defer c.krbMu.Unlock()
 	c.mu.Lock()
 	old := c.krbClient
 	c.krbClient = cl
