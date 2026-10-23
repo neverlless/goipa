@@ -109,6 +109,20 @@ func (e *IpaError) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
+// MarshalJSON writes FreeIPA's error shape; an empty Data becomes {}.
+func (e *IpaError) MarshalJSON() ([]byte, error) {
+	data := json.RawMessage(e.Data)
+	if len(data) == 0 {
+		data = json.RawMessage("{}")
+	}
+	return json.Marshal(struct {
+		Code    int             `json:"code"`
+		Message string          `json:"message"`
+		Name    string          `json:"name"`
+		Data    json.RawMessage `json:"data"`
+	}{e.Code, e.Message, e.Name, data})
+}
+
 func (e *IpaError) Error() string {
 	return fmt.Sprintf("ipa: error %d - %s", e.Code, e.Message)
 }
