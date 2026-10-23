@@ -56,7 +56,9 @@ up() {
   if [ -e /etc/krb5.conf ] && [ ! -e /etc/krb5.conf.goipa-bak ]; then
     sudo cp -p /etc/krb5.conf /etc/krb5.conf.goipa-bak
   fi
-  printf '[libdefaults]\n default_realm = %s\n[realms]\n %s = {\n  kdc = %s\n }\n' "$IPA_REALM" "$IPA_REALM" "$IPA_FQDN" | sudo tee /etc/krb5.conf >/dev/null
+  # forwardable as ipa-client-install sets it: FreeIPA's S4U2Proxy needs a
+  # forwardable service ticket, else every call fails 2100 "Credential cache is empty".
+  printf '[libdefaults]\n default_realm = %s\n forwardable = true\n[realms]\n %s = {\n  kdc = %s\n }\n' "$IPA_REALM" "$IPA_REALM" "$IPA_FQDN" | sudo tee /etc/krb5.conf >/dev/null
 
   # Dedicated user: ipa-getkeytab rotates keys, which would break admin password tests.
   docker exec "$NAME" sh -c 'echo "$PASSWORD" | kinit admin >/dev/null && ipa user-add goipa-svc --first Go --last Svc >/dev/null && ipa-getkeytab -p goipa-svc -k /tmp/svc.keytab >/dev/null'
