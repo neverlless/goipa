@@ -7,9 +7,20 @@ existing exported identifiers keep their signatures).
 
 ## [Unreleased]
 
-- Keytab, password and ccache logins work on ipa-client 4.13 hosts:
-  `include` and `includedir` in krb5.conf are resolved as MIT krb5 does,
-  except that a missing include file or includedir is skipped
+## [v0.2.1] - 2026-10-23
+
+- Keytab, password and ccache logins work on ipa-client 4.13 hosts
+  (RHEL / CentOS Stream 9 and 10). ipa-client-install 4.13 moves
+  `[realms]` to `/etc/krb5.conf.d/freeipa-realm` and leaves only
+  `includedir` in krb5.conf, which gokrb5 ignores, so logins failed with
+  `lookup _kerberos._tcp.<REALM> ... no such host` unless the realm had
+  DNS SRV records
+- `include` and `includedir` in krb5.conf are now resolved as MIT krb5
+  does: single values take the first definition, a realm defined in
+  several files keeps all its `kdc` entries, and only file names MIT
+  accepts are read from an includedir. A missing include file or
+  includedir is skipped, as before. A krb5.conf without include
+  directives is parsed exactly as before
 
 ## [v0.2.0] - 2026-10-23
 
@@ -105,6 +116,7 @@ v0.0.1 – v0.0.7 were released by Andrew E. Bruno as
 [ubccr/goipa](https://github.com/ubccr/goipa/tags). This repository keeps
 that history.
 
-[Unreleased]: https://github.com/neverlless/goipa/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/neverlless/goipa/compare/v0.2.1...HEAD
+[v0.2.1]: https://github.com/neverlless/goipa/compare/v0.2.0...v0.2.1
 [v0.2.0]: https://github.com/neverlless/goipa/compare/v0.1.0...v0.2.0
 [v0.1.0]: https://github.com/neverlless/goipa/releases/tag/v0.1.0
