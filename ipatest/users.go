@@ -1,0 +1,473 @@
+// Copyright 2026 goipa Authors. All rights reserved.
+// Use of this source code is governed by a BSD style
+// license that can be found in the LICENSE file.
+
+package ipatest
+
+import (
+	"crypto/rand"
+	"encoding/base64"
+	"fmt"
+	"net/http"
+	"reflect"
+	"slices"
+	"sort"
+	"strconv"
+	"strings"
+	"time"
+
+	ipa "github.com/neverlless/goipa"
+)
+
+const (
+	firstID      = 1000000 // first uidnumber, as FreeIPA's default ID range
+	maxFailures  = 6       // krbpwdmaxfailure
+	minPwdLength = 8       // krbpwdminlength
+	baseDN       = "cn=users,cn=accounts,dc=test,dc=local"
+)
+
+// User is a user account of the fake server.
+type User struct {
+	Password     string // "" = no password: login always invalid-password, has_password false
+	Expired      bool
+	Locked       bool     // nsaccountlock (user_disable)
+	Preserved    bool     // set by user_del preserve=true
+	Groups       []string // memberof_group
+	AuthTypes    []string // ipauserauthtype
+	Email        string
+	First        string
+	Last         string
+	DisplayName  string
+	Category     string
+	Telephone    string
+	Mobile       string
+	Shell        string
+	HomeDir      string
+	SSHPubKeys   []string // ipasshpubkey, authorized_keys lines
+	FailedLogins int
+	PasswdExpire time.Time
+}
+
+// userRec is a stored user plus the attributes the server assigns.
+type userRec struct {
+	User
+	id   int
+	uuid string
+}
+
+func (u User) clone() User {
+	u.Groups = slices.Clone(u.Groups)
+	u.AuthTypes = slices.Clone(u.AuthTypes)
+	u.SSHPubKeys = slices.Clone(u.SSHPubKeys)
+	return u
+}
+
+// AddUser creates or replaces user uid. Empty fields get defaults: Email
+// uid@example.com, First "Test", Last "User", HomeDir /home/uid, Shell /bin/sh.
+func (s *Server) AddUser(uid string, u User) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.putUser(uid, u)
+}
+
+// putUser needs s.mu held. A replaced user keeps its ids.
+func (s *Server) putUser(uid string, u User) *userRec {
+	u = u.clone()
+	def := func(p *string, v string) {
+		if *p == "" {
+			*p = v
+		}
+	}
+	def(&u.Email, uid+"@example.com")
+	def(&u.First, "Test")
+	def(&u.Last, "User")
+	def(&u.HomeDir, "/home/"+uid)
+	def(&u.Shell, "/bin/sh")
+	r := s.users[uid]
+	if r == nil {
+		s.nextID++
+		r = &userRec{id: s.nextID, uuid: newUUID()}
+		s.users[uid] = r
+	}
+	r.User = u
+	return r
+}
+
+// User returns a copy of user uid.
+func (s *Server) User(uid string) (User, bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	r, ok := s.users[uid]
+	if !ok {
+		return User{}, false
+	}
+	return r.User.clone(), true
+}
+
+// UpdateUser runs fn on a copy of user uid and stores the result. It reports
+// whether the user exists. fn runs without the server lock held.
+func (s *Server) UpdateUser(uid string, fn func(*User)) bool {
+	u, ok := s.User(uid)
+	if !ok {
+		return false
+	}
+	fn(&u)
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	r, ok := s.users[uid]
+	if ok {
+		r.User = u.clone()
+	}
+	return ok
+}
+
+func newUUID() string {
+	b := make([]byte, 16)
+	_, _ = rand.Read(b)
+	b[6] = b[6]&0x0f | 0x40
+	b[8] = b[8]&0x3f | 0x80
+	return fmt.Sprintf("%x-%x-%x-%x-%x", b[0:4], b[4:6], b[6:8], b[8:10], b[10:])
+}
+
+func randomPassword() string {
+	b := make([]byte, 12)
+	_, _ = rand.Read(b)
+	return base64.RawURLEncoding.EncodeToString(b)
+}
+
+// render is the user record as FreeIPA's JSON API returns it (Q16): LDAP
+// attributes are lists, nsaccountlock, has_password, has_keytab, preserved
+// and randompassword are scalars, datetimes are {"__datetime__": ...}.
+func (r *userRec) render(uid string) map[string]any {
+	out := map[string]any{
+		"dn":               "uid=" + uid + "," + baseDN,
+		"uid":              []string{uid},
+		"krbprincipalname": []string{uid + "@" + realm},
+		"uidnumber":        []string{strconv.Itoa(r.id)},
+		"gidnumber":        []string{strconv.Itoa(r.id)},
+		"ipauniqueid":      []string{r.uuid},
+		"nsaccountlock":    r.Locked,
+		"has_password":     r.Password != "",
+		"has_keytab":       false,
+		"preserved":        r.Preserved,
+	}
+	for k, v := range map[string][]string{
+		"givenname":       {r.First},
+		"sn":              {r.Last},
+		"displayname":     {r.DisplayName},
+		"mail":            {r.Email},
+		"homedirectory":   {r.HomeDir},
+		"loginshell":      {r.Shell},
+		"telephonenumber": {r.Telephone},
+		"mobile":          {r.Mobile},
+		"userclass":       {r.Category},
+		"ipasshpubkey":    r.SSHPubKeys,
+		"ipauserauthtype": r.AuthTypes,
+		"memberof_group":  r.Groups,
+	} {
+		v = slices.DeleteFunc(slices.Clone(v), func(s string) bool { return s == "" })
+		if len(v) > 0 {
+			out[k] = v
+		}
+	}
+	if !r.PasswdExpire.IsZero() {
+		out["krbpasswordexpiration"] = []map[string]string{{"__datetime__": r.PasswdExpire.UTC().Format(ipa.IpaDatetimeFormat)}}
+	}
+	return out
+}
+
+// strs reads an option that is a string or a list of strings; "" is no value.
+func strs(v any) []string {
+	var out []string
+	switch v := v.(type) {
+	case string:
+		out = []string{v}
+	case []any:
+		for _, e := range v {
+			out = append(out, fmt.Sprint(e))
+		}
+	}
+	return slices.DeleteFunc(out, func(s string) bool { return s == "" })
+}
+
+func str(v any) string {
+	if s := strs(v); len(s) > 0 {
+		return s[0]
+	}
+	return ""
+}
+
+func flag(c Call, name string) bool {
+	b, _ := c.Options[name].(bool)
+	return b
+}
+
+// apply sets the user attributes present in opts, the ones ToOptions sends
+// plus ipauserauthtype. An empty value clears the attribute.
+func (u *User) apply(opts map[string]any) {
+	for k, v := range opts {
+		switch k {
+		case "mail":
+			u.Email = str(v)
+		case "givenname":
+			u.First = str(v)
+		case "sn":
+			u.Last = str(v)
+		case "homedirectory":
+			u.HomeDir = str(v)
+		case "loginshell":
+			u.Shell = str(v)
+		case "displayname":
+			u.DisplayName = str(v)
+		case "telephonenumber":
+			u.Telephone = str(v)
+		case "mobile":
+			u.Mobile = str(v)
+		case "userclass":
+			u.Category = str(v)
+		case "ipasshpubkey":
+			u.SSHPubKeys = strs(v)
+		case "ipauserauthtype":
+			u.AuthTypes = strs(v)
+		}
+	}
+}
+
+// uidArg is the primary key every user command takes.
+func uidArg(c Call) (string, *ipa.IpaError) {
+	if len(c.Args) == 0 || c.Args[0] == "" {
+		return "", required("uid")
+	}
+	return c.Args[0], nil
+}
+
+// userArg looks up the user c names.
+func (s *Server) userArg(c Call) (string, *userRec, *ipa.IpaError) {
+	uid, err := uidArg(c)
+	if err != nil {
+		return "", nil, err
+	}
+	r := s.users[uid]
+	if r == nil {
+		return "", nil, notFound(uid, "user")
+	}
+	return uid, r, nil
+}
+
+// withRandom implements Q3: random=true sets a random password, returned in
+// this response only, and expired.
+func (r *userRec) withRandom(c Call, rec map[string]any) {
+	if flag(c, "random") {
+		r.Password, r.Expired = randomPassword(), true
+		rec["randompassword"] = r.Password
+		rec["has_password"] = true
+	}
+}
+
+func userShow(s *Server, c Call) (any, *ipa.IpaError) {
+	uid, r, err := s.userArg(c)
+	if err != nil {
+		return nil, err
+	}
+	return entry(uid, r.render(uid), ""), nil
+}
+
+func userFind(s *Server, c Call) (any, *ipa.IpaError) {
+	needle := ""
+	if len(c.Args) > 0 {
+		needle = strings.ToLower(c.Args[0])
+	}
+	all := flag(c, "all")
+	var uids []string
+	for uid, r := range s.users {
+		if r.Preserved && !flag(c, "preserved") {
+			continue
+		}
+		if needle != "" && !slices.ContainsFunc([]string{uid, r.First, r.Last, r.Email}, func(v string) bool {
+			return strings.Contains(strings.ToLower(v), needle)
+		}) {
+			continue
+		}
+		if !matches(c, "uid", uid) || !matches(c, "mail", r.Email) || !matches(c, "givenname", r.First) || !matches(c, "sn", r.Last) {
+			continue
+		}
+		uids = append(uids, uid)
+	}
+	sort.Strings(uids)
+	recs := make([]map[string]any, 0, len(uids))
+	for _, uid := range uids {
+		rec := s.users[uid].render(uid)
+		if !all { // Q1
+			delete(rec, "userclass")
+		}
+		recs = append(recs, rec)
+	}
+	return list(recs), nil
+}
+
+func matches(c Call, opt, have string) bool {
+	v, ok := c.Options[opt]
+	return !ok || str(v) == have
+}
+
+func userAdd(s *Server, c Call) (any, *ipa.IpaError) {
+	uid, err := uidArg(c)
+	if err != nil {
+		return nil, err
+	}
+	if s.users[uid] != nil { // Q10
+		return nil, &ipa.IpaError{Code: ipa.CodeDuplicateEntry, Message: fmt.Sprintf("user with name %q already exists", uid)}
+	}
+	var u User
+	u.apply(c.Options)
+	if u.First == "" {
+		return nil, required("givenname")
+	}
+	if u.Last == "" {
+		return nil, required("sn")
+	}
+	r := s.putUser(uid, u)
+	rec := r.render(uid)
+	r.withRandom(c, rec)
+	return entry(uid, rec, fmt.Sprintf("Added user %q", uid)), nil
+}
+
+func userMod(s *Server, c Call) (any, *ipa.IpaError) {
+	uid, r, err := s.userArg(c)
+	if err != nil {
+		return nil, err
+	}
+	next := r.User.clone()
+	next.apply(c.Options)
+	random := flag(c, "random")
+	if !random && reflect.DeepEqual(next, r.User) { // Q11
+		return nil, &ipa.IpaError{Code: ipa.CodeEmptyModlist, Message: "no modifications to be performed"}
+	}
+	r.User = next
+	rec := r.render(uid)
+	r.withRandom(c, rec)
+	return entry(uid, rec, fmt.Sprintf("Modified user %q", uid)), nil
+}
+
+func userDel(s *Server, c Call) (any, *ipa.IpaError) {
+	var deleted, failed []string
+	for _, uid := range c.Args {
+		if s.users[uid] == nil {
+			if !flag(c, "continue") {
+				return nil, notFound(uid, "user")
+			}
+			failed = append(failed, uid)
+		} else {
+			deleted = append(deleted, uid)
+		}
+	}
+	for _, uid := range deleted {
+		if flag(c, "preserve") {
+			s.users[uid].Preserved, s.users[uid].Locked = true, true
+		} else {
+			delete(s.users, uid)
+		}
+	}
+	if failed == nil {
+		failed = []string{}
+	}
+	if deleted == nil {
+		deleted = []string{}
+	}
+	return map[string]any{
+		"result":  map[string]any{"failed": failed},
+		"value":   deleted,
+		"summary": fmt.Sprintf("Deleted user %q", strings.Join(deleted, ",")),
+	}, nil
+}
+
+// setLocked implements user_disable and user_enable, Q17.
+func setLocked(lock bool) builtin {
+	return func(s *Server, c Call) (any, *ipa.IpaError) {
+		uid, r, err := s.userArg(c)
+		if err != nil {
+			return nil, err
+		}
+		if r.Locked == lock {
+			if lock {
+				return nil, &ipa.IpaError{Code: ipa.CodeAlreadyInactive, Message: "This entry is already disabled"}
+			}
+			return nil, &ipa.IpaError{Code: ipa.CodeAlreadyActive, Message: "This entry is already enabled"}
+		}
+		r.Locked = lock
+		verb := "Enabled"
+		if lock {
+			verb = "Disabled"
+		}
+		return map[string]any{"result": true, "value": uid, "summary": fmt.Sprintf("%s user account %q", verb, uid)}, nil
+	}
+}
+
+func passwd(s *Server, c Call) (any, *ipa.IpaError) {
+	uid, r, err := s.userArg(c)
+	if err != nil {
+		return nil, err
+	}
+	if cur, ok := c.Options["current_password"]; ok && (r.Password == "" || str(cur) != r.Password) { // Q9
+		return nil, &ipa.IpaError{Code: ipa.CodeACI, Message: "Insufficient access: Invalid credentials"}
+	}
+	pw := str(c.Options["password"])
+	if pw == "" {
+		return nil, required("password")
+	}
+	r.Password = pw
+	r.Expired = c.User != uid // Q3: a password set by someone else is expired
+	return map[string]any{"result": true, "value": uid, "summary": fmt.Sprintf("Changed password for %q", uid)}, nil
+}
+
+func loginPassword(s *Server, w http.ResponseWriter, r *http.Request) {
+	uid, pw := r.FormValue("user"), r.FormValue("password")
+	reject := func(reason string) {
+		w.Header().Set("X-IPA-Rejection-Reason", reason)
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+	}
+	u := s.users[uid]
+	switch {
+	case u == nil || u.Password == "":
+		reject("invalid-password")
+	case u.Locked || u.Preserved || u.FailedLogins >= maxFailures: // Q6, Q8
+		reject("user-locked")
+	case u.Password != pw:
+		u.FailedLogins++
+		reject("invalid-password")
+	case u.Expired || (!u.PasswdExpire.IsZero() && !u.PasswdExpire.After(time.Now())): // Q5
+		reject("password-expired")
+	default:
+		u.FailedLogins = 0
+		setSessionCookie(w, s.newSession(uid))
+	}
+}
+
+func changePassword(s *Server, w http.ResponseWriter, r *http.Request) {
+	u := s.users[r.FormValue("user")]
+	newPw := r.FormValue("new_password")
+	result := "ok"
+	switch {
+	case u == nil || u.Password == "" || u.Password != r.FormValue("old_password"):
+		result = "invalid-password"
+	case len(newPw) < minPwdLength:
+		result = "policy-error"
+		w.Header().Set("X-IPA-Pwchange-Policy-Error", "Constraint violation: Password is too short")
+	default:
+		u.Password, u.Expired, u.PasswdExpire = newPw, false, time.Time{}
+	}
+	w.Header().Set("X-IPA-Pwchange-Result", result)
+}
+
+func init() {
+	builtins["user_show"] = userShow
+	builtins["user_find"] = userFind
+	builtins["user_add"] = userAdd
+	builtins["user_mod"] = userMod
+	builtins["user_del"] = userDel
+	builtins["user_disable"] = setLocked(true)
+	builtins["user_enable"] = setLocked(false)
+	builtins["passwd"] = passwd
+	forms["/ipa/session/login_password"] = loginPassword
+	forms["/ipa/session/change_password"] = changePassword
+}
