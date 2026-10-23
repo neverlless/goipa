@@ -25,8 +25,10 @@
 //
 // # Auth model
 //
-// Every authenticated caller may run every command; ACIs are not evaluated;
-// OTP codes are not checked. A caller is authenticated by a session from
+// Every authenticated caller may run every command; ACIs are not evaluated,
+// so where FreeIPA answers 2100 ACIError ipatest runs the command: an
+// ordinary user deleting a missing OTP token gets 4001 NotFound here and
+// "2100 Insufficient access" from FreeIPA. OTP codes are not checked. A caller is authenticated by a session from
 // Session, ClientAs or a login, or, on /ipa/json, by SetNegotiateUser.
 //
 // # FreeIPA behaviour kept
@@ -59,7 +61,9 @@
 //     4.13.1 answers invalid-password instead of user-locked (issue 9891).
 //     TestLoginFormRejections, goipa.TestContractLoginRejection.
 //   - Q6: after 6 wrong passwords (krbpwdmaxfailure) even the right one is
-//     user-locked; a successful login resets the count.
+//     user-locked; a successful login resets the count. FreeIPA before
+//     4.13.1 reports invalid-password here too (issue 9891); ipatest
+//     models 4.13.4.
 //     TestLoginFormRejections, goipa.TestContractLockout.
 //   - Q7: disabling or deleting the last enabled OTP token of a user whose
 //     ipauserauthtype is exactly "otp" fails with 4203 DatabaseError "Can't
@@ -84,9 +88,10 @@
 //     an ipa_session cookie "MagBearerToken=<token>" it did not issue (one
 //     from another server, or forged): FreeIPA 4.9 to 4.13 crash the httpd
 //     child on a token they cannot decrypt, and goipa returns the transport
-//     error (io.EOF). Any other unknown or missing cookie answers HTTP 401
-//     with "WWW-Authenticate: Negotiate", which goipa maps to
-//     ErrUnauthorized. TestSessionsNotShared, TestUnknownSession,
+//     error (io.EOF). A session ended with ExpireSession, and any other
+//     unknown or missing cookie, answers HTTP 401 with "WWW-Authenticate:
+//     Negotiate", which goipa maps to ErrUnauthorized. TestSessionsNotShared,
+//     TestUnknownSession, TestExpireSession,
 //     goipa.TestContractInvalidSession.
 //   - Q14: an unknown command fails with 905 CommandError ("unknown command
 //     '<name>'"). TestUnknownCommand, goipa.TestContractUnknownCommand.
