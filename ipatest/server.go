@@ -90,6 +90,7 @@ type Server struct {
 	calls     []Call
 	handlers  map[string]HandlerFunc
 	users     map[string]*userRec
+	tokens    []*OTPToken
 	nextID    int // last uidnumber handed out
 }
 
