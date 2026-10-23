@@ -28,6 +28,9 @@ existing exported identifiers keep their signatures).
 - `SetSessionID` restores a saved session on any client.
 - Logging in again on the same `Client` destroys the previous Kerberos client
   instead of leaking its renewal goroutine and credentials.
+- `AddOTPToken` no longer writes defaults into `DefaultTOTPToken` (data race)
+  or into the token passed in; it sends `NotBefore`/`NotAfter` in UTC (they
+  were sent in the caller's zone with a `Z` suffix).
 
 ## [v0.1.0] - 2026-10-22
 
