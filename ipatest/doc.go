@@ -55,7 +55,8 @@
 //   - Q5: login_password answers 401 with X-IPA-Rejection-Reason
 //     invalid-password (unknown user, no password, wrong password),
 //     password-expired (PasswdExpire set and not in the future) or
-//     user-locked (disabled and preserved accounts too).
+//     user-locked (disabled and preserved accounts too). FreeIPA before
+//     4.13.1 answers invalid-password instead of user-locked (issue 9891).
 //     TestLoginFormRejections, goipa.TestContractLoginRejection.
 //   - Q6: after 6 wrong passwords (krbpwdmaxfailure) even the right one is
 //     user-locked; a successful login resets the count.
