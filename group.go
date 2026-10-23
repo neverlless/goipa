@@ -6,7 +6,9 @@ package ipa
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"maps"
 	"strings"
 
@@ -197,4 +199,129 @@ func (c *Client) GroupDeleteContext(ctx context.Context, names ...string) error 
 	}
 	_, err := c.rpc(ctx, "group_del", names, Options{"continue": false})
 	return err
+}
+
+// MemberFailure is one member FreeIPA refused to add or remove.
+type MemberFailure struct {
+	Kind    string // "member" or "membermanager"
+	Type    string // "user" or "group"
+	Name    string
+	Message string
+}
+
+// MemberError reports the members a group member call could not change.
+// FreeIPA lists them in the result, with no error, even when the caller lacks
+// the right to change members at all.
+type MemberError struct {
+	Failures []MemberFailure
+}
+
+func (e *MemberError) Error() string {
+	parts := make([]string, len(e.Failures))
+	for i, f := range e.Failures {
+		parts[i] = fmt.Sprintf("%s %s: %s", f.Type, f.Name, f.Message)
+	}
+	s := "s"
+	if len(parts) == 1 {
+		s = ""
+	}
+	return fmt.Sprintf("ipa: %d member failure%s: %s", len(parts), s, strings.Join(parts, "; "))
+}
+
+func parseMemberFailures(failed json.RawMessage) []MemberFailure {
+	var out []MemberFailure
+	gjson.ParseBytes(failed).ForEach(func(kind, types gjson.Result) bool {
+		types.ForEach(func(typ, pairs gjson.Result) bool {
+			for _, p := range pairs.Array() {
+				out = append(out, MemberFailure{Kind: kind.String(), Type: typ.String(), Name: p.Get("0").String(), Message: p.Get("1").String()})
+			}
+			return true
+		})
+		return true
+	})
+	return out
+}
+
+func (c *Client) groupMembers(ctx context.Context, method, group string, users, groups []string) (*Group, error) {
+	if group == "" {
+		return nil, errors.New("ipa: group name is required")
+	}
+	if len(users) == 0 && len(groups) == 0 {
+		return nil, errors.New("ipa: no users or groups given")
+	}
+	options := Options{"all": true}
+	if len(users) > 0 {
+		options["user"] = users
+	}
+	if len(groups) > 0 {
+		options["group"] = groups
+	}
+	res, err := c.rpc(ctx, method, []string{group}, options)
+	if err != nil {
+		return nil, err
+	}
+	g, err := groupResult(res)
+	if err != nil {
+		return nil, err
+	}
+	// Failed may be absent or the bytes null; both parse to no failures.
+	if f := parseMemberFailures(res.Result.Failed); len(f) > 0 {
+		return g, &MemberError{Failures: f}
+	}
+	return g, nil
+}
+
+// GroupAddMember adds users and groups to a group with `group_add_member`. It
+// needs the Group Administrators or Modify Group membership privilege, or the
+// caller is a member manager of the group; per-member problems, including
+// insufficient access, are returned as *MemberError, together with the group
+// as it stands. This is the context-aware API from ubccr/goipa#17, generalised
+// to users and groups.
+func (c *Client) GroupAddMember(group string, users, groups []string) (*Group, error) {
+	return c.GroupAddMemberContext(context.Background(), group, users, groups)
+}
+
+// GroupAddMemberContext is like GroupAddMember but bounds the request with ctx.
+func (c *Client) GroupAddMemberContext(ctx context.Context, group string, users, groups []string) (*Group, error) {
+	return c.groupMembers(ctx, "group_add_member", group, users, groups)
+}
+
+// GroupRemoveMember removes users and groups from a group with
+// `group_remove_member`. It needs the Group Administrators or Modify Group
+// membership privilege, or the caller is a member manager of the group;
+// per-member problems, including insufficient access, are returned as
+// *MemberError, together with the group as it stands.
+func (c *Client) GroupRemoveMember(group string, users, groups []string) (*Group, error) {
+	return c.GroupRemoveMemberContext(context.Background(), group, users, groups)
+}
+
+// GroupRemoveMemberContext is like GroupRemoveMember but bounds the request with ctx.
+func (c *Client) GroupRemoveMemberContext(ctx context.Context, group string, users, groups []string) (*Group, error) {
+	return c.groupMembers(ctx, "group_remove_member", group, users, groups)
+}
+
+// GroupAddMemberManager makes users and groups member managers of a group
+// with `group_add_member_manager`; it requires the Group Administrators
+// privilege (System: Modify Groups). Per-member problems are returned as
+// *MemberError, together with the group as it stands.
+func (c *Client) GroupAddMemberManager(group string, users, groups []string) (*Group, error) {
+	return c.GroupAddMemberManagerContext(context.Background(), group, users, groups)
+}
+
+// GroupAddMemberManagerContext is like GroupAddMemberManager but bounds the request with ctx.
+func (c *Client) GroupAddMemberManagerContext(ctx context.Context, group string, users, groups []string) (*Group, error) {
+	return c.groupMembers(ctx, "group_add_member_manager", group, users, groups)
+}
+
+// GroupRemoveMemberManager removes member managers from a group with
+// `group_remove_member_manager`; it requires the Group Administrators
+// privilege (System: Modify Groups). Per-member problems are returned as
+// *MemberError, together with the group as it stands.
+func (c *Client) GroupRemoveMemberManager(group string, users, groups []string) (*Group, error) {
+	return c.GroupRemoveMemberManagerContext(context.Background(), group, users, groups)
+}
+
+// GroupRemoveMemberManagerContext is like GroupRemoveMemberManager but bounds the request with ctx.
+func (c *Client) GroupRemoveMemberManagerContext(ctx context.Context, group string, users, groups []string) (*Group, error) {
+	return c.groupMembers(ctx, "group_remove_member_manager", group, users, groups)
 }
