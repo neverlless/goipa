@@ -86,16 +86,22 @@ func (rt *swapRT) RoundTrip(r *http.Request) (*http.Response, error) {
 }
 
 func TestExpiredSession_CompareAndClear(t *testing.T) {
-	c, _ := expiryServer(t)
 	const fresh = "MagBearerToken=fresh"
-	c.httpClient.Transport = &swapRT{next: c.httpClient.Transport, fn: func() { c.SetSessionID(fresh) }}
-	c.SetSessionID(oldSID)
-	// The old session's 401 must not clear the fresh one; the retry uses it.
-	if _, err := c.Ping(); err != nil {
-		t.Fatal(err)
-	}
-	if c.SessionID() != fresh {
-		t.Errorf("SessionID = %q, want %q", c.SessionID(), fresh)
+	// start "" is a request sent after another goroutine's 401 cleared the
+	// session; its 401 is retried on the session that goroutine then stored.
+	for _, start := range []string{oldSID, ""} {
+		t.Run("start="+start, func(t *testing.T) {
+			c, _ := expiryServer(t)
+			c.httpClient.Transport = &swapRT{next: c.httpClient.Transport, fn: func() { c.SetSessionID(fresh) }}
+			c.SetSessionID(start)
+			// The 401 must not clear the fresh session; the retry uses it.
+			if _, err := c.Ping(); err != nil {
+				t.Fatal(err)
+			}
+			if c.SessionID() != fresh {
+				t.Errorf("SessionID = %q, want %q", c.SessionID(), fresh)
+			}
+		})
 	}
 }
 

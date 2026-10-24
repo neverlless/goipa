@@ -27,7 +27,8 @@ func TestKrb5Config_Source(t *testing.T) {
 	require.Equal(t, "P.TEST", cfg.LibDefaults.DefaultRealm)
 
 	c.krb5Path = p
-	cfg, _ = c.krb5Config()
+	cfg, err = c.krb5Config()
+	require.NoError(t, err)
 	require.Equal(t, "D.TEST", cfg.LibDefaults.DefaultRealm, "data wins over path")
 }
 
