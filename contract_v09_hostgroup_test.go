@@ -132,8 +132,8 @@ func TestContractHostGroupManagers(t *testing.T) {
 	})
 }
 
-// TestContractHostGroupMixedCase pins Q51's case rule: the name keeps its
-// case, and find's criteria match it case-insensitively.
+// TestContractHostGroupMixedCase pins Q51's case rule: FreeIPA lower-cases
+// the name, and the mixed-case name still finds it.
 func TestContractHostGroupMixedCase(t *testing.T) {
 	forEachBackend(t, func(t *testing.T, b backend) {
 		cn := "GoipaMixed" + randHex(t, 4)
@@ -146,12 +146,12 @@ func TestContractHostGroupMixedCase(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if added.Name != cn || g.Name != cn {
-			t.Errorf("added %q, shown %q, want %q", added.Name, g.Name, cn)
+		if lower := strings.ToLower(cn); added.Name != lower || g.Name != lower {
+			t.Errorf("added %q, shown %q, want %q", added.Name, g.Name, lower)
 		}
-		res := mustRPC(t, b.admin, "hostgroup_find", []string{strings.ToLower(cn)}, nil)
+		res := mustRPC(t, b.admin, "hostgroup_find", []string{cn}, nil)
 		if res.Result.Count != 1 {
-			t.Errorf("find %q: %d matches, want 1", strings.ToLower(cn), res.Result.Count)
+			t.Errorf("find %q: %d matches, want 1", cn, res.Result.Count)
 		}
 	})
 }

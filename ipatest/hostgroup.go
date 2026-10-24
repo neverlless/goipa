@@ -33,19 +33,20 @@ func (g HostGroup) clone() HostGroup {
 	return g
 }
 
-// AddHostGroup creates or replaces host group cn.
+// AddHostGroup creates or replaces host group cn; the name is lower-cased,
+// as FreeIPA does (Q51).
 func (s *Server) AddHostGroup(cn string, g HostGroup) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	g = g.clone()
-	s.hostgroups[cn] = &g
+	s.hostgroups[strings.ToLower(cn)] = &g
 }
 
 // HostGroup returns a copy of host group cn.
 func (s *Server) HostGroup(cn string) (HostGroup, bool) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	g, ok := s.hostgroups[cn]
+	g, ok := s.hostgroups[strings.ToLower(cn)]
 	if !ok {
 		return HostGroup{}, false
 	}
@@ -143,7 +144,7 @@ func (s *Server) hostGroupArg(c Call) (string, *HostGroup, *ipa.IpaError) {
 	if len(c.Args) == 0 || c.Args[0] == "" {
 		return "", nil, required("cn")
 	}
-	cn := c.Args[0]
+	cn := strings.ToLower(c.Args[0])
 	g := s.hostgroups[cn]
 	if g == nil {
 		return "", nil, notFound(cn, "host group")
@@ -192,7 +193,7 @@ func hostGroupAdd(s *Server, c Call) (any, *ipa.IpaError) {
 	if len(c.Args) == 0 || c.Args[0] == "" {
 		return nil, required("cn")
 	}
-	cn := c.Args[0]
+	cn := strings.ToLower(c.Args[0])
 	if s.hostgroups[cn] != nil {
 		return nil, &ipa.IpaError{Code: ipa.CodeDuplicateEntry, Message: fmt.Sprintf("host group with name %q already exists", cn)}
 	}
@@ -208,12 +209,13 @@ func dropName(l []string, n string) []string {
 }
 
 func hostGroupDel(s *Server, c Call) (any, *ipa.IpaError) {
-	for _, cn := range c.Args {
-		if s.hostgroups[cn] == nil {
+	deleted := make([]string, len(c.Args))
+	for i, cn := range c.Args {
+		deleted[i] = strings.ToLower(cn)
+		if s.hostgroups[deleted[i]] == nil {
 			return nil, notFound(cn, "host group")
 		}
 	}
-	deleted := slices.Clone(c.Args)
 	for _, cn := range deleted {
 		delete(s.hostgroups, cn)
 		for _, g := range s.hostgroups {
@@ -235,9 +237,6 @@ func hostGroupDel(s *Server, c Call) (any, *ipa.IpaError) {
 			v.KeytabRetrieve.HostGroups = dropName(v.KeytabRetrieve.HostGroups, cn)
 			v.KeytabCreate.HostGroups = dropName(v.KeytabCreate.HostGroups, cn)
 		}
-	}
-	if deleted == nil {
-		deleted = []string{}
 	}
 	return map[string]any{
 		"result":  map[string]any{"failed": []string{}},

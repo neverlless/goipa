@@ -349,8 +349,10 @@
 //   - Q51: a host in a nested host group is in the parent's
 //     memberindirect_host, not member_host, and host_show lists the parent
 //     in memberofindirect_hostgroup; a nested group's own nested groups are
-//     memberindirect_hostgroup. Host group names are not lower-cased;
-//     hostgroup_find's criteria match them case-insensitively.
+//     memberindirect_hostgroup. hostgroup_* lower-case the host group
+//     name (AddHostGroup and HostGroup too); hostgroup_find's criteria
+//     match case-insensitively. Host group names given to other commands
+//     are taken as they are.
 //     TestContractHostGroupMembers, TestHostGroupShow,
 //     goipa.TestContractHostGroupMixedCase.
 //   - Q90: cert_request signs the CSR with an in-memory CA (ECDSA P-256,
