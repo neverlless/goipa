@@ -12,14 +12,17 @@
 goipa talks to a [FreeIPA](https://www.freeipa.org/) server over HTTPS using
 its JSON-RPC [API](https://github.com/freeipa/freeipa/blob/master/API.txt).
 It logs in with a password, a keytab, a Kerberos credential cache or an
-existing session, and gives you typed Go calls for users, passwords, SSH keys
-and OTP tokens.
+existing session, and gives you typed Go calls for users, stage users, groups
+with their members and member managers, hosts, passwords and lockout,
+password policy, sub-IDs, HBAC/sudo rules and hbactest, passkeys and OTP
+tokens.
 
 > **Note:** This is the maintained continuation of
 > [ubccr/goipa](https://github.com/ubccr/goipa) by Andrew E. Bruno, which has
 > had no release since 2024. It is a drop-in replacement for ubccr/goipa
 > v0.0.7; see [Migrating from ubccr/goipa](#migrating-from-ubccrgoipa).
-> It is developed alongside [mokey](https://github.com/neverlless/mokey), a FreeIPA self-service portal.
+> It is developed alongside [mokey](https://github.com/neverlless/mokey), a
+> FreeIPA self-service portal.
 
 ## Features
 
@@ -35,11 +38,29 @@ and OTP tokens.
   and expired passwords
 - SSH public keys and user authentication types (password, OTP, ...)
 - OTP tokens: add, list, enable, disable, remove, sync (`SyncOTPToken`)
-- Groups, hosts, stage users, lockout (`UserStatus`, `UserUnlock`), password policy
-  (`PwPolicyShow`, `UserPwPolicy`), sub-IDs, HBAC/sudo lookups and
-  `HBACTest`, passkeys
+- Stage users: add, show, find, modify, activate, delete
+  (`StageUserAdd`, `StageUserActivate`, ...)
+- Groups: show, find, add, modify, delete; members and member managers
+  (`GroupAddMember`, `GroupAddMemberManager`, ...), with per-member failures
+  returned as `*MemberError`
+- Hosts: show, find (`HostShow`, `HostFind`)
+- Lockout: per-replica failed logins and unlock (`UserStatus`, `UserUnlock`)
+- Password policy: group, global and effective per user (`PwPolicyShow`,
+  `UserPwPolicy`)
+- Sub-IDs: find, generate (`SubIDFind`, `SubIDGenerate`)
+- HBAC and sudo: rule lookups and access checks (`HBACRuleFind`,
+  `SudoRuleFind`, `HBACTest`)
+- Passkeys: add, remove (`UserAddPasskey`, `UserRemovePasskey`)
+- Typed errors: `errors.Is(err, ipa.ErrNotFound)` and friends; server errors
+  are a bare `*IpaError` with `Code`, `Name` and `Data`
+- A `…Context` variant of every call that talks to the server (the Kerberos
+  logins excepted)
+- `RPC` / `RPCContext` for any other command, reusing the client's TLS
+  config, session or Kerberos auth and API version
+- [`ipatest`](https://pkg.go.dev/github.com/neverlless/goipa/ipatest), a fake
+  FreeIPA server for your own tests
 
-Anything else: the generic `RPC` call. See the [roadmap](ROADMAP.md) for what is next.
+See the [roadmap](ROADMAP.md) for what is next.
 
 ## Install
 
@@ -119,6 +140,14 @@ On macOS use `sed -i ''`. What changed since v0.0.7 is listed in the
 - `go test ./...` runs without a FreeIPA server; tests that need one are
   behind the `integration` build tag
 - CI with race detector, staticcheck, gosec and govulncheck
+- No logging: upstream's trace logs wrote passwords, random passwords and
+  session cookies into the caller's log
+- A `Client` is safe for concurrent use
+- `include` and `includedir` in krb5.conf are resolved, so Kerberos logins
+  work on ipa-client 4.13 hosts
+- The `RPC` escape hatch, typed errors and `context.Context` support
+- `ipatest`, a fake FreeIPA server, and contract tests that run the same
+  checks nightly against real FreeIPA 4.9, 4.12 and 4.13
 
 ## Development
 
