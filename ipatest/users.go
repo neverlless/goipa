@@ -454,8 +454,8 @@ func (s *Server) userAdd(stage bool, c Call) (any, *ipa.IpaError) {
 	if s.store(stage)[uid] != nil { // Q10, Q29
 		return nil, &ipa.IpaError{Code: ipa.CodeDuplicateEntry, Message: fmt.Sprintf("%s with name %q already exists", userObject(stage), uid)}
 	}
-	if v, ok := c.Options["homedirectory"]; ok && str(v) == "" { // Q19
-		return nil, &ipa.IpaError{Code: 4205, Name: "ObjectclassViolation", Message: `missing attribute "homeDirectory" required by object class "posixAccount"`}
+	if err := emptyHomeDir(c); err != nil {
+		return nil, err
 	}
 	var u User
 	u.apply(c.Options)
@@ -473,9 +473,20 @@ func userMod(stage bool) builtin {
 	return func(s *Server, c Call) (any, *ipa.IpaError) { return s.userMod(stage, c) }
 }
 
+// emptyHomeDir is Q19: "" means no value and posixAccount requires one.
+func emptyHomeDir(c Call) *ipa.IpaError {
+	if v, ok := c.Options["homedirectory"]; ok && str(v) == "" {
+		return &ipa.IpaError{Code: 4205, Name: "ObjectclassViolation", Message: `missing attribute "homeDirectory" required by object class "posixAccount"`}
+	}
+	return nil
+}
+
 func (s *Server) userMod(stage bool, c Call) (any, *ipa.IpaError) {
 	uid, r, err := s.userArgIn(stage, c)
 	if err != nil {
+		return nil, err
+	}
+	if err := emptyHomeDir(c); err != nil {
 		return nil, err
 	}
 	next := r.User.clone()

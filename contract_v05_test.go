@@ -44,10 +44,18 @@ func TestContractStageUserLifecycle(t *testing.T) {
 		if got, err := b.admin.StageUserShow(uid); err != nil || got.Category != "staff" {
 			t.Fatalf("show = %+v, %v", got, err)
 		}
-		if got, err := b.admin.StageUserMod(&ipa.User{Username: uid, First: "Go", Last: "Test", Category: "c2", Email: "x@example.com"}); err != nil || got.Category != "c2" {
+		shown, err := b.admin.StageUserShow(uid)
+		if err != nil {
+			t.Fatal(err)
+		}
+		shown.Category = "c2" // read-modify-write: ToOptions sends HomeDir too
+		if got, err := b.admin.StageUserMod(shown); err != nil || got.Category != "c2" {
 			t.Fatalf("mod = %+v, %v", got, err)
 		}
-		same := &ipa.User{Username: uid, First: "Go", Last: "Test", Category: "c2", Email: "x@example.com"}
+		same, err := b.admin.StageUserShow(uid)
+		if err != nil {
+			t.Fatal(err)
+		}
 		if got, err := b.admin.StageUserMod(same); err != nil || got != same {
 			t.Fatalf("unchanged mod = %p, %v, want the input", got, err)
 		}

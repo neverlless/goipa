@@ -115,10 +115,11 @@
 //     summary}; user_find returns {result: [...], count, truncated,
 //     summary}. TestHandleWholeResultObject, TestUserAddModDel,
 //     goipa.TestContractResultShapes.
-//   - Q19: user_add with an explicit empty homedirectory fails with 4205
-//     ObjectclassViolation, as "" means no value and homeDirectory is
-//     required by posixAccount; leaving the option out gets /home/<uid>.
-//     TestUserAddEmptyHomeDir, goipa.TestContractUserAddDefaults.
+//   - Q19: user_add, user_mod and stageuser_mod with an explicit empty
+//     homedirectory fail with 4205 ObjectclassViolation, as "" means no value
+//     and homeDirectory is required by posixAccount; leaving the option out
+//     gets /home/<uid> on add and keeps the value on mod.
+//     TestUserAddEmptyHomeDir, TestUserModEmptyHomeDir, goipa.TestContractUserAddDefaults.
 //   - Q20: group_show returns members unless no_members is true (all
 //     overrides it); group_find returns them only with no_members false or
 //     all true. Empty member lists are left out; gidnumber only on POSIX

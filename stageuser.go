@@ -90,7 +90,8 @@ func (c *Client) StageUserFindContext(ctx context.Context, options Options) ([]*
 }
 
 // StageUserMod modifies a stage user with `stageuser_mod`, sending the same
-// attributes as UserMod. It returns user itself when nothing changed. It
+// attributes as UserMod; like UserMod it is read-modify-write, so start from
+// StageUserShow. It returns user itself when nothing changed. It
 // requires the Stage User Administrators privilege.
 func (c *Client) StageUserMod(user *User) (*User, error) {
 	return c.StageUserModContext(context.Background(), user)

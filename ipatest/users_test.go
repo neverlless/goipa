@@ -241,6 +241,7 @@ func TestUserAddModDel(t *testing.T) {
 	}
 	u.Email = "heisenberg@example.com"
 	u.SSHAuthKeys = nil
+	u.HomeDir = rec.HomeDir // UserMod is read-modify-write
 	if _, err := c.UserMod(u); err != nil {
 		t.Fatal(err)
 	}
@@ -296,6 +297,22 @@ func TestUserAddEmptyHomeDir(t *testing.T) {
 	_, err := c.RPC("user_add", []string{"x"}, ipa.Options{"givenname": "X", "sn": "Y", "homedirectory": ""})
 	if ipaCode(t, err) != 4205 {
 		t.Errorf("empty homedirectory: %v", err)
+	}
+}
+
+func TestUserModEmptyHomeDir(t *testing.T) {
+	s := ipatest.NewServer(t)
+	s.AddUser("jesse", ipatest.User{})
+	s.AddStageUser("sam", ipatest.User{})
+	c := s.ClientAs("admin")
+	for _, cmd := range []struct{ name, uid string }{{"user_mod", "jesse"}, {"stageuser_mod", "sam"}} {
+		_, err := c.RPC(cmd.name, []string{cmd.uid}, ipa.Options{"homedirectory": ""})
+		if ipaCode(t, err) != 4205 {
+			t.Errorf("%s with empty homedirectory: %v", cmd.name, err)
+		}
+	}
+	if u, _ := s.User("jesse"); u.HomeDir != "/home/jesse" {
+		t.Errorf("HomeDir = %q after the failed mod", u.HomeDir)
 	}
 }
 

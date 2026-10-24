@@ -622,9 +622,12 @@ func (c *Client) UserDeleteContext(ctx context.Context, preserve, stopOnError bo
 	return nil
 }
 
-// Modify user. Currently only modifies a subset of user attributes: mail (all
-// values, see Emails), givenname, sn, homedirectory, loginshell, displayname,
-// ipasshpubkey, telephonenumber, and mobile
+// Modify user. It is read-modify-write: send a User from UserShow with the
+// changes, as every attribute ToOptions sends is set, an empty HomeDir
+// included (FreeIPA rejects that with 4205). Currently only modifies a
+// subset of user attributes: mail (all values, see Emails), givenname, sn,
+// homedirectory, loginshell, displayname, ipasshpubkey, telephonenumber, and
+// mobile
 func (c *Client) UserMod(user *User) (*User, error) {
 	return c.UserModContext(context.Background(), user)
 }
