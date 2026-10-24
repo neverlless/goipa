@@ -20,11 +20,9 @@ import (
 )
 
 const (
-	firstID      = 1000000 // first uidnumber, as FreeIPA's default ID range
-	maxFailures  = 6       // krbpwdmaxfailure
-	minPwdLength = 8       // krbpwdminlength
-	baseDN       = "cn=users,cn=accounts,dc=test,dc=local"
-	stageBaseDN  = "cn=staged users,cn=accounts,cn=provisioning,dc=test,dc=local"
+	firstID     = 1000000 // first uidnumber, as FreeIPA's default ID range
+	baseDN      = "cn=users,cn=accounts,dc=test,dc=local"
+	stageBaseDN = "cn=staged users,cn=accounts,cn=provisioning,dc=test,dc=local"
 )
 
 // User is a user account of the fake server.
@@ -593,7 +591,7 @@ func loginPassword(s *Server, w http.ResponseWriter, r *http.Request) {
 	switch {
 	case u == nil || u.Password == "":
 		reject("invalid-password")
-	case u.Locked || u.Preserved || u.FailedLogins >= maxFailures: // Q6
+	case u.Locked || u.Preserved || u.FailedLogins >= s.pwpol[globalPolicy].MaxFailures: // Q6
 		reject("user-locked")
 	case u.Password != pw:
 		u.FailedLogins++
@@ -614,7 +612,7 @@ func changePassword(s *Server, w http.ResponseWriter, r *http.Request) {
 	switch {
 	case u == nil || u.Password == "" || u.Password != r.FormValue("old_password"):
 		result = "invalid-password"
-	case len(newPw) < minPwdLength:
+	case len(newPw) < s.pwpol[globalPolicy].MinLength:
 		result = "policy-error"
 		w.Header().Set("X-IPA-Pwchange-Policy-Error", "Constraint violation: Password is too short")
 	default:

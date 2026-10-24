@@ -102,6 +102,7 @@ type Server struct {
 	subids    map[string]SubID // by owner uid
 	hbac      map[string]*hbacRec
 	sudo      map[string]*sudoRec
+	pwpol     map[string]PwPolicy
 	tokens    []*OTPToken
 	nextID    int // last uidnumber handed out
 	nextGID   int // last gidnumber handed out
@@ -129,6 +130,7 @@ func New() *Server {
 		subids:   map[string]SubID{},
 		hbac:     seedAllowAll(),
 		sudo:     map[string]*sudoRec{},
+		pwpol:    seedPwPolicies(),
 		nextID:   firstID - 1,
 		nextGID:  firstID - 1,
 	}

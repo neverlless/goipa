@@ -224,6 +224,18 @@
 //     TestHBACRuleFind_AllFields, TestSudoRuleFind_AllFields,
 //     TestRuleFindMembersVisibility, TestRuleFindFilters,
 //     TestRuleAddUserFailures.
+//   - Q32: New seeds global_policy with FreeIPA's defaults (90 days, 1 hour,
+//     minlength 8, 6 failures, 60 s interval, 600 s lockout, grace limit -1).
+//     pwpolicy_show without cn is the global policy; option user resolves the
+//     lowest cospriority among the user's groups, nested ones included, else
+//     global (4001 for a missing user, "<cn>: password policy not found" for
+//     an unknown cn). Numbers are one-element string lists in wire units, the
+//     credits and the two checks (["TRUE"]/["FALSE"]) are always present,
+//     cospriority only for group policies, zero optional ones are omitted.
+//     Any caller may read it ([unverified] V7). pwpolicy_add needs an existing
+//     group (4001) and cospriority (3007); login_password and change_password
+//     use the global MaxFailures and MinLength. TestContractPwPolicyGlobal,
+//     TestUserPwPolicy_Resolution, TestPwPolicy_AddDelAndLoginUseGlobal.
 //
 // A response's version is the server release, 4.13.4, and its principal is
 // <uid>@TEST.LOCAL. An error a HandlerFunc returns without a Name gets the
@@ -231,7 +243,7 @@
 //
 // # Not modelled
 //
-// Password policy and hbactest (planned for v0.5); of HBAC and sudo rules
+// hbactest (planned for v0.5); of HBAC and sudo rules
 // only find, add, del and the member and option calls the tests need.
 // Until then, Handle is the way to reach them. Kerberos, LDAP search
 // filters, size limits, replication and HTTP fault injection are left out;
