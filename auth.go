@@ -48,11 +48,13 @@ func (c *Client) setKrbClient(cl *client.Client) {
 	}
 }
 
-// Clears out FreeIPA session id
+// Clears out FreeIPA session id and the credentials kept by
+// WithPasswordRelogin, so the Client does not log back in on its own.
 func (c *Client) ClearSession() {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	c.sessionID = ""
+	c.reloginUser, c.reloginPass = "", ""
 }
 
 // Set stick sessions.

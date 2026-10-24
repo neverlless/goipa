@@ -182,6 +182,17 @@ func TestRelogin_NotWithoutStickySession(t *testing.T) {
 	}
 }
 
+func TestRelogin_ClearSessionForgetsPassword(t *testing.T) {
+	_, c, rt := reloginSetup(t, true)
+	c.ClearSession()
+	if _, err := c.UserShow("rita"); !errors.Is(err, ipa.ErrUnauthorized) {
+		t.Fatalf("err = %v, want ErrUnauthorized", err)
+	}
+	if n := rt.logins.Load(); n != 1 {
+		t.Errorf("logins = %d, want 1", n)
+	}
+}
+
 func TestSessionLogout(t *testing.T) {
 	srv := ipatest.NewServer(t)
 	c := srv.ClientAs("admin")

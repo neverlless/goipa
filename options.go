@@ -102,8 +102,9 @@ func WithKrb5ConfigData(data []byte) Option {
 
 // WithPasswordRelogin keeps the password given to RemoteLogin in memory and
 // logs in again once when FreeIPA answers 401 for an expired session. Off by
-// default. The user name and password stay in process memory for the life of
-// the Client; a password FreeIPA rejects on re-login is forgotten.
+// default; needs sticky sessions. The user name and password stay in the
+// Client, so a %+v dump of the struct shows them. A password FreeIPA rejects
+// on re-login is forgotten, and so are both after ClearSession.
 func WithPasswordRelogin() Option {
 	return func(s *settings) error {
 		s.relogin = true
