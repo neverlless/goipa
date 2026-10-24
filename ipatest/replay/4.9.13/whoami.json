@@ -1,7 +1,0 @@
-{
-  "arguments": [
-    "admin"
-  ],
-  "command": "user_show/1",
-  "object": "user"
-}

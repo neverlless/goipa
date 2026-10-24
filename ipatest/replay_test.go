@@ -97,6 +97,16 @@ func TestReplay_Disabled(t *testing.T) {
 	}
 }
 
+func TestReplay_IgnoresWrites(t *testing.T) {
+	s := ipatest.NewServer(t)
+	s.SetReplay(fstest.MapFS{"4.13.4/hostgroup_add.json": recording("recorded")})
+	_, err := s.ClientAs("admin").RPC("hostgroup_add", []string{"hg"}, nil)
+	var ierr *ipa.IpaError
+	if !errors.As(err, &ierr) || ierr.Code != ipa.CodeCommand {
+		t.Fatalf("err = %#v, want 905", err)
+	}
+}
+
 func TestReplay_InBatch(t *testing.T) {
 	s := ipatest.NewServer(t)
 	s.SetReplay(fstest.MapFS{"4.13.4/config_show.json": recording("recorded")})
@@ -156,10 +166,10 @@ func TestRecorder_Redacts(t *testing.T) {
 		`"tokens":[{"uri":"otpauth://totp/x?secret=ABC"}],"ipatokenotpkey":[{"__base64__":"AAAA"}]},"value":"jdoe","summary":"ok"},` +
 		`"error":null,"id":0,"principal":"admin@X","version":"4.12.2"}`
 	rt := ipatest.NewRecorder(fakeIPA(t, envelope), dir)
-	if got := recordPost(t, rt, "/ipa/session/json", "user_add"); got != envelope {
+	if got := recordPost(t, rt, "/ipa/session/json", "user_show"); got != envelope {
 		t.Errorf("response changed: %s", got)
 	}
-	b, err := os.ReadFile(filepath.Join(dir, "4.12.2", "user_add.json"))
+	b, err := os.ReadFile(filepath.Join(dir, "4.12.2", "user_show.json"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -190,6 +200,17 @@ func TestRecorder_Redacts(t *testing.T) {
 	}
 	if len(r.UID) != 1 || r.UID[0] != "jdoe" || rec.Summary != "ok" {
 		t.Errorf("other values changed: %s", b)
+	}
+}
+
+func TestRecorder_SkipsWrites(t *testing.T) {
+	dir := t.TempDir()
+	rt := ipatest.NewRecorder(fakeIPA(t, `{"result":{"summary":"x"},"error":null,"version":"4.12.2"}`), dir)
+	for _, method := range []string{"hostgroup_add", "user_mod", "otptoken_add", "user_status"} {
+		recordPost(t, rt, "/ipa/session/json", method)
+	}
+	if entries, err := os.ReadDir(dir); err != nil || len(entries) != 0 {
+		t.Errorf("recorded %v (err %v)", entries, err)
 	}
 }
 

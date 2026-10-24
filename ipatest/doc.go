@@ -328,14 +328,16 @@
 //     command '<name>'", as Q14. Q44 and Q45 follow the ipa command
 //     catalogue and skip Handle overrides. TestServer_CommandNewerThanVersion,
 //     TestServer_HandleBypassesCatalogue.
-//   - Q130: a command that is neither modelled nor overridden with Handle
-//     answers, as its result, the response recorded from a real FreeIPA
+//   - Q130: a *_show or *_find command that is neither modelled nor
+//     overridden with Handle answers, as its result, the response recorded from a real FreeIPA
 //     (ipatest/replay, see SetReplay and NewRecorder) for the greatest
 //     recorded release not newer than the SetVersion one, else for the
 //     oldest; only without a recording is it 905. Options and arguments are
 //     not looked at, so the answer is the same for every call; batch entries
-//     are answered the same way. TestReplay_Precedence,
-//     TestReplay_PicksRelease, TestReplay_Disabled, TestReplay_InBatch.
+//     are answered the same way. Other commands are never replayed, so an
+//     unmodelled write stays 905 instead of faking a change.
+//     TestReplay_Precedence, TestReplay_PicksRelease, TestReplay_Disabled,
+//     TestReplay_InBatch, TestReplay_IgnoresWrites, TestRecorder_SkipsWrites.
 //
 // A response's version is the server release, 4.13.4 unless SetVersion
 // changes it, and its principal is

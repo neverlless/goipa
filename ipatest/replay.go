@@ -33,8 +33,8 @@ func shippedReplay() fs.FS {
 	return sub
 }
 
-// SetReplay sets the recorded responses the server answers for a command it
-// neither models nor has a Handle override for (Q130): fsys holds
+// SetReplay sets the recorded responses the server answers for a *_show or
+// *_find command it neither models nor has a Handle override for (Q130): fsys holds
 // <release>/<method>.json files as NewRecorder writes them. The default is
 // the recordings shipped in ipatest/replay; nil disables replay, so such a
 // command is 905 again.
@@ -47,7 +47,7 @@ func (s *Server) SetReplay(fsys fs.FS) {
 // replayed returns the recording of method from the greatest release not
 // newer than version, else from the oldest release, or nil without one.
 func replayed(fsys fs.FS, method, version string) json.RawMessage {
-	if fsys == nil || !methodName.MatchString(method) {
+	if fsys == nil || !readOnly(method) {
 		return nil
 	}
 	dirs, err := fs.ReadDir(fsys, ".")
@@ -89,6 +89,12 @@ func replayed(fsys fs.FS, method, version string) json.RawMessage {
 }
 
 var methodName = regexp.MustCompile(`^[a-z][a-z0-9_]*$`)
+
+// readOnly reports whether method only reads: a canned answer to a write
+// would fake a state change that never happened.
+func readOnly(method string) bool {
+	return methodName.MatchString(method) && (strings.HasSuffix(method, "_show") || strings.HasSuffix(method, "_find"))
+}
 
 func parseRelease(s string) (v [3]int, ok bool) {
 	parts := strings.Split(s, ".")
@@ -141,10 +147,11 @@ type recorder struct {
 }
 
 // NewRecorder returns a transport that sends each request through next and,
-// for every JSON-RPC call to /ipa/json or /ipa/session/json that succeeds,
-// writes the response's result object to <dir>/<version>/<method>.json,
-// version being the release the server reports. A later call of the same
-// method overwrites the file; batch calls are not recorded. The values of
+// for every *_show or *_find JSON-RPC call to /ipa/json or /ipa/session/json
+// that succeeds, writes the response's result object to
+// <dir>/<version>/<method>.json, version being the release the server
+// reports. A later call of the same method overwrites the file; other
+// commands, batch among them, are not recorded. The values of
 // randompassword, userpassword, krbprincipalkey, ipatokenotpkey, uri,
 // ipatokenradiussecret and ipasecretkey are replaced with "REDACTED" at any
 // depth. A nil next means http.DefaultTransport.
@@ -173,7 +180,7 @@ func (r *recorder) RoundTrip(req *http.Request) (*http.Response, error) {
 		var call struct {
 			Method string `json:"method"`
 		}
-		if json.Unmarshal(b, &call) == nil && call.Method != "batch" {
+		if json.Unmarshal(b, &call) == nil && readOnly(call.Method) {
 			method = call.Method
 		}
 	}
@@ -202,7 +209,7 @@ func (r *recorder) record(method string, body []byte) error {
 	if json.Unmarshal(body, &env) != nil || (len(env.Error) > 0 && string(env.Error) != "null") {
 		return nil
 	}
-	if _, ok := parseRelease(env.Version); !ok || !methodName.MatchString(method) {
+	if _, ok := parseRelease(env.Version); !ok || !readOnly(method) {
 		return nil
 	}
 	var result map[string]any
