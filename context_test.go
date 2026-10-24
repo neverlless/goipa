@@ -148,6 +148,10 @@ func twinCalls() []twinCall {
 			_, err := c.HBACRuleFindContext(ctx, nil)
 			return err
 		}},
+		{"HBACTestContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.HBACTestContext(ctx, "bob", "h.test.local", "sshd")
+			return err
+		}},
 		{"SudoRuleFindContext", func(ctx context.Context, c *ipa.Client) error {
 			_, err := c.SudoRuleFindContext(ctx, nil)
 			return err

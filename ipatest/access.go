@@ -255,7 +255,64 @@ func ruleAddUser[T any](s *Server, rules map[string]*T, kind string, c Call, use
 	}, nil
 }
 
+// hbactest implements Q35. Called with s.mu held.
+func (s *Server) hbactest(c Call) (any, *ipa.IpaError) {
+	for _, o := range []string{"user", "targethost", "service"} {
+		if str(c.Options[o]) == "" {
+			return nil, required(o)
+		}
+	}
+	user, host, svc := str(c.Options["user"]), str(c.Options["targethost"]), str(c.Options["service"])
+	var groups, hostGroups []string
+	if u := s.users[user]; u != nil {
+		groups = s.userGroups(user, u)
+		groups = append(groups, s.ancestors(groups)...)
+	}
+	if h, ok := s.hosts[host]; ok {
+		hostGroups = h.HostGroups
+	}
+	hit := func(cat string, direct []string, name string, indirect []string, ids ...string) bool {
+		return cat == "all" || slices.Contains(direct, name) || slices.ContainsFunc(indirect, func(g string) bool { return slices.Contains(ids, g) })
+	}
+
+	var names, matched, notMatched, errs []string
+	if want, ok := c.Options["rules"]; ok {
+		names = strs(want)
+	} else {
+		for cn, r := range s.hbac {
+			if !r.Disabled {
+				names = append(names, cn)
+			}
+		}
+	}
+	sort.Strings(names)
+	for _, cn := range names {
+		r := s.hbac[cn]
+		switch {
+		case r == nil:
+			errs = append(errs, cn)
+		case hit(r.UserCategory, r.Users, user, groups, r.Groups...) &&
+			hit(r.HostCategory, r.Hosts, host, hostGroups, r.HostGroups...) &&
+			hit(r.ServiceCategory, r.Services, svc, nil):
+			matched = append(matched, cn)
+		default:
+			notMatched = append(notMatched, cn)
+		}
+	}
+	granted := "False"
+	if len(matched) > 0 {
+		granted = "True"
+	}
+	return map[string]any{
+		"value":   len(matched) > 0,
+		"summary": "Access granted: " + granted,
+		"matched": matched, "notmatched": notMatched, "error": errs, "warning": []string(nil),
+	}, nil
+}
+
 func init() {
+	builtins["hbactest"] = (*Server).hbactest
+
 	hbacDesc := func(r *hbacRec) string { return r.Description }
 	hbacOff := func(r *hbacRec) bool { return r.Disabled }
 	sudoDesc := func(r *sudoRec) string { return r.Description }
