@@ -7,6 +7,13 @@ existing exported identifiers keep their signatures).
 
 ## [Unreleased]
 
+## [v0.6.0] - 2026-10-24
+
+Construction and authentication: an options-based `New` with no file I/O at
+import time, Kerberos login from memory, `WhoAmI`, and recovery from expired
+sessions. The session behaviour is checked against real FreeIPA 4.9, 4.12
+and 4.13 by the contract tests.
+
 ### Added
 
 - `New(opts ...Option) (*Client, error)` with `WithHost`, `WithRealm`,
@@ -32,8 +39,9 @@ existing exported identifiers keep their signatures).
 - `NewDefaultClient*`, `NewClient` and `New` read `/etc/ipa` on first use
   instead of at import; `NewClientCustomHttp` never reads it
 - `ClearSession` also forgets the credentials kept by `WithPasswordRelogin`
-- An `ipa_session=MagBearerToken=` cookie (FreeIPA's logout cookie) clears
-  the session instead of being stored
+- FreeIPA's logout cookie (an `ipa_session` cookie that deletes the session,
+  or `MagBearerToken=`) clears the session; before, `session_logout` failed
+  with "invalid set-cookie header"
 
 ## [v0.5.0] - 2026-10-24
 
@@ -245,7 +253,8 @@ v0.0.1 – v0.0.7 were released by Andrew E. Bruno as
 [ubccr/goipa](https://github.com/ubccr/goipa/tags). This repository keeps
 that history.
 
-[Unreleased]: https://github.com/neverlless/goipa/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/neverlless/goipa/compare/v0.6.0...HEAD
+[v0.6.0]: https://github.com/neverlless/goipa/compare/v0.5.0...v0.6.0
 [v0.5.0]: https://github.com/neverlless/goipa/compare/v0.4.0...v0.5.0
 [v0.4.0]: https://github.com/neverlless/goipa/compare/v0.3.0...v0.4.0
 [v0.3.0]: https://github.com/neverlless/goipa/compare/v0.2.1...v0.3.0
