@@ -113,8 +113,9 @@ type Server struct {
 	sudo      map[string]*sudoRec
 	pwpol     map[string]PwPolicy
 	tokens    []*OTPToken
-	nextID    int // last uidnumber handed out
-	nextGID   int // last gidnumber handed out
+	nextID    int                 // last uidnumber handed out
+	nextGID   int                 // last gidnumber handed out
+	dnsZones  map[string]*dnsZone // by absolute name
 }
 
 // NewServer starts a server and closes it with tb.Cleanup.
@@ -143,6 +144,7 @@ func New() *Server {
 		version:  defaultVersion,
 		nextID:   firstID - 1,
 		nextGID:  firstID - 1,
+		dnsZones: seedDNS(),
 	}
 	mux := http.NewServeMux()
 	mux.HandleFunc("/ipa/session/json", s.serveSessionJSON)
