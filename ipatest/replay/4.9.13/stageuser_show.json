@@ -1,0 +1,71 @@
+{
+  "result": {
+    "cn": [
+      "Go Test"
+    ],
+    "description": [
+      "__no_upg__"
+    ],
+    "displayname": [
+      "Go Test"
+    ],
+    "dn": "uid=gs74888268,cn=staged users,cn=accounts,cn=provisioning,dc=example,dc=test",
+    "gecos": [
+      "Go Test"
+    ],
+    "gidnumber": [
+      "-1"
+    ],
+    "givenname": [
+      "Go"
+    ],
+    "has_keytab": false,
+    "has_password": false,
+    "homedirectory": [
+      "/home/gs74888268"
+    ],
+    "initials": [
+      "GT"
+    ],
+    "ipauniqueid": [
+      "autogenerate"
+    ],
+    "krbcanonicalname": [
+      "gs74888268@EXAMPLE.TEST"
+    ],
+    "krbprincipalname": [
+      "gs74888268@EXAMPLE.TEST"
+    ],
+    "loginshell": [
+      "/bin/sh"
+    ],
+    "mail": [
+      "gs74888268@example.test"
+    ],
+    "nsaccountlock": true,
+    "objectclass": [
+      "top",
+      "person",
+      "organizationalperson",
+      "inetorgperson",
+      "inetuser",
+      "posixaccount",
+      "krbprincipalaux",
+      "krbticketpolicyaux",
+      "ipaobject",
+      "ipasshuser",
+      "ipaSshGroupOfPubKeys"
+    ],
+    "sn": [
+      "Test"
+    ],
+    "uid": [
+      "gs74888268"
+    ],
+    "uidnumber": [
+      "-1"
+    ]
+  },
+  "summary": null,
+  "value": "gs74888268"
+}

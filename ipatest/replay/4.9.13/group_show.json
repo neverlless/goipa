@@ -1,0 +1,28 @@
+{
+  "result": {
+    "cn": [
+      "gg96d8af30"
+    ],
+    "dn": "cn=gg96d8af30,cn=groups,cn=accounts,dc=example,dc=test",
+    "gidnumber": [
+      "1145000037"
+    ],
+    "ipantsecurityidentifier": [
+      "S-1-5-21-990091588-3492688831-3425625902-1037"
+    ],
+    "ipauniqueid": [
+      "b641560a-cfdf-11f1-a6fa-52f53a5c7008"
+    ],
+    "objectclass": [
+      "top",
+      "groupofnames",
+      "nestedgroup",
+      "ipausergroup",
+      "ipaobject",
+      "posixgroup",
+      "ipantgroupattrs"
+    ]
+  },
+  "summary": null,
+  "value": "gg96d8af30"
+}

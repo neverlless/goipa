@@ -5,7 +5,10 @@
 package ipatest
 
 import (
+	"encoding/json"
+	"io/fs"
 	"reflect"
+	"strings"
 	"testing"
 
 	ipa "github.com/neverlless/goipa"
@@ -25,5 +28,26 @@ func TestResultHelpers(t *testing.T) {
 	}
 	if got, want := *required("uid"), (ipa.IpaError{Code: 3007, Name: "RequirementError", Message: "'uid' is required"}); got != want {
 		t.Errorf("required = %+v", got)
+	}
+}
+
+func TestShippedRecordingsAreObjects(t *testing.T) {
+	fsys := shippedReplay()
+	err := fs.WalkDir(fsys, ".", func(path string, d fs.DirEntry, err error) error {
+		if err != nil || d.IsDir() || !strings.HasSuffix(path, ".json") {
+			return err
+		}
+		b, err := fs.ReadFile(fsys, path)
+		var obj map[string]any
+		if err == nil {
+			err = json.Unmarshal(b, &obj)
+		}
+		if err != nil {
+			t.Errorf("%s: %v", path, err)
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatal(err)
 	}
 }

@@ -1,0 +1,13 @@
+{
+  "result": {
+    "dn": "cn=EXAMPLE.TEST,cn=kerberos,dc=example,dc=test",
+    "krbmaxrenewableage": [
+      "604800"
+    ],
+    "krbmaxticketlife": [
+      "86400"
+    ]
+  },
+  "summary": null,
+  "value": null
+}

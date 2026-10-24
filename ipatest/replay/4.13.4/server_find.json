@@ -1,0 +1,19 @@
+{
+  "count": 1,
+  "result": [
+    {
+      "cn": [
+        "ipa.example.test"
+      ],
+      "dn": "cn=ipa.example.test,cn=masters,cn=ipa,cn=etc,dc=example,dc=test",
+      "ipamaxdomainlevel": [
+        "1"
+      ],
+      "ipamindomainlevel": [
+        "1"
+      ]
+    }
+  ],
+  "summary": "1 IPA server matched",
+  "truncated": false
+}

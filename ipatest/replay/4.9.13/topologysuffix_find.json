@@ -1,0 +1,25 @@
+{
+  "count": 2,
+  "result": [
+    {
+      "cn": [
+        "ca"
+      ],
+      "dn": "cn=ca,cn=topology,cn=ipa,cn=etc,dc=example,dc=test",
+      "iparepltopoconfroot": [
+        "o=ipaca"
+      ]
+    },
+    {
+      "cn": [
+        "domain"
+      ],
+      "dn": "cn=domain,cn=topology,cn=ipa,cn=etc,dc=example,dc=test",
+      "iparepltopoconfroot": [
+        "dc=example,dc=test"
+      ]
+    }
+  ],
+  "summary": "2 topology suffixes matched",
+  "truncated": false
+}

@@ -1,0 +1,25 @@
+{
+  "count": 2,
+  "result": [
+    {
+      "cn": [
+        "ftp"
+      ],
+      "description": [
+        "Default group of ftp related services"
+      ],
+      "dn": "cn=ftp,cn=hbacservicegroups,cn=hbac,dc=example,dc=test"
+    },
+    {
+      "cn": [
+        "Sudo"
+      ],
+      "description": [
+        "Default group of Sudo related services"
+      ],
+      "dn": "cn=Sudo,cn=hbacservicegroups,cn=hbac,dc=example,dc=test"
+    }
+  ],
+  "summary": "2 HBAC service groups matched",
+  "truncated": false
+}

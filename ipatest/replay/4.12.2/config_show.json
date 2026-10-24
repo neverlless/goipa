@@ -1,0 +1,70 @@
+{
+  "result": {
+    "ca_renewal_master_server": "ipa.example.test",
+    "ca_server_server": [
+      "ipa.example.test"
+    ],
+    "dn": "cn=ipaConfig,cn=etc,dc=example,dc=test",
+    "ipa_master_server": [
+      "ipa.example.test"
+    ],
+    "ipacertificatesubjectbase": [
+      "O=EXAMPLE.TEST"
+    ],
+    "ipaconfigstring": [
+      "AllowNThash",
+      "KDC:Disable Last Success"
+    ],
+    "ipadefaultemaildomain": [
+      "example.test"
+    ],
+    "ipadefaultloginshell": [
+      "/bin/sh"
+    ],
+    "ipadefaultprimarygroup": [
+      "ipausers"
+    ],
+    "ipagroupsearchfields": [
+      "cn,description"
+    ],
+    "ipahomesrootdir": [
+      "/home"
+    ],
+    "ipakrbauthzdata": [
+      "MS-PAC",
+      "nfs:NONE"
+    ],
+    "ipamaxhostnamelength": [
+      "64"
+    ],
+    "ipamaxusernamelength": [
+      "32"
+    ],
+    "ipamigrationenabled": [
+      false
+    ],
+    "ipapwdexpadvnotify": [
+      "4"
+    ],
+    "ipasearchrecordslimit": [
+      "100"
+    ],
+    "ipasearchtimelimit": [
+      "2"
+    ],
+    "ipaselinuxusermapdefault": [
+      "unconfined_u:s0-s0:c0.c1023"
+    ],
+    "ipaselinuxusermaporder": [
+      "guest_u:s0$xguest_u:s0$user_u:s0$staff_u:s0-s0:c0.c1023$sysadm_u:s0-s0:c0.c1023$unconfined_u:s0-s0:c0.c1023"
+    ],
+    "ipausersearchfields": [
+      "uid,givenname,sn,telephonenumber,ou,title"
+    ],
+    "pkinit_server_server": [
+      "ipa.example.test"
+    ]
+  },
+  "summary": null,
+  "value": null
+}

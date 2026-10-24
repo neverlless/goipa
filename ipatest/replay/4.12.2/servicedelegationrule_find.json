@@ -1,0 +1,16 @@
+{
+  "count": 1,
+  "result": [
+    {
+      "cn": [
+        "ipa-http-delegation"
+      ],
+      "dn": "cn=ipa-http-delegation,cn=s4u2proxy,cn=etc,dc=example,dc=test",
+      "memberprincipal": [
+        "HTTP/ipa.example.test@EXAMPLE.TEST"
+      ]
+    }
+  ],
+  "summary": "1 service delegation rule matched",
+  "truncated": false
+}

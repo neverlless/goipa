@@ -1,0 +1,63 @@
+{
+  "count": 3,
+  "result": [
+    {
+      "dn": "krbprincipalname=HTTP/ipa.example.test@EXAMPLE.TEST,cn=services,cn=accounts,dc=example,dc=test",
+      "has_keytab": true,
+      "issuer": "CN=Certificate Authority,O=EXAMPLE.TEST",
+      "krbcanonicalname": [
+        "HTTP/ipa.example.test@EXAMPLE.TEST"
+      ],
+      "krbprincipalname": [
+        "HTTP/ipa.example.test@EXAMPLE.TEST"
+      ],
+      "serial_number": "9",
+      "serial_number_hex": "0x9",
+      "sha1_fingerprint": "7d:4b:7f:ae:1a:d4:03:9a:8c:ca:f8:46:8a:1c:a0:b8:8c:01:fb:26",
+      "sha256_fingerprint": "96:35:1e:92:a2:12:6e:37:f3:56:db:99:67:ca:99:7c:42:4c:34:ee:f2:a7:d8:9a:90:91:99:c5:b1:f1:1b:b4",
+      "subject": "CN=ipa.example.test,O=EXAMPLE.TEST",
+      "usercertificate": [
+        {
+          "__base64__": "MIIE+DCCA2CgAwIBAgIBCTANBgkqhkiG9w0BAQsFADA3MRUwEwYDVQQKDAxFWEFNUExFLlRFU1QxHjAcBgNVBAMMFUNlcnRpZmljYXRlIEF1dGhvcml0eTAeFw0yNjEwMjQxOTE4NDVaFw0yODEwMjQxOTE4NDVaMDIxFTATBgNVBAoMDEVYQU1QTEUuVEVTVDEZMBcGA1UEAwwQaXBhLmV4YW1wbGUudGVzdDCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBALCgpP8V83/G0dY2b/RCEkTQkgE2FV9uLfWBh0kYpxwyYPX0zgsFaqon7AIIyJndJSm7Bit5B+0LqJ9wi3s9OaJyy82a1WDLWiuXzCfW7FBf/SND2PkOn3i3iYS6ZAiGM/yUiqMz/A5BcsAyrzTJKHX2ToICuWdgqa40gkGaEB4ObIUlNloWbVKmS0kt3vo+An4c1wEYxcaCbRLYOBYDoRjbTOW3YOAe9OQtx5bR0IUYEOvNIi1wTgjaC7H+72a96vssbkEYVDHUj3srBuojCQFdbS/7ruxpa/nRVbxFAoHlwhRvmMNTkV4OSj3QGDf5PitwMVp1Qi0PabXa9IgBNfUCAwEAAaOCAZIwggGOMB8GA1UdIwQYMBaAFBodulX4RBsf8iT1t0jYlGQ3d5d9MD4GCCsGAQUFBwEBBDIwMDAuBggrBgEFBQcwAYYiaHR0cDovL2lwYS1jYS5leGFtcGxlLnRlc3QvY2Evb2NzcDAOBgNVHQ8BAf8EBAMCBPAwHQYDVR0lBBYwFAYIKwYBBQUHAwEGCCsGAQUFBwMCMHcGA1UdHwRwMG4wbKA0oDKGMGh0dHA6Ly9pcGEtY2EuZXhhbXBsZS50ZXN0L2lwYS9jcmwvTWFzdGVyQ1JMLmJpbqI0pDIwMDEOMAwGA1UECgwFaXBhY2ExHjAcBgNVBAMMFUNlcnRpZmljYXRlIEF1dGhvcml0eTAdBgNVHQ4EFgQUpBWg0dGuGxlS8vhH4SFfI0bAZ8gwZAYDVR0RBF0wW4IQaXBhLmV4YW1wbGUudGVzdIITaXBhLWNhLmV4YW1wbGUudGVzdKAyBgorBgEEAYI3FAIDoCQMIkhUVFAvaXBhLmV4YW1wbGUudGVzdEBFWEFNUExFLlRFU1QwDQYJKoZIhvcNAQELBQADggGBAKKXOwT43/Y9sfn0s5IPgYyglJsNJY5kjBfMr2PiuoV7guKzEP5QWyJ66Wx4KNte1Kih/C90aDlV+Fe9o+1StJ0XVJbI5YPHw2YsomhbRuxj0i1LVKs0b+Nvl7KtpShxk2hPXFzksvytevIOZ2TBSf9I1jYy7IP0GuLmUge+8teKeG8vJq4aqzSNK29X6rgJULIyw+hSy5HcLX7RrfmjNoZT77Djvi0vVS11bG28AwCetujsoIOPeejJwDWo02a4H2ajYgo+KHqzvRhZ3dqiO9QjkaGgQsN9jDBjvUNZsTliWEJLXZNcb6b/N63QYc+TVs43Ib3uEMMmwhYsw4l6uJ7JVCBTISm37XCqQ1A7Fwcd9L+ELtdt0rNmPPH9daRFcV82dusXI0Oq6nDh5vbnqDREVLTZSCXrtigYDt0PNSFW422e3e3XGcf0WcA53/0tD3XZHFl3YQTW9yrKBTlj5IHdzfxfFM1WlJhSIsNilT6AJICUw01fA6CZYaF9orKEZg=="
+        }
+      ],
+      "valid_not_after": "Tue Oct 24 19:18:45 2028 UTC",
+      "valid_not_before": "Sat Oct 24 19:18:45 2026 UTC"
+    },
+    {
+      "dn": "krbprincipalname=dogtag/ipa.example.test@EXAMPLE.TEST,cn=services,cn=accounts,dc=example,dc=test",
+      "has_keytab": true,
+      "krbcanonicalname": [
+        "dogtag/ipa.example.test@EXAMPLE.TEST"
+      ],
+      "krbprincipalname": [
+        "dogtag/ipa.example.test@EXAMPLE.TEST"
+      ]
+    },
+    {
+      "dn": "krbprincipalname=ldap/ipa.example.test@EXAMPLE.TEST,cn=services,cn=accounts,dc=example,dc=test",
+      "has_keytab": true,
+      "issuer": "CN=Certificate Authority,O=EXAMPLE.TEST",
+      "krbcanonicalname": [
+        "ldap/ipa.example.test@EXAMPLE.TEST"
+      ],
+      "krbprincipalname": [
+        "ldap/ipa.example.test@EXAMPLE.TEST"
+      ],
+      "serial_number": "8",
+      "serial_number_hex": "0x8",
+      "sha1_fingerprint": "cb:bc:23:f7:0c:23:64:e5:cc:25:a5:ec:bb:de:ff:02:a9:7e:4f:ee",
+      "sha256_fingerprint": "43:b0:7e:59:18:97:ef:2b:d1:e4:2c:e4:56:a2:a8:76:48:f8:13:16:8c:6f:b9:11:da:74:10:59:d9:e2:73:a1",
+      "subject": "CN=ipa.example.test,O=EXAMPLE.TEST",
+      "usercertificate": [
+        {
+          "__base64__": "MIIE4zCCA0ugAwIBAgIBCDANBgkqhkiG9w0BAQsFADA3MRUwEwYDVQQKDAxFWEFNUExFLlRFU1QxHjAcBgNVBAMMFUNlcnRpZmljYXRlIEF1dGhvcml0eTAeFw0yNjEwMjQxOTE4MjhaFw0yODEwMjQxOTE4MjhaMDIxFTATBgNVBAoMDEVYQU1QTEUuVEVTVDEZMBcGA1UEAwwQaXBhLmV4YW1wbGUudGVzdDCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAMB20kwMy9vwm7ndmheX+nApW2TuzRkrOMbGZQfvTs2dr710E0K/NXlf37F5Y/40cxDrLvk7ZP/aEv3Qw3XZRqvGcrQZhPzM0x2Wj08w8jrZ7CRwPG05RpYeIr+e50hlku0B7qTojcz30Z/FoqO3eau6Abo45LAuVKchpByaA2SaO62gPhV429Jp/BwXuDUxLUupCE0Y4NyctWiDXj+s71kACEw1GbqZgYNBW4JlatO55jMdtR8FDUZB/GRLn0ZtsucPeedEJj8N7AtkpRxJhtNcrAJuca2KdjRXG2RneHH/Jm/5kNNE4M4dSxHsOoW5ut8lUK1G65qe+7YD7blv4ykCAwEAAaOCAX0wggF5MB8GA1UdIwQYMBaAFBodulX4RBsf8iT1t0jYlGQ3d5d9MD4GCCsGAQUFBwEBBDIwMDAuBggrBgEFBQcwAYYiaHR0cDovL2lwYS1jYS5leGFtcGxlLnRlc3QvY2Evb2NzcDAOBgNVHQ8BAf8EBAMCBPAwHQYDVR0lBBYwFAYIKwYBBQUHAwEGCCsGAQUFBwMCMHcGA1UdHwRwMG4wbKA0oDKGMGh0dHA6Ly9pcGEtY2EuZXhhbXBsZS50ZXN0L2lwYS9jcmwvTWFzdGVyQ1JMLmJpbqI0pDIwMDEOMAwGA1UECgwFaXBhY2ExHjAcBgNVBAMMFUNlcnRpZmljYXRlIEF1dGhvcml0eTAdBgNVHQ4EFgQUqr7sYPi0KNIx2CvMSlqD5Dk3t3kwTwYDVR0RBEgwRoIQaXBhLmV4YW1wbGUudGVzdKAyBgorBgEEAYI3FAIDoCQMImxkYXAvaXBhLmV4YW1wbGUudGVzdEBFWEFNUExFLlRFU1QwDQYJKoZIhvcNAQELBQADggGBACcGgYdp1gwEwzQTm98hqRC1w1/jldnOnYEpIetOmNqw5M5RtxcxKvnUCN2bo6yC39q5qvHiDLOk35WHi+605DK1Fc/Tm3bXgu4MIejarHBlb3tr1JofY32mHCxj4EYPvunrssiZRkoZzTrZhpAxlDBsj8d7YDiVOT8xTjXiK6/E0oHWJRgRdXDVAR5uRAj71m4bQbZ8lgQA9VJckLOGJ1PGDxU1OL4VGnXM7IzcsEtREVf39XnxuMukW+79UXU3CsuLOxEZDUI1GvV97fNgB03ZwYKiwte8TyR3SPoQB++OPVj65QeAIxmk2fuWCqqALf7KjXAnW97IoQd2PySIwKN4+0IydFQFZoIn34kxKXBhcW5++os5BVlH4RqtSpGWSfegPY0LqoPfwdBw0gih9L8Jb+b/gkeiNcmRcTVsyRfy6NDmMmipxnc76SM+ZO6B6EukzQrJcjQt0e7FvQDQm64IB8qBaeWnIaccNtCEDxwaVhTEoiNh14IIaVpa4QjpDw=="
+        }
+      ],
+      "valid_not_after": "Tue Oct 24 19:18:28 2028 UTC",
+      "valid_not_before": "Sat Oct 24 19:18:28 2026 UTC"
+    }
+  ],
+  "summary": "3 services matched",
+  "truncated": false
+}

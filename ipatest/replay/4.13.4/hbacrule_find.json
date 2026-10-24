@@ -1,0 +1,46 @@
+{
+  "count": 2,
+  "result": [
+    {
+      "cn": [
+        "allow_all"
+      ],
+      "description": [
+        "Allow all users to access any host from any host"
+      ],
+      "dn": "ipaUniqueID=45fe8c46-cfdf-11f1-89eb-2276371f0835,cn=hbac,dc=example,dc=test",
+      "hostcategory": [
+        "all"
+      ],
+      "ipaenabledflag": [
+        true
+      ],
+      "servicecategory": [
+        "all"
+      ],
+      "usercategory": [
+        "all"
+      ]
+    },
+    {
+      "cn": [
+        "allow_systemd-user"
+      ],
+      "description": [
+        "Allow pam_systemd to run user@.service to create a system user session"
+      ],
+      "dn": "ipaUniqueID=45ff973a-cfdf-11f1-924f-2276371f0835,cn=hbac,dc=example,dc=test",
+      "hostcategory": [
+        "all"
+      ],
+      "ipaenabledflag": [
+        true
+      ],
+      "usercategory": [
+        "all"
+      ]
+    }
+  ],
+  "summary": "2 HBAC rules matched",
+  "truncated": false
+}

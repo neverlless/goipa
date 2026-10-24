@@ -1,0 +1,40 @@
+{
+  "count": 1,
+  "result": [
+    {
+      "cn": [
+        "global_policy"
+      ],
+      "dn": "cn=global_policy,cn=EXAMPLE.TEST,cn=kerberos,dc=example,dc=test",
+      "krbmaxpwdlife": [
+        "90"
+      ],
+      "krbminpwdlife": [
+        "1"
+      ],
+      "krbpwdfailurecountinterval": [
+        "60"
+      ],
+      "krbpwdhistorylength": [
+        "0"
+      ],
+      "krbpwdlockoutduration": [
+        "600"
+      ],
+      "krbpwdmaxfailure": [
+        "6"
+      ],
+      "krbpwdmindiffchars": [
+        "0"
+      ],
+      "krbpwdminlength": [
+        "8"
+      ],
+      "passwordgracelimit": [
+        "-1"
+      ]
+    }
+  ],
+  "summary": null,
+  "truncated": false
+}

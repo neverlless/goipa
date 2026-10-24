@@ -1,0 +1,55 @@
+{
+  "count": 2,
+  "result": [
+    {
+      "cn": [
+        "EXAMPLE.TEST_id_range"
+      ],
+      "dn": "cn=EXAMPLE.TEST_id_range,cn=ranges,cn=etc,dc=example,dc=test",
+      "ipabaseid": [
+        "1145000000"
+      ],
+      "ipabaserid": [
+        "1000"
+      ],
+      "ipaidrangesize": [
+        "200000"
+      ],
+      "iparangetype": [
+        "local domain range"
+      ],
+      "iparangetyperaw": [
+        "ipa-local"
+      ],
+      "ipasecondarybaserid": [
+        "100000000"
+      ]
+    },
+    {
+      "cn": [
+        "EXAMPLE.TEST_subid_range"
+      ],
+      "dn": "cn=EXAMPLE.TEST_subid_range,cn=ranges,cn=etc,dc=example,dc=test",
+      "ipabaseid": [
+        "2147483648"
+      ],
+      "ipabaserid": [
+        "2147283648"
+      ],
+      "ipaidrangesize": [
+        "2147352576"
+      ],
+      "ipanttrusteddomainsid": [
+        "S-1-5-21-738065-838566-1348261757"
+      ],
+      "iparangetype": [
+        "Active Directory domain range"
+      ],
+      "iparangetyperaw": [
+        "ipa-ad-trust"
+      ]
+    }
+  ],
+  "summary": "2 ranges matched",
+  "truncated": false
+}

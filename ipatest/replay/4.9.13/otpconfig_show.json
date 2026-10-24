@@ -1,0 +1,19 @@
+{
+  "result": {
+    "dn": "cn=otp,cn=etc,dc=example,dc=test",
+    "ipatokenhotpauthwindow": [
+      "10"
+    ],
+    "ipatokenhotpsyncwindow": [
+      "100"
+    ],
+    "ipatokentotpauthwindow": [
+      "300"
+    ],
+    "ipatokentotpsyncwindow": [
+      "86400"
+    ]
+  },
+  "summary": null,
+  "value": null
+}

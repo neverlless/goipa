@@ -11,6 +11,7 @@ import (
 	"encoding/pem"
 	"fmt"
 	"io"
+	"io/fs"
 	"maps"
 	"net/http"
 	"net/http/httptest"
@@ -122,6 +123,7 @@ type Server struct {
 	roles      map[string]*ipa.Role
 	privs      map[string]*ipa.Privilege
 	perms      map[string]*ipa.Permission
+	replay     fs.FS
 }
 
 // NewServer starts a server and closes it with tb.Cleanup.
@@ -156,6 +158,7 @@ func New() *Server {
 		roles:      seedRoles(),
 		privs:      seedPrivileges(),
 		perms:      seedPermissions(),
+		replay:     shippedReplay(),
 	}
 	mux := http.NewServeMux()
 	mux.HandleFunc("/ipa/session/json", s.serveSessionJSON)
@@ -403,13 +406,15 @@ func decodeParams(c *Call, params []json.RawMessage) error {
 }
 
 // dispatch records c and runs it: a handler without the lock, else batch,
-// else a builtin under s.mu (both after catalogueCheck), else 905. args is
+// else a builtin under s.mu (both after catalogueCheck), else a recording
+// (Q130), else 905. args is
 // the raw params[0], which batch needs; custom reports that a handler ran.
 func (s *Server) dispatch(c Call, args json.RawMessage) (result any, ierr *ipa.IpaError, custom bool) {
 	s.mu.Lock()
 	s.calls = append(s.calls, c.clone())
 	h := s.handlers[c.Method]
 	version := s.version
+	replay := s.replay
 	s.mu.Unlock()
 
 	switch b := builtins[c.Method]; {
@@ -427,6 +432,10 @@ func (s *Server) dispatch(c Call, args json.RawMessage) (result any, ierr *ipa.I
 		result, ierr = b(s, c)
 		s.mu.Unlock()
 	default:
+		if rec := replayed(replay, c.Method, version); rec != nil {
+			result = rec
+			break
+		}
 		ierr = &ipa.IpaError{Code: ipa.CodeCommand, Message: fmt.Sprintf("unknown command '%s'", c.Method)}
 	}
 	return result, ierr, h != nil

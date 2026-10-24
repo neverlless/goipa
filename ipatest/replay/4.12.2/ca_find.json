@@ -1,0 +1,28 @@
+{
+  "count": 1,
+  "result": [
+    {
+      "cn": [
+        "ipa"
+      ],
+      "description": [
+        "IPA CA"
+      ],
+      "dn": "cn=ipa,cn=cas,cn=ca,dc=example,dc=test",
+      "ipacaid": [
+        "c2849ed4-78f4-4dc3-bc4b-668b096cdbdf"
+      ],
+      "ipacaissuerdn": [
+        "CN=Certificate Authority,O=EXAMPLE.TEST"
+      ],
+      "ipacarandomserialnumberversion": [
+        "0"
+      ],
+      "ipacasubjectdn": [
+        "CN=Certificate Authority,O=EXAMPLE.TEST"
+      ]
+    }
+  ],
+  "summary": "1 CA matched",
+  "truncated": false
+}
