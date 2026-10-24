@@ -328,6 +328,32 @@
 //     command '<name>'", as Q14. Q44 and Q45 follow the ipa command
 //     catalogue and skip Handle overrides. TestServer_CommandNewerThanVersion,
 //     TestServer_HandleBypassesCatalogue.
+//   - Q60: service principals are stored and reported with the realm
+//     (krbcanonicalname and krbprincipalname "svc/host@TEST.LOCAL") and
+//     accepted without it. service_add needs the host to exist unless
+//     skip_host_check (4001 "The host '<h>' does not exist to add a service
+//     to.") and makes it managedby_host; a second add is 4002. With all,
+//     ipakrbokasdelegate and ipakrboktoauthasdelegate are false and
+//     ipakrbrequirespreauth true. goipa.TestContractServiceLifecycle.
+//   - Q61: service_{allow,disallow}_{retrieve,create}_keytab take user,
+//     group, host and hostgroup; the grants show as
+//     ipaallowedtoperform_{read,write}_keys_<type> unless no_members.
+//     goipa.TestContractServiceKeytabAccess.
+//   - Q62: a service member call naming a missing member returns the
+//     service, completed 0 and failed.<attr>.<type> [[name, "no such
+//     entry"]], attr managedby for service_{add,remove}_host and
+//     ipaallowedtoperform_{read,write}_keys for the keytab calls. Host
+//     groups are not modelled, so every host group is missing.
+//     goipa.TestContractServiceMemberMissing.
+//   - Q63: service_add_host of a host already managing the service fails
+//     that member ("This entry is already a member"); the host may be
+//     removed and added back. goipa.TestContractServiceManagedBy.
+//   - Q64: service_disable drops the keys (has_keytab false) and every
+//     usercertificate; a service with neither is 4010 AlreadyInactive
+//     "This entry is already disabled". service_add_cert takes base64 DER
+//     and the certificates come back as {"__base64__": ...}; revocation is
+//     not modelled. TestService_SeededAndDisable,
+//     goipa.TestContractServiceDisable.
 //
 // A response's version is the server release, 4.13.4 unless SetVersion
 // changes it, and its principal is
