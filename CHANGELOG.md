@@ -7,6 +7,57 @@ existing exported identifiers keep their signatures).
 
 ## [Unreleased]
 
+### Added
+
+- Host groups: `HostGroupShow`, `HostGroupFind`, `HostGroupAdd`,
+  `HostGroupDelete`, member and member-manager calls
+- Services: `ServiceShow`, `ServiceFind`, `ServiceAdd`, `ServiceDelete`,
+  `ServiceDisable`, hosts that manage a service, and the keytab access lists
+  (`ServiceAllowRetrieveKeytab` and its three siblings with `KeytabAccess`)
+- HBAC and sudo rules: show, add, delete, enable, disable and members
+  (`HBACRuleAddUser`, `SudoRuleAddAllowCommand`, `SudoRuleAddRunAsUser`,
+  `SudoRuleAddOption`, ...); `SudoRule.RunAsUserGroups`
+- Certificates: `CertRequest`, `CertShow`, `CertRevoke`
+- DNS: zones (`DNSZoneShow`, `DNSZoneFind`, `DNSZoneAdd`, `DNSZoneDelete`,
+  `DNSZoneEnable`, `DNSZoneDisable`) and records (`DNSRecordShow`,
+  `DNSRecordFind`, `DNSRecordAdd`, `DNSRecordRemove`, `DNSRecordDelete`)
+- Automember rules: show, find, add, delete, conditions, default group,
+  rebuild (`AutomemberShow`, `AutomemberAddCondition`, `AutomemberRebuild`, ...)
+- Roles, privileges and permissions, read only: `RoleShow`/`RoleFind`,
+  `PrivilegeShow`/`PrivilegeFind`, `PermissionShow`/`PermissionFind`
+- Every new call has a `...Context` twin. Attribute changes go through
+  `Modify` (for automember, `RPC`, since it needs the rule type); member
+  calls return the updated object and a `*MemberError` for members the
+  server refused
+- `ipatest`: models for all of the above, with `AddHostGroup`, `AddService`,
+  `AddHBACRule`, `AddSudoRule`, `AddRole`, `AddPrivilege` and `AddPermission`
+  seed helpers
+- `ipatest`: `NewRecorder` records a real server's `*_show`/`*_find`
+  responses (secrets redacted) and `Server.SetReplay` answers from them; the
+  recordings of FreeIPA 4.9.13, 4.12.2 and 4.13.4 are embedded, so tests of
+  commands goipa does not wrap see real response shapes. `IPATEST_RECORD=dir`
+  records during the contract tests
+
+### Changed
+
+- `ipatest`: `host_add` and `host_del` are modelled
+- `ipatest`: a `*_show` or `*_find` command that is not modelled and has no
+  `Handle` override is answered from the recordings instead of 905 (a
+  built-in or a `Handle` override still wins); `SetReplay(nil)` restores 905.
+  The recordings add about 3 MB to the `ipatest` package only
+- The integration CI container installs FreeIPA with integrated DNS
+
+### Notes from the real servers
+
+Checked on FreeIPA 4.9.13, 4.12.2 and 4.13.4; `ipatest` follows them
+(quirks Q50 to Q139 in its documentation).
+
+- Enabling or disabling an HBAC rule, sudo rule or DNS zone twice succeeds
+- The default certificate profile accepts RSA keys only; an ECDSA CSR fails
+- On 4.9 `sudorule_add_option` takes one option per request, so
+  `SudoRuleAddOption` sends them one at a time
+- A sudo rule's unknown users, groups and hosts become external members
+
 ## [v0.8.0] - 2026-10-24
 
 Command catalogue: every command, argument and option of FreeIPA 4.9.0 to

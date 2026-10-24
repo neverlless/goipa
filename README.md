@@ -47,6 +47,9 @@ tokens.
   (`GroupAddMember`, `GroupAddMemberManager`, ...), with per-member failures
   returned as `*MemberError`
 - Hosts: show, find (`HostShow`, `HostFind`)
+- Host groups, services and keytab access, HBAC and sudo rules, certificates,
+  DNS, automember rules, roles, privileges and permissions: see
+  [Typed objects](#typed-objects)
 - Lockout: per-replica failed logins and unlock (`UserStatus`, `UserUnlock`)
 - Password policy: group, global and effective per user (`PwPolicyShow`,
   `UserPwPolicy`)
@@ -104,6 +107,26 @@ For its built-in commands `ipatest` rejects options the command lacks at the
 `SetVersion` release (3005 `OptionError`, `Unknown option: <name>`) and
 commands added after that release (905). It does not count arguments or
 return `ErrNotSupported`, and `Handle` overrides are not checked.
+
+## Typed objects
+
+Each object has typed `…Show`/`…Find` calls (and `…Add`, `…Delete` and member
+calls where noted), checked nightly against FreeIPA 4.9, 4.12 and 4.13. Member
+calls return the updated object and a `*MemberError` for members the server
+refused. Attributes are changed with `Modify` (`HostGroupAdd` and friends only
+create); for automember use `RPC`, since `automember_mod` needs the rule type.
+
+| Object | Methods | FreeIPA commands |
+|---|---|---|
+| Host group | `HostGroupShow`, `HostGroupFind`, `HostGroupAdd`, `HostGroupDelete`, `HostGroupAddMember`, `HostGroupRemoveMember`, `HostGroupAddMemberManager`, `HostGroupRemoveMemberManager` | `hostgroup_show`, `_find`, `_add`, `_del`, `_add_member`, `_remove_member`, `_add_member_manager`, `_remove_member_manager` |
+| Service | `ServiceShow`, `ServiceFind`, `ServiceAdd`, `ServiceDelete`, `ServiceDisable`, `ServiceAddHost`, `ServiceRemoveHost`, `ServiceAllow…Keytab`, `ServiceDisallow…Keytab` (retrieve, create) | `service_show`, `_find`, `_add`, `_del`, `_disable`, `_add_host`, `_remove_host`, `_allow_retrieve_keytab`, `_disallow_retrieve_keytab`, `_allow_create_keytab`, `_disallow_create_keytab` |
+| HBAC rule | `HBACRuleShow`, `HBACRuleFind`, `HBACRuleAdd`, `HBACRuleDelete`, `HBACRuleEnable`, `HBACRuleDisable`, `HBACRuleAdd/RemoveUser`, `…Host`, `…Service` | `hbacrule_show`, `_find`, `_add`, `_del`, `_enable`, `_disable`, `_add_user`, `_remove_user`, `_add_host`, `_remove_host`, `_add_service`, `_remove_service` |
+| Sudo rule | `SudoRuleShow`, `SudoRuleFind`, `SudoRuleAdd`, `SudoRuleDelete`, `SudoRuleEnable`, `SudoRuleDisable`, `SudoRuleAdd/RemoveUser`, `…Host`, `…AllowCommand`, `…DenyCommand`, `…RunAsUser`, `…RunAsGroup`, `…Option` | `sudorule_show`, `_find`, `_add`, `_del`, `_enable`, `_disable`, `_add_user`, `_add_host`, `_add_allow_command`, `_add_deny_command`, `_add_runasuser`, `_add_runasgroup`, `_add_option` and their `_remove_` twins |
+| Certificate | `CertRequest`, `CertShow`, `CertRevoke` | `cert_request`, `cert_show`, `cert_revoke` |
+| DNS zone | `DNSZoneShow`, `DNSZoneFind`, `DNSZoneAdd`, `DNSZoneDelete`, `DNSZoneEnable`, `DNSZoneDisable` | `dnszone_show`, `_find`, `_add`, `_del`, `_enable`, `_disable` |
+| DNS record | `DNSRecordShow`, `DNSRecordFind`, `DNSRecordAdd`, `DNSRecordRemove`, `DNSRecordDelete` | `dnsrecord_show`, `_find`, `_add`, `_del` (remove values; `del_all` for the name) |
+| Automember rule | `AutomemberShow`, `AutomemberFind`, `AutomemberAdd`, `AutomemberDelete`, `AutomemberAddCondition`, `AutomemberRemoveCondition`, `AutomemberDefaultGroup`, `AutomemberSetDefaultGroup`, `AutomemberRemoveDefaultGroup`, `AutomemberRebuild` | `automember_show`, `_find`, `_add`, `_del`, `_add_condition`, `_remove_condition`, `automember_default_group_show`, `_set`, `_remove`, `automember_rebuild` |
+| Role, privilege, permission (read only) | `RoleShow`/`RoleFind`, `PrivilegeShow`/`PrivilegeFind`, `PermissionShow`/`PermissionFind` | `role_*`, `privilege_*`, `permission_*` `_show` and `_find` |
 
 ## Install
 
@@ -253,6 +276,16 @@ scripts/ipa-up.sh && (set -a; . ./.env; set +a; go test -race -tags integration 
 `/etc/krb5.conf.goipa-bak`), `/etc/ipa/` and your ccache, and refuses to run
 on a host whose `/etc/ipa/default.conf` points at another IPA server unless
 `FORCE=1` is set.
+
+### Recorded responses
+
+`ipatest` models the commands above and answers any other `*_show` or
+`*_find` command from responses recorded on real FreeIPA 4.9.13, 4.12.2 and
+4.13.4 (secrets redacted), so tests of commands goipa does not wrap see real
+shapes. Order: a `Handle` override, then a built-in, then a recording, then
+905. `Server.SetReplay(nil)` turns recordings off and `SetReplay(fsys)` uses
+your own, written by `ipatest.NewRecorder`. The recordings are about 3 MB,
+embedded in `ipatest` only.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) before sending a pull request.
 
