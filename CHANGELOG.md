@@ -7,17 +7,33 @@ existing exported identifiers keep their signatures).
 
 ## [Unreleased]
 
-### Added
-- Stage users: `StageUserAdd`, `StageUserShow`, `StageUserFind`, `StageUserMod`, `StageUserActivate`, `StageUserDelete`
-- Lockout: `UserStatus` (one `ReplicaStatus` per master, list and scalar counter forms, unreachable masters reported instead of failing), `UserUnlock`
-- Password policy: `PwPolicyShow`, `UserPwPolicy`; durations as `time.Duration`, including the FreeIPA 4.13 password-quality credits and the grace login limit
-- Subordinate IDs: `SubIDFind`, `SubIDGenerate`
-- HBAC and sudo: `HBACRuleFind`, `SudoRuleFind`, `HBACTest` (reads hbactest's result correctly and evaluates every rule, not only the first 100)
-- Passkeys: `UserAddPasskey`, `UserRemovePasskey`
-- `SyncOTPToken` and `ErrInvalidCredentials` (based on ubccr/goipa#2 by @farzandalaee)
-- `CodeOption` (3005 OptionError, an option the command does not take)
-- Every new call has a `…Context` twin
-- `ipatest` models stage users, user_status/user_unlock, password policies, sub-IDs, HBAC and sudo rules (with the default `allow_all` rule), hbactest, passkey mappings and token sync
+## [v0.5.0] - 2026-10-24
+
+Account lifecycle and access: stage users, lockout status and unlock,
+password policy, subordinate IDs, HBAC and sudo rules with hbactest,
+passkey mappings and OTP token sync, each with a `Context` twin and an
+`ipatest` model. Every behaviour is checked against real FreeIPA 4.9,
+4.12 and 4.13 by the contract tests.
+
+- Stage users: `StageUserAdd`, `StageUserShow`, `StageUserFind`,
+  `StageUserMod`, `StageUserActivate` and `StageUserDelete`
+- Lockout: `UserStatus` returns one `ReplicaStatus` per master (failed
+  logins in either of FreeIPA's forms, last success and failure times, an
+  unreachable master reported instead of failing the call); `UserUnlock`
+- Password policy: `PwPolicyShow` and `UserPwPolicy`, with durations as
+  `time.Duration` and the FreeIPA 4.13 password-quality credits and grace
+  login limit
+- Subordinate IDs: `SubIDFind` and `SubIDGenerate`
+- HBAC and sudo: `HBACRuleFind`, `SudoRuleFind` and `HBACTest`, which
+  reads hbactest's result correctly and evaluates every rule, not only the
+  first 100
+- Passkeys: `UserAddPasskey` and `UserRemovePasskey`
+- `SyncOTPToken` and `ErrInvalidCredentials` (based on ubccr/goipa#2 by
+  @farzandalaee)
+- `CodeOption` (3005 OptionError: an option the command does not take)
+- `ipatest` models stage users, user_status and user_unlock, password
+  policies, sub-IDs, HBAC and sudo rules (with the default `allow_all`
+  rule), hbactest, passkey mappings and token sync
 
 ## [v0.4.0] - 2026-10-23
 
@@ -201,7 +217,8 @@ v0.0.1 – v0.0.7 were released by Andrew E. Bruno as
 [ubccr/goipa](https://github.com/ubccr/goipa/tags). This repository keeps
 that history.
 
-[Unreleased]: https://github.com/neverlless/goipa/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/neverlless/goipa/compare/v0.5.0...HEAD
+[v0.5.0]: https://github.com/neverlless/goipa/compare/v0.4.0...v0.5.0
 [v0.4.0]: https://github.com/neverlless/goipa/compare/v0.3.0...v0.4.0
 [v0.3.0]: https://github.com/neverlless/goipa/compare/v0.2.1...v0.3.0
 [v0.2.1]: https://github.com/neverlless/goipa/compare/v0.2.0...v0.2.1
