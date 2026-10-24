@@ -7,6 +7,27 @@ existing exported identifiers keep their signatures).
 
 ## [Unreleased]
 
+### Added
+
+- `Call[T]`, a generic typed call for any FreeIPA command, and `Entry`, a
+  result object with `Has`, `Str`, `Strs`, `Bool`, `Int`, `Time`, `Bytes`,
+  `DN` and `Raw` accessors that read FreeIPA's attribute lists,
+  `__datetime__` and `__base64__` values
+- `FindEntries` and `ErrTruncated`: a `*_find` that reports a result
+  truncated by the server's size limit instead of returning it silently
+- `ServerVersion` and `ErrNotSupported`: passkey calls (FreeIPA 4.11) and
+  `SubIDFind`/`SubIDGenerate` (4.9.7) fail before sending when the known
+  server is older
+- `Modify`: `setattr`/`addattr`/`delattr` updates of single attributes on
+  any object
+- `Batch`: several commands in one round trip with per-command results and
+  errors
+
+### Changed
+
+- `ServerVersion` is recorded from every response; it is empty until the
+  first one
+
 ## [v0.6.0] - 2026-10-24
 
 Construction and authentication: an options-based `New` with no file I/O at

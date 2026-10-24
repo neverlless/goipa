@@ -159,17 +159,39 @@ against `ipatest` and an integration test.
       saved session. Says plainly that `Login` is Kerberos and shows the
       CA setup for hosts not enrolled in FreeIPA
 
-## v0.7.0 — Breadth without a generated API
+## v0.7.0 — Typed escape hatch and core API
 
 goipa keeps a hand-written API for the common objects and makes every other
-command just as safe to call. Code generation is used only for data (the
-command catalogue), never for the public call API.
+command just as safe to call.
 
-- [ ] Typed escape hatch: a generic `Call[T any](ctx, c, method, args,
+- [x] Typed escape hatch: a generic `Call[T any](ctx, c, method, args,
       opts) (T, *Result, error)` that decodes `result` into the caller's
       struct, and an `Entry` type with `Str`, `Strs`, `Bool`, `Int`,
       `Time` and `DN` accessors that understand FreeIPA's attribute lists,
       `__datetime__` and `__base64__` values, so no caller parses gjson by hand
+- [x] Server version awareness: `ServerVersion` from the first response
+      (the envelope carries it), and typed calls for features newer than
+      the server (passkeys 4.11, sub-IDs 4.9.7, password-quality credits
+      4.13) return `ErrNotSupported` instead of a confusing server error
+- [x] Attribute-level updates for any object: `c.Modify(command,
+      pkey).Set(attr, v).Add(attr, v).Del(attr, v).Run(ctx)` over FreeIPA's
+      `setattr`/`addattr`/`delattr`, so a single field changes without the
+      read-modify-write that `UserMod` needs today
+- [x] `batch` support: several commands in one round trip, with per-command
+      results and errors
+- [x] Paging helpers for `*_find`: report `Truncated` as an error option or
+      iterate with an explicit `sizelimit`, so large directories don't
+      silently return 100 entries
+
+Accept: any FreeIPA command can be called with typed decoding; truncated
+finds are reported; batch and attribute updates work on FreeIPA 4.9, 4.12
+and 4.13.
+
+## v0.8.0 — Command catalogue
+
+Code generation is used only for data (the command catalogue), never for the
+public call API.
+
 - [ ] Command catalogue generated from FreeIPA's `API.txt` for each supported
       release (4.9 to 4.13): command names, positional args, option names
       and types, and the release that introduced each. `RPC` and `Call` can
@@ -177,19 +199,12 @@ command catalogue), never for the public call API.
       `ipa.Commands` lets callers discover what a server version supports.
       `go generate` refreshes it; a CI job fails when a new FreeIPA release
       adds commands that the catalogue lacks
-- [ ] Server version awareness: `ServerVersion` from the first response
-      (the envelope carries it), and typed calls for features newer than
-      the server (passkeys 4.11, sub-IDs 4.9.7, password-quality credits
-      4.13) return `ErrNotSupported` instead of a confusing server error
-- [ ] Attribute-level updates for any object: `Modify(ctx, c, command,
-      pkey).Set(attr, v).Add(attr, v).Del(attr, v)` over FreeIPA's
-      `setattr`/`addattr`/`delattr`, so a single field changes without the
-      read-modify-write that `UserMod` needs today
-- [ ] `batch` support: several commands in one round trip, with per-command
-      results and errors
-- [ ] Paging helpers for `*_find`: report `Truncated` as an error option or
-      iterate with an explicit `sizelimit`, so large directories don't
-      silently return 100 entries
+
+Accept: any FreeIPA command can be called with option validation, without
+hand-written JSON parsing.
+
+## v0.9.0 — Typed objects
+
 - [ ] Typed APIs for the objects users ask for most, each with a `Context`
       twin, an `ipatest` model and contract tests on real FreeIPA, in this
       order: host groups; services and keytab metadata; HBAC and sudo rule
@@ -200,9 +215,8 @@ command catalogue), never for the public call API.
       the nightly run (`IPATEST_RECORD=dir`) and replay them for commands
       it doesn't model, so tests of unwrapped commands use real shapes
 
-Accept: any FreeIPA command can be called with typed decoding and option
-validation, without hand-written JSON parsing; the listed objects have
-typed APIs verified nightly on FreeIPA 4.9, 4.12 and 4.13.
+Accept: the listed objects have typed APIs verified nightly on FreeIPA 4.9,
+4.12 and 4.13.
 
 ## v1.0.0 — Stable API
 
@@ -214,5 +228,5 @@ typed APIs verified nightly on FreeIPA 4.9, 4.12 and 4.13.
 ## Out of scope
 
 - An LDAP backend, a CLI, non-FreeIPA identity systems.
-- Generating the public call API from FreeIPA's schema; v0.7's command
+- Generating the public call API from FreeIPA's schema; v0.8's command
   catalogue and `Call` cover the long tail.

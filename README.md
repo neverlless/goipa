@@ -60,6 +60,13 @@ tokens.
   logins excepted)
 - `RPC` / `RPCContext` for any other command, reusing the client's TLS
   config, session or Kerberos auth and API version
+- `Call[T]` and `Entry`: typed decoding of any command's result, with
+  accessors for FreeIPA's attribute lists, dates and binary values
+- `FindEntries` returns `ErrTruncated` when the server cut a search short
+- `Modify` changes single attributes (`setattr`/`addattr`/`delattr`) on any
+  object; `Batch` sends several commands in one round trip
+- `ServerVersion`; calls for features newer than the server return
+  `ErrNotSupported`
 - [`ipatest`](https://pkg.go.dev/github.com/neverlless/goipa/ipatest), a fake
   FreeIPA server for your own tests
 
