@@ -516,8 +516,11 @@ func TestStageUserDuplicateAndDelete(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got := string(res.Result.Failed); got != "" && !strings.Contains(got, "[]") {
-		t.Errorf("failed = %s", got)
+	if string(res.Result.Data) != `{"failed":[]}` {
+		t.Errorf("result = %s", res.Result.Data)
+	}
+	if v, ok := res.Result.Value.([]any); !ok || len(v) != 1 || v[0] != "x" {
+		t.Errorf("value = %v", res.Result.Value)
 	}
 	if res.Result.Summary != `Deleted stage user "x"` {
 		t.Errorf("summary = %q", res.Result.Summary)
