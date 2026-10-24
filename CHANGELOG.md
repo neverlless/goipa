@@ -7,6 +7,15 @@ existing exported identifiers keep their signatures).
 
 ## [Unreleased]
 
+## [v0.9.0] - 2026-10-24
+
+Typed objects: host groups, services and keytab access, HBAC and sudo rule
+management, certificates, DNS zones and records, automember rules, and
+roles, privileges and permissions, each with an `ipatest` model and contract
+tests checked against real FreeIPA 4.9, 4.12 and 4.13. `ipatest` also
+answers commands it does not model with responses recorded from those
+servers.
+
 ### Added
 
 - Host groups: `HostGroupShow`, `HostGroupFind`, `HostGroupAdd`,
@@ -369,7 +378,8 @@ v0.0.1 – v0.0.7 were released by Andrew E. Bruno as
 [ubccr/goipa](https://github.com/ubccr/goipa/tags). This repository keeps
 that history.
 
-[Unreleased]: https://github.com/neverlless/goipa/compare/v0.8.0...HEAD
+[Unreleased]: https://github.com/neverlless/goipa/compare/v0.9.0...HEAD
+[v0.9.0]: https://github.com/neverlless/goipa/compare/v0.8.0...v0.9.0
 [v0.8.0]: https://github.com/neverlless/goipa/compare/v0.7.0...v0.8.0
 [v0.7.0]: https://github.com/neverlless/goipa/compare/v0.6.0...v0.7.0
 [v0.6.0]: https://github.com/neverlless/goipa/compare/v0.5.0...v0.6.0
