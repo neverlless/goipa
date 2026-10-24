@@ -183,7 +183,7 @@
 //   - Q29: stageuser_add without givenname or sn is 3007; a duplicate stage
 //     uid is 4002 `stage user with name "<uid>" already exists`; active
 //     users are not checked. stageuser_del has the user_del shape; a missing
-//     entry is 4001 "<uid>: stage user not found"; it ignores preserve.
+//     entry is 4001 "<uid>: stage user not found".
 //     TestStageUserAdd_Required, TestStageUserDuplicateAndDelete.
 //   - Q30: stageuser_activate moves the record to the active users with a
 //     fresh uidnumber and answers with the active entry (all attributes),
@@ -312,6 +312,18 @@
 //     is dispatched recursively, and a nested session_logout sends no
 //     deletion cookie (neither verified against FreeIPA). TestBatch,
 //     TestBatch_MiddleFails, TestBatchMalformedEntries, goipa.TestContractBatch.
+//   - Q44: a modelled command given an option it does not take at the
+//     reported release (arguments by name count, as in ipalib's
+//     __options_2_params) fails with 3005 OptionError "Unknown option:
+//     <name>", the first unknown name in sorted order; FreeIPA picks an
+//     arbitrary one. Inside a batch it is that entry's error.
+//     TestServer_UnknownOption, TestServer_BatchUnknownOption,
+//     goipa.TestContract_UnknownOption.
+//   - Q45: a modelled command added after the release SetVersion reports
+//     (subid_* before 4.9.7, passkey commands before 4.11.0) is 905 "unknown
+//     command '<name>'", as Q14. Q44 and Q45 follow the ipa command
+//     catalogue and skip Handle overrides. TestServer_CommandNewerThanVersion,
+//     TestServer_HandleBypassesCatalogue.
 //
 // A response's version is the server release, 4.13.4 unless SetVersion
 // changes it, and its principal is

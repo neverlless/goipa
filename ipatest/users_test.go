@@ -529,7 +529,7 @@ func TestStageUserDuplicateAndDelete(t *testing.T) {
 		t.Errorf("duplicate = %v", err)
 	}
 
-	res, err := c.RPC("stageuser_del", []string{"x"}, ipa.Options{"preserve": true})
+	res, err := c.RPC("stageuser_del", []string{"x"}, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
