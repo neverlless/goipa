@@ -120,3 +120,40 @@ func TestPing(t *testing.T) {
 	assert.Containsf(res.Principal, c.Realm(), "Realm not found in principal")
 	assert.NotEmptyf(c.SessionID(), "Missing sessionID")
 }
+
+func TestLoginWithKeytabData(t *testing.T) {
+	if TestEnvKeytabFile == "" || TestEnvKeytabUser == "" {
+		t.Skip("Admin user/keytab not set. Skipping")
+	}
+	b, err := os.ReadFile(TestEnvKeytabFile)
+	require.NoError(t, err)
+
+	c := ipa.NewDefaultClient()
+	require.NoError(t, c.LoginWithKeytabData(b, TestEnvKeytabUser))
+	who, err := c.WhoAmI()
+	require.NoError(t, err)
+	assert.Equal(t, []string{TestEnvKeytabUser}, who.Arguments)
+}
+
+func TestLoginFromCCacheData(t *testing.T) {
+	u, err := user.Current()
+	require.NoError(t, err)
+	b, err := os.ReadFile(fmt.Sprintf("/tmp/krb5cc_%s", u.Uid))
+	require.NoError(t, err)
+
+	c := ipa.NewDefaultClient()
+	require.NoError(t, c.LoginFromCCacheData(b))
+	_, err = c.WhoAmI()
+	assert.NoError(t, err)
+}
+
+func TestWithKrb5ConfigData(t *testing.T) {
+	if TestEnvKeytabFile == "" || TestEnvKeytabUser == "" {
+		t.Skip("Admin user/keytab not set. Skipping")
+	}
+	conf, err := os.ReadFile(ipa.DefaultKerbConf)
+	require.NoError(t, err)
+	c, err := ipa.New(ipa.WithKrb5ConfigData(conf))
+	require.NoError(t, err)
+	assert.NoError(t, c.LoginWithKeytab(TestEnvKeytabFile, TestEnvKeytabUser))
+}
