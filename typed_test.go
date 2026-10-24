@@ -27,6 +27,21 @@ func TestShowEntry_SendsAllAndMembers(t *testing.T) {
 	}
 }
 
+func TestShowEntry_NoMembersOnlyWhenCatalogued(t *testing.T) {
+	s, c := newFake(t)
+	s.AddUser("u1", ipatest.User{})
+	_, _ = ipa.ShowEntry(context.Background(), c, "dnszone_show", []string{"example.test."})
+	if o := lastFind(s).Options; o["all"] != true || o["no_members"] != nil {
+		t.Errorf("dnszone_show options = %v", o)
+	}
+	if _, err := ipa.ShowEntry(context.Background(), c, "user_show", []string{"u1"}); err != nil {
+		t.Fatal(err)
+	}
+	if o := lastFind(s).Options; o["no_members"] != false {
+		t.Errorf("user_show options = %v", o)
+	}
+}
+
 func TestFindTyped_Truncated(t *testing.T) {
 	s, c := newFake(t)
 	s.AddUser("u1", ipatest.User{})

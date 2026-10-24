@@ -81,7 +81,7 @@ func (c *Client) AutomemberShowContext(ctx context.Context, typ, name string) (*
 	if err := checkAutomemberRule(typ, name); err != nil {
 		return nil, err
 	}
-	// automember_show takes no no_members, so showEntry does not fit.
+	// showEntry does not send the type option.
 	e, _, err := Call[Entry](ctx, c, "automember_show", []string{name}, Options{"type": typ, "all": true})
 	if err != nil {
 		return nil, err
@@ -107,15 +107,7 @@ func (c *Client) AutomemberFindContext(ctx context.Context, typ string, options 
 		o = Options{}
 	}
 	o["type"] = typ
-	entries, err := FindEntries(ctx, c, "automember_find", []string{""}, o, 0)
-	if err != nil && !errors.Is(err, ErrTruncated) {
-		return nil, err
-	}
-	out := make([]*AutomemberRule, len(entries))
-	for i, e := range entries {
-		out[i] = automemberRule(typ)(e)
-	}
-	return out, err
+	return findTyped(ctx, c, "automember_find", []string{""}, o, automemberRule(typ))
 }
 
 // AutomemberAdd creates a rule with `automember_add`. name is the target

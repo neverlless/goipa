@@ -8,12 +8,24 @@ import (
 	"context"
 	"errors"
 	"maps"
+	"slices"
 )
 
-// showEntry runs a *_show command with all: true and no_members: false so the
-// result carries every attribute and the member lists.
+// takesOption reports whether the command catalogue lists opt for method.
+func takesOption(method, opt string) bool {
+	cmd, _ := LookupCommand(method, "")
+	return slices.ContainsFunc(cmd.Options, func(p Param) bool { return p.Name == opt })
+}
+
+// showEntry runs a *_show command with all: true and, where the command has
+// it, no_members: false so the result carries every attribute and the member
+// lists. Validating servers reject no_members on commands that lack it.
 func showEntry[T any](ctx context.Context, c *Client, method string, args []string, conv func(Entry) *T) (*T, error) {
-	e, _, err := Call[Entry](ctx, c, method, args, Options{"all": true, "no_members": false})
+	o := Options{"all": true}
+	if takesOption(method, "no_members") {
+		o["no_members"] = false
+	}
+	e, _, err := Call[Entry](ctx, c, method, args, o)
 	if err != nil {
 		return nil, err
 	}
@@ -21,14 +33,15 @@ func showEntry[T any](ctx context.Context, c *Client, method string, args []stri
 }
 
 // findTyped runs a *_find command; options is copied, and all and no_members
-// default to true and false unless the caller set them. The server's
+// (where the command has it) default to true and false unless the caller set
+// them. The server's
 // truncation comes back as ErrTruncated next to the converted entries.
 func findTyped[T any](ctx context.Context, c *Client, method string, args []string, options Options, conv func(Entry) *T) ([]*T, error) {
 	o := maps.Clone(options)
 	if o == nil {
 		o = Options{}
 	}
-	if _, ok := o["no_members"]; !ok {
+	if _, ok := o["no_members"]; !ok && takesOption(method, "no_members") {
 		o["no_members"] = false
 	}
 	entries, err := FindEntries(ctx, c, method, args, o, 0)

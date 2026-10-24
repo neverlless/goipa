@@ -8,7 +8,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"slices"
 	"strings"
 
 	"github.com/tidwall/gjson"
@@ -69,8 +68,7 @@ func dnsRecordFrom(e Entry) *DNSRecord {
 // recordOption maps a record type to its dnsrecord_add option ("A" → arecord).
 func recordOption(rtype string) (string, error) {
 	opt := strings.ToLower(rtype) + "record"
-	cmd, _ := LookupCommand("dnsrecord_add", "")
-	if rtype == "" || !slices.ContainsFunc(cmd.Options, func(p Param) bool { return p.Name == opt }) {
+	if rtype == "" || !takesOption("dnsrecord_add", opt) {
 		return "", fmt.Errorf("%w: unknown DNS record type %q", ErrInvalidCall, rtype)
 	}
 	return opt, nil
@@ -93,11 +91,7 @@ func (c *Client) DNSZoneShowContext(ctx context.Context, name string) (*DNSZone,
 	if name == "" {
 		return nil, errZoneRequired
 	}
-	e, _, err := Call[Entry](ctx, c, "dnszone_show", []string{name}, Options{"all": true})
-	if err != nil {
-		return nil, err
-	}
-	return dnsZoneFrom(e), nil
+	return showEntry(ctx, c, "dnszone_show", []string{name}, dnsZoneFrom)
 }
 
 // DNSZoneFind finds zones with `dnszone_find`; options are passed through
@@ -110,20 +104,7 @@ func (c *Client) DNSZoneFind(options Options) ([]*DNSZone, error) {
 
 // DNSZoneFindContext is like DNSZoneFind but bounds the request with ctx.
 func (c *Client) DNSZoneFindContext(ctx context.Context, options Options) ([]*DNSZone, error) {
-	return dnsFind(ctx, c, "dnszone_find", []string{""}, options, dnsZoneFrom)
-}
-
-// dnsFind is findTyped without no_members, which the dns commands lack.
-func dnsFind[T any](ctx context.Context, c *Client, method string, args []string, options Options, conv func(Entry) *T) ([]*T, error) {
-	entries, err := FindEntries(ctx, c, method, args, options, 0)
-	if err != nil && !errors.Is(err, ErrTruncated) {
-		return nil, err
-	}
-	out := make([]*T, len(entries))
-	for i, e := range entries {
-		out[i] = conv(e)
-	}
-	return out, err
+	return findTyped(ctx, c, "dnszone_find", []string{""}, options, dnsZoneFrom)
 }
 
 // DNSZoneAdd creates a master zone with `dnszone_add` and returns it; force
@@ -217,11 +198,7 @@ func (c *Client) DNSRecordShowContext(ctx context.Context, zone, name string) (*
 	if err != nil {
 		return nil, err
 	}
-	e, _, err := Call[Entry](ctx, c, "dnsrecord_show", args, Options{"all": true})
-	if err != nil {
-		return nil, err
-	}
-	return dnsRecordFrom(e), nil
+	return showEntry(ctx, c, "dnsrecord_show", args, dnsRecordFrom)
 }
 
 // DNSRecordFind finds the record names of zone with `dnsrecord_find`; options
@@ -237,7 +214,7 @@ func (c *Client) DNSRecordFindContext(ctx context.Context, zone string, options 
 	if zone == "" {
 		return nil, errZoneRequired
 	}
-	return dnsFind(ctx, c, "dnsrecord_find", []string{zone}, options, dnsRecordFrom)
+	return findTyped(ctx, c, "dnsrecord_find", []string{zone}, options, dnsRecordFrom)
 }
 
 func dnsRecordValues(zone, name, rtype string, values []string) ([]string, Options, error) {
