@@ -86,6 +86,11 @@ func (c *Client) rpcParams(ctx context.Context, method string, params []any, opt
 	if _, ok := opts["version"]; !ok {
 		opts["version"] = IpaClientVersion
 	}
+	if c.validate {
+		if err := validateCall(method, c.ServerVersion(), len(params), opts); err != nil {
+			return nil, err
+		}
+	}
 
 	data := []interface{}{
 		params,

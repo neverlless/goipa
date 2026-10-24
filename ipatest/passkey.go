@@ -72,4 +72,7 @@ func passkeyCmd(add bool) builtin {
 func init() {
 	builtins["user_add_passkey"] = passkeyCmd(true)
 	builtins["user_remove_passkey"] = passkeyCmd(false)
+	builtins["passkeyconfig_show"] = func(s *Server, c Call) (any, *ipa.IpaError) {
+		return map[string]any{"result": map[string]any{"iparequireuserverification": []bool{true}}, "value": nil, "summary": nil}, nil
+	}
 }

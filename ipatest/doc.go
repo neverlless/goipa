@@ -312,6 +312,10 @@
 //     is dispatched recursively, and a nested session_logout sends no
 //     deletion cookie (neither verified against FreeIPA). TestBatch,
 //     TestBatch_MiddleFails, TestBatchMalformedEntries, goipa.TestContractBatch.
+//   - Q43: passkeyconfig_show answers FreeIPA's default configuration,
+//     iparequireuserverification [true], with null value and summary; only
+//     its success is pinned against FreeIPA, the attribute shape follows
+//     passkeyconfig.py. goipa.TestContract_CatalogueGate.
 //
 // A response's version is the server release, 4.13.4 unless SetVersion
 // changes it, and its principal is
