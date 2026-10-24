@@ -205,6 +205,42 @@ func twinCalls() []twinCall {
 		{"UserRemovePasskeyContext", func(ctx context.Context, c *ipa.Client) error {
 			return c.UserRemovePasskeyContext(ctx, "bob", testPasskey)
 		}},
+		{"AutomemberShowContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.AutomemberShowContext(ctx, ipa.AutomemberGroup, "g")
+			return err
+		}},
+		{"AutomemberFindContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.AutomemberFindContext(ctx, ipa.AutomemberGroup, nil)
+			return err
+		}},
+		{"AutomemberAddContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.AutomemberAddContext(ctx, ipa.AutomemberGroup, "g", "")
+			return err
+		}},
+		{"AutomemberDeleteContext", func(ctx context.Context, c *ipa.Client) error {
+			return c.AutomemberDeleteContext(ctx, ipa.AutomemberGroup, "g")
+		}},
+		{"AutomemberAddConditionContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.AutomemberAddConditionContext(ctx, ipa.AutomemberGroup, "g", "uid", []string{"^a"}, nil)
+			return err
+		}},
+		{"AutomemberRemoveConditionContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.AutomemberRemoveConditionContext(ctx, ipa.AutomemberGroup, "g", "uid", []string{"^a"}, nil)
+			return err
+		}},
+		{"AutomemberDefaultGroupContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.AutomemberDefaultGroupContext(ctx, ipa.AutomemberGroup)
+			return err
+		}},
+		{"AutomemberSetDefaultGroupContext", func(ctx context.Context, c *ipa.Client) error {
+			return c.AutomemberSetDefaultGroupContext(ctx, ipa.AutomemberGroup, "g")
+		}},
+		{"AutomemberRemoveDefaultGroupContext", func(ctx context.Context, c *ipa.Client) error {
+			return c.AutomemberRemoveDefaultGroupContext(ctx, ipa.AutomemberGroup)
+		}},
+		{"AutomemberRebuildContext", func(ctx context.Context, c *ipa.Client) error {
+			return c.AutomemberRebuildContext(ctx, ipa.AutomemberGroup)
+		}},
 	}
 }
 
