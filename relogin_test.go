@@ -168,6 +168,20 @@ func TestRelogin_ConcurrentPasswordChanged(t *testing.T) {
 	}
 }
 
+func TestRelogin_NotWithoutStickySession(t *testing.T) {
+	srv, c, rt := reloginSetup(t, true)
+	c.StickySession(false)
+	srv.ExpireSession(c.SessionID())
+	for range 3 {
+		if _, err := c.UserShow("rita"); !errors.Is(err, ipa.ErrUnauthorized) {
+			t.Fatalf("err = %v, want ErrUnauthorized", err)
+		}
+	}
+	if n := rt.logins.Load(); n != 1 {
+		t.Errorf("logins = %d, want 1", n)
+	}
+}
+
 func TestSessionLogout(t *testing.T) {
 	srv := ipatest.NewServer(t)
 	c := srv.ClientAs("admin")

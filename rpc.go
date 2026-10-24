@@ -114,12 +114,12 @@ func (c *Client) rpc(ctx context.Context, method string, params []string, option
 	if c.sessionID == sent { // another goroutine may already hold a fresh one
 		c.sessionID = ""
 	}
-	fresh, krb := c.sessionID, c.krbClient
+	fresh, krb, sticky := c.sessionID, c.krbClient, c.sticky
 	c.mu.Unlock()
 
 	switch {
 	case fresh != "" || krb != nil: // send uses the fresh session or SPNEGO
-	case c.relogin:
+	case c.relogin && sticky: // without sticky sessions a new login is never used
 		ok, lerr := c.passwordRelogin(ctx)
 		if lerr != nil {
 			return nil, lerr
