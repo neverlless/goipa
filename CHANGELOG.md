@@ -7,6 +7,17 @@ existing exported identifiers keep their signatures).
 
 ## [Unreleased]
 
+### Added
+- Stage users: `StageUserAdd`, `StageUserShow`, `StageUserFind`, `StageUserMod`, `StageUserActivate`, `StageUserDelete`
+- Lockout: `UserStatus` (one `ReplicaStatus` per master, list and scalar counter forms, unreachable masters reported instead of failing), `UserUnlock`
+- Password policy: `PwPolicyShow`, `UserPwPolicy`; durations as `time.Duration`, including the FreeIPA 4.13 password-quality credits and the grace login limit
+- Subordinate IDs: `SubIDFind`, `SubIDGenerate`
+- HBAC and sudo: `HBACRuleFind`, `SudoRuleFind`, `HBACTest` (reads hbactest's result correctly and evaluates every rule, not only the first 100)
+- Passkeys: `UserAddPasskey`, `UserRemovePasskey`
+- `SyncOTPToken` and `ErrInvalidCredentials` (based on ubccr/goipa#2 by @farzandalaee)
+- Every new call has a `…Context` twin
+- `ipatest` models stage users, user_status/user_unlock, password policies, sub-IDs, HBAC and sudo rules (with the default `allow_all` rule), hbactest, passkey mappings and token sync
+
 ## [v0.4.0] - 2026-10-23
 
 Users and groups: typed group management with per-member failures as

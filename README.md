@@ -34,10 +34,12 @@ and OTP tokens.
 - Passwords: set, change (with OTP), reset; typed errors for policy, invalid
   and expired passwords
 - SSH public keys and user authentication types (password, OTP, ...)
-- OTP tokens: add, list, enable, disable, remove
+- OTP tokens: add, list, enable, disable, remove, sync (`SyncOTPToken`)
+- Groups, hosts, stage users, lockout (`UserStatus`, `UserUnlock`), password policy
+  (`PwPolicyShow`, `UserPwPolicy`), sub-IDs, HBAC/sudo lookups and
+  `HBACTest`, passkeys
 
-Groups, stage users, HBAC/sudo, sub-IDs, passkeys, password policy and a
-generic `RPC` call are planned; see the [roadmap](ROADMAP.md).
+Anything else: the generic `RPC` call. See the [roadmap](ROADMAP.md) for what is next.
 
 ## Install
 
