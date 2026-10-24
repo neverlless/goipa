@@ -7,6 +7,7 @@ package ipa_test
 import (
 	"errors"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -128,7 +129,7 @@ func TestUserPwPolicy_Resolution(t *testing.T) {
 	s.SetPwPolicy("inner", ipatest.PwPolicy{Priority: 20, MinLength: 12})
 	s.SetPwPolicy("outer", ipatest.PwPolicy{Priority: 10, MinLength: 15})
 	c := s.ClientAs("admin")
-	if p, err := c.UserPwPolicy("bob"); err != nil || p.Name != "outer" || p.MinLength != 15 {
+	if p, err := c.UserPwPolicy("bob"); err != nil || p.Name != "outer" || p.MinLength != 15 || p.Priority != 0 {
 		t.Errorf("bob = %+v, %v", p, err)
 	}
 	if p, err := c.UserPwPolicy("eve"); err != nil || p.Name != "global_policy" {
@@ -218,5 +219,53 @@ func TestPwPolicyShow_GroupOmitsUnset(t *testing.T) {
 	res, err = c.RPC("pwpolicy_show", nil, ipa.Options{"all": true})
 	if err != nil || !gjson.GetBytes(res.Result.Data, "ipapwddcredit").Exists() || !gjson.GetBytes(res.Result.Data, "krbpwdhistorylength").Exists() {
 		t.Errorf("global = %s, %v", res.Result.Data, err)
+	}
+}
+
+func TestUserPwPolicy_OmitsCospriority(t *testing.T) {
+	s := ipatest.NewServer(t)
+	s.AddUser("bob", ipatest.User{First: "B", Last: "B", Groups: []string{"g"}})
+	s.AddGroup("g", ipatest.Group{})
+	s.SetPwPolicy("g", ipatest.PwPolicy{Priority: 10, MinLength: 12})
+	c := s.ClientAs("admin")
+	res, err := c.RPC("pwpolicy_show", nil, ipa.Options{"all": true, "user": "bob"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if gjson.GetBytes(res.Result.Data, "cospriority").Exists() {
+		t.Errorf("cospriority returned for the user form: %s", res.Result.Data)
+	}
+	if p, err := c.PwPolicyShow("g"); err != nil || p.Priority != 10 {
+		t.Errorf("PwPolicyShow(g) = %+v, %v", p, err)
+	}
+}
+
+func TestPwPolicyShow_HiddenFromPlainUser(t *testing.T) {
+	s := ipatest.NewServer(t)
+	s.AddUser("bob", ipatest.User{First: "B", Last: "B"})
+	s.AddUser("ann", ipatest.User{First: "A", Last: "A", Groups: []string{"admins"}})
+	s.AddGroup("admins", ipatest.Group{})
+	s.AddGroup("g", ipatest.Group{})
+	s.SetPwPolicy("g", ipatest.PwPolicy{Priority: 10})
+	bob := s.ClientAs("bob")
+	for name, call := range map[string]func() error{
+		"global": func() error { _, err := bob.PwPolicyShow(""); return err },
+		"group":  func() error { _, err := bob.PwPolicyShow("g"); return err },
+		"user":   func() error { _, err := bob.UserPwPolicy("bob"); return err },
+	} {
+		err := call()
+		if ie := new(ipa.IpaError); !errors.Is(err, ipa.ErrNotFound) || !errors.As(err, &ie) || !strings.HasSuffix(ie.Message, ": password policy not found") {
+			t.Errorf("%s: err = %v, want 4001 password policy not found", name, err)
+		}
+	}
+	var ie *ipa.IpaError
+	if _, err := bob.PwPolicyShow(""); !errors.As(err, &ie) || ie.Message != "None: password policy not found" {
+		t.Errorf("global message = %v", err)
+	}
+	if _, err := bob.PwPolicyShow("g"); !errors.As(err, &ie) || ie.Message != "g: password policy not found" {
+		t.Errorf("group message = %v", err)
+	}
+	if _, err := s.ClientAs("ann").PwPolicyShow(""); err != nil {
+		t.Errorf("member of admins: %v", err)
 	}
 }

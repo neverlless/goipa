@@ -17,7 +17,8 @@ import (
 type PwPolicy struct {
 	// cn: "global_policy" or the group the policy belongs to
 	Name string
-	// cospriority; group policies only
+	// cospriority; group policies only. 0 from UserPwPolicy: FreeIPA does not
+	// return it for the effective policy, use PwPolicyShow(Name).
 	Priority int
 	// krbmaxpwdlife (days on the wire), krbminpwdlife (hours on the wire)
 	MaxLife, MinLife time.Duration
@@ -72,9 +73,9 @@ func (c *Client) pwPolicyShow(ctx context.Context, args []string, options Option
 }
 
 // PwPolicyShow fetches the password policy of group with `pwpolicy_show`;
-// "" is the global_policy. Group policies need the Password Policy Readers or
-// Password Policy Administrator privilege (System: Read Group Password
-// Policy).
+// "" is the global_policy. It needs the Password Policy Readers or Password
+// Policy Administrator privilege (System: Read Group Password Policy);
+// without it FreeIPA hides the entry and answers ErrNotFound, not ErrACI.
 func (c *Client) PwPolicyShow(group string) (*PwPolicy, error) {
 	return c.PwPolicyShowContext(context.Background(), group)
 }
@@ -91,7 +92,9 @@ func (c *Client) PwPolicyShowContext(ctx context.Context, group string) (*PwPoli
 // UserPwPolicy fetches the policy that applies to username with
 // `pwpolicy_show` and its `user` option: the group policy with the lowest
 // priority among the user's groups, else the global policy. FreeIPA resolves
-// it as the caller, so the caller must be able to read the user.
+// it as the caller, so the caller must be able to read the user, and, as for
+// PwPolicyShow, a caller without the privilege gets ErrNotFound. Priority is
+// 0 because FreeIPA does not return it here.
 func (c *Client) UserPwPolicy(username string) (*PwPolicy, error) {
 	return c.UserPwPolicyContext(context.Background(), username)
 }

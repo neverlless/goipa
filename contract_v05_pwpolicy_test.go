@@ -65,8 +65,11 @@ func TestContractUserPwPolicy(t *testing.T) {
 		t.Cleanup(func() { _, _ = b.admin.RPC("pwpolicy_del", []string{g}, nil) })
 
 		p, err := b.admin.UserPwPolicy(uid)
-		if err != nil || p.Name != g || p.Priority != 10 || p.MinLength != 12 {
+		if err != nil || p.Name != g || p.MinLength != 12 {
 			t.Fatalf("UserPwPolicy(member) = %+v, %v", p, err)
+		}
+		if p, err := b.admin.PwPolicyShow(g); err != nil || p.Priority != 10 { // F2: not returned for the user form
+			t.Errorf("PwPolicyShow(g) = %+v, %v", p, err)
 		}
 		p, err = b.admin.UserPwPolicy(other)
 		if err != nil || p.Name != "global_policy" {
@@ -85,8 +88,8 @@ func TestContractPwPolicyPlainUser(t *testing.T) {
 		}
 		p, err := c.PwPolicyShow("")
 		t.Logf("plain user reads global_policy: %+v, err = %v", p, err)
-		if err != nil && !errors.Is(err, ipa.ErrACI) {
-			t.Errorf("err = %v, want nil or ErrACI", err)
+		if !errors.Is(err, ipa.ErrNotFound) {
+			t.Errorf("err = %v, want ErrNotFound", err)
 		}
 	})
 }

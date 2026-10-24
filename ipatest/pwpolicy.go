@@ -44,7 +44,7 @@ func (s *Server) SetPwPolicy(cn string, p PwPolicy) {
 	s.pwpol[cn] = p
 }
 
-func (p PwPolicy) render(cn string) map[string]any {
+func (p PwPolicy) render(cn string, withPriority bool) map[string]any {
 	out := map[string]any{"cn": []string{cn}}
 	set := func(k string, v int, always bool) {
 		if v != 0 || always {
@@ -54,7 +54,7 @@ func (p PwPolicy) render(cn string) map[string]any {
 	// A group policy holds only what pwpolicy_add or SetPwPolicy set; zero
 	// stands for never set.
 	global := cn == globalPolicy
-	if !global {
+	if !global && withPriority {
 		set("cospriority", p.Priority, false)
 	}
 	set("krbmaxpwdlife", int(p.MaxLife/(24*time.Hour)), global)
@@ -155,7 +155,15 @@ func init() {
 		if len(c.Args) > 0 && c.Args[0] != "" {
 			cn = c.Args[0]
 		}
-		if uid := str(c.Options["user"]); uid != "" {
+		uid := str(c.Options["user"])
+		if !s.isAdmin(c.User) { // Q32: the ACI hides the entries
+			name := "None"
+			if len(c.Args) > 0 && c.Args[0] != "" {
+				name = c.Args[0]
+			}
+			return nil, &ipa.IpaError{Code: ipa.CodeNotFound, Name: "NotFound", Message: name + ": password policy not found"}
+		}
+		if uid != "" {
 			var ok bool
 			if cn, ok = s.userPolicy(uid); !ok {
 				return nil, notFound(uid, "user")
@@ -165,7 +173,7 @@ func init() {
 		if !ok {
 			return nil, notFound(cn, "password policy")
 		}
-		return entry(cn, p.render(cn), ""), nil
+		return entry(cn, p.render(cn, uid == ""), ""), nil
 	}
 	builtins["pwpolicy_add"] = func(s *Server, c Call) (any, *ipa.IpaError) {
 		if len(c.Args) == 0 || c.Args[0] == "" {
@@ -184,7 +192,7 @@ func init() {
 		p := PwPolicy{GraceLimit: -1} // passwordgracelimit is autofilled
 		p.apply(c.Options)
 		s.pwpol[cn] = p
-		return entry(cn, p.render(cn), fmt.Sprintf("Added policy for %s", cn)), nil
+		return entry(cn, p.render(cn, true), fmt.Sprintf("Added policy for %s", cn)), nil
 	}
 	builtins["pwpolicy_del"] = func(s *Server, c Call) (any, *ipa.IpaError) {
 		for _, cn := range c.Args {

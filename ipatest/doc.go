@@ -26,7 +26,8 @@
 // # Auth model
 //
 // Every authenticated caller may run every command; ACIs are not evaluated
-// except the group member checks of Q24, so where FreeIPA answers 2100
+// except the group member checks of Q24 and the pwpolicy_show check of Q32,
+// so where FreeIPA answers 2100
 // ACIError ipatest runs the command: an ordinary user deleting a missing OTP
 // token gets 4001 NotFound here and "2100 Insufficient access" from FreeIPA.
 // OTP codes are not checked. A caller is authenticated by a session from
@@ -205,14 +206,19 @@
 //     (["TRUE"]/["FALSE"]) are always present; a group policy has
 //     cospriority, passwordgracelimit (-1 unless set) and only the attributes
 //     that were set; zero optional ones are omitted.
-//     Any caller may read it ([unverified] V7). pwpolicy_add needs an existing
+//     A caller who is neither uid admin nor a member of admins gets 4001
+//     `<cn or None>: password policy not found` (the ACI hides the entry;
+//     also for option user), not 2100. With option user the answer has no
+//     cospriority, as pwpolicy_show asks add_cospriority for a cn of None.
+//     pwpolicy_add needs an existing
 //     group (4001) and cospriority (3007); login_password and change_password
 //     use the global MaxFailures (0 disables lockout) and MinLength.
 //     pwpolicy_show takes only all, raw, rights, user and version; any other
 //     option is 3005 OptionError "Unknown option: <name>".
 //     TestContractPwPolicyGlobal, TestUserPwPolicy_Resolution,
 //     TestPwPolicy_AddDelAndLoginUseGlobal, TestPwPolicyShow_UnknownOption,
-//     TestPwPolicyShow_GroupOmitsUnset.
+//     TestPwPolicyShow_GroupOmitsUnset, TestUserPwPolicy_OmitsCospriority,
+//     TestPwPolicyShow_HiddenFromPlainUser, TestContractPwPolicyPlainUser.
 //   - Q33: sub-ID ranges start at 2147483648 and advance by 65536 (uid and gid
 //     equal). subid_find filters by ipaowner, ipauniqueid, ipasubuidnumber and
 //     description; values are lists of strings, plus dn

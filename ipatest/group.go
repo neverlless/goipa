@@ -342,17 +342,27 @@ func groupDel(s *Server, c Call) (any, *ipa.IpaError) {
 	}, nil
 }
 
-// canWrite reports whether uid may change the members of r. Member managers
-// may change members; only admins may change the managers.
-func (s *Server) canWrite(uid, cn string, r *groupRec, managers bool) bool {
+// groupsOf is uid's groups, nested ones included.
+func (s *Server) groupsOf(uid string) []string {
 	var mine []string
 	if u := s.users[uid]; u != nil {
 		mine = s.userGroups(uid, u)
 	}
-	mine = append(mine, s.ancestors(mine)...)
-	if uid == "admin" || slices.Contains(mine, "admins") {
+	return append(mine, s.ancestors(mine)...)
+}
+
+// isAdmin is true for uid admin and members of the group admins.
+func (s *Server) isAdmin(uid string) bool {
+	return uid == "admin" || slices.Contains(s.groupsOf(uid), "admins")
+}
+
+// canWrite reports whether uid may change the members of r. Member managers
+// may change members; only admins may change the managers.
+func (s *Server) canWrite(uid, cn string, r *groupRec, managers bool) bool {
+	if s.isAdmin(uid) {
 		return true
 	}
+	mine := s.groupsOf(uid)
 	return !managers && (slices.Contains(r.ManagerUsers, uid) || slices.ContainsFunc(r.ManagerGroups, func(g string) bool { return slices.Contains(mine, g) }))
 }
 
