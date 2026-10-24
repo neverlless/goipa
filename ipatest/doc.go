@@ -510,6 +510,34 @@
 //     default (fallback) group set". goipa.TestContractAutomemberDefaultGroup.
 //   - Q114: automember_del deletes the rules named before the first missing
 //     one, then fails with 4001. goipa.TestContractAutomemberMissing.
+//   - Q80: sudorule_enable and sudorule_disable succeed with {"result":
+//     true} whatever the rule's state, so a second call is no error (FreeIPA
+//     swallows EmptyModlist). goipa.TestContractSudoRuleEnableTwice.
+//   - Q81: the sudo rule member calls keep names FreeIPA does not know as
+//     external members, lower-cased and counted in completed: users and
+//     groups in externaluser, hosts in externalhost, run-as users and
+//     groups in ipasudorunasextuser and ipasudorunasextusergroup, run-as
+//     groups in ipasudorunasextgroup. Only host groups, commands and
+//     command groups fail with "no such entry"; host groups and command
+//     groups are not modelled, so each one fails. Removing a name that is
+//     neither a member nor external, existing or not, is "This entry is not
+//     a member".
+//     goipa.TestContractSudoRuleExternalMembers,
+//     goipa.TestContractSudoRuleMemberMissing, TestSudoMember_External.
+//   - Q82: sudorule_add_option of an option the rule has is 4002
+//     "This entry already exists" and changes nothing; sudorule_remove_option
+//     of one it lacks is 4026 "ipasudoopt does not contain '<option>'".
+//     sudocmd_add and sudocmd_del keep only the command and its description;
+//     FreeIPA's refusal to delete a command a rule uses is not modelled.
+//     goipa.TestContractSudoRuleOptions, TestSudoCmd_AddDel.
+//   - Q83: at a 4.9 release sudorule_add_option and sudorule_remove_option
+//     reject any JSON list for ipasudoopt, even of one value, with 3008
+//     "invalid 'ipasudoopt': Only one value is allowed", although the schema
+//     marks it multivalued; 4.12.2 and later take a list. Releases between
+//     are not pinned and take a list. goipa's SudoRuleAddOption and
+//     SudoRuleRemoveOption send one scalar call per option.
+//     goipa.TestContractSudoRuleOptions,
+//     TestSudoOption_ListAt49.
 //
 // A response's version is the server release, 4.13.4 unless SetVersion
 // changes it, and its principal is

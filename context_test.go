@@ -429,6 +429,79 @@ func twinCalls() []twinCall {
 		{"AutomemberRebuildContext", func(ctx context.Context, c *ipa.Client) error {
 			return c.AutomemberRebuildContext(ctx, ipa.AutomemberGroup)
 		}},
+		{"SudoRuleShowContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.SudoRuleShowContext(ctx, "r")
+			return err
+		}},
+		{"SudoRuleAddContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.SudoRuleAddContext(ctx, &ipa.SudoRule{Name: "r"})
+			return err
+		}},
+		{"SudoRuleDeleteContext", func(ctx context.Context, c *ipa.Client) error {
+			return c.SudoRuleDeleteContext(ctx, "r")
+		}},
+		{"SudoRuleEnableContext", func(ctx context.Context, c *ipa.Client) error {
+			return c.SudoRuleEnableContext(ctx, "r")
+		}},
+		{"SudoRuleDisableContext", func(ctx context.Context, c *ipa.Client) error {
+			return c.SudoRuleDisableContext(ctx, "r")
+		}},
+		{"SudoRuleAddUserContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.SudoRuleAddUserContext(ctx, "r", []string{"x"}, nil)
+			return err
+		}},
+		{"SudoRuleRemoveUserContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.SudoRuleRemoveUserContext(ctx, "r", []string{"x"}, nil)
+			return err
+		}},
+		{"SudoRuleAddHostContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.SudoRuleAddHostContext(ctx, "r", []string{"x"}, nil)
+			return err
+		}},
+		{"SudoRuleRemoveHostContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.SudoRuleRemoveHostContext(ctx, "r", []string{"x"}, nil)
+			return err
+		}},
+		{"SudoRuleAddAllowCommandContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.SudoRuleAddAllowCommandContext(ctx, "r", []string{"x"}, nil)
+			return err
+		}},
+		{"SudoRuleRemoveAllowCommandContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.SudoRuleRemoveAllowCommandContext(ctx, "r", []string{"x"}, nil)
+			return err
+		}},
+		{"SudoRuleAddDenyCommandContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.SudoRuleAddDenyCommandContext(ctx, "r", []string{"x"}, nil)
+			return err
+		}},
+		{"SudoRuleRemoveDenyCommandContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.SudoRuleRemoveDenyCommandContext(ctx, "r", []string{"x"}, nil)
+			return err
+		}},
+		{"SudoRuleAddRunAsUserContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.SudoRuleAddRunAsUserContext(ctx, "r", []string{"x"}, nil)
+			return err
+		}},
+		{"SudoRuleRemoveRunAsUserContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.SudoRuleRemoveRunAsUserContext(ctx, "r", []string{"x"}, nil)
+			return err
+		}},
+		{"SudoRuleAddRunAsGroupContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.SudoRuleAddRunAsGroupContext(ctx, "r", []string{"x"})
+			return err
+		}},
+		{"SudoRuleRemoveRunAsGroupContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.SudoRuleRemoveRunAsGroupContext(ctx, "r", []string{"x"})
+			return err
+		}},
+		{"SudoRuleAddOptionContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.SudoRuleAddOptionContext(ctx, "r", "!authenticate")
+			return err
+		}},
+		{"SudoRuleRemoveOptionContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.SudoRuleRemoveOptionContext(ctx, "r", "!authenticate")
+			return err
+		}},
 	}
 }
 
