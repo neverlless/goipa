@@ -141,8 +141,30 @@ func TestRelogin_ConcurrentExpiry(t *testing.T) {
 			t.Error(err)
 		}
 	}
-	if got := rt.logins.Load() - 1; got < 1 || got > n {
-		t.Errorf("re-logins = %d, want 1..%d", got, n)
+	if got := rt.logins.Load() - 1; got != 1 {
+		t.Errorf("re-logins = %d, want 1", got)
+	}
+}
+
+// A changed password must cost one failed login, not one per goroutine:
+// FreeIPA locks the account after a few failures.
+func TestRelogin_ConcurrentPasswordChanged(t *testing.T) {
+	srv, c, rt := reloginSetup(t, true)
+	srv.UpdateUser("rita", func(u *ipatest.User) { u.Password = "other" })
+	srv.ExpireSession(c.SessionID())
+	var wg sync.WaitGroup
+	for range 20 {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			if _, err := c.UserShow("rita"); err == nil {
+				t.Error("UserShow succeeded with a changed password")
+			}
+		}()
+	}
+	wg.Wait()
+	if got := rt.logins.Load() - 1; got != 1 {
+		t.Errorf("failed re-logins = %d, want 1", got)
 	}
 }
 

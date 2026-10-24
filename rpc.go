@@ -114,16 +114,17 @@ func (c *Client) rpc(ctx context.Context, method string, params []string, option
 	if c.sessionID == sent { // another goroutine may already hold a fresh one
 		c.sessionID = ""
 	}
-	fresh, krb, user, pass := c.sessionID, c.krbClient, c.reloginUser, c.reloginPass
+	fresh, krb := c.sessionID, c.krbClient
 	c.mu.Unlock()
 
 	switch {
 	case fresh != "" || krb != nil: // send uses the fresh session or SPNEGO
-	case c.relogin && user != "":
-		if err := c.RemoteLoginContext(ctx, user, pass); err != nil {
-			if errors.Is(err, ErrInvalidPassword) || errors.Is(err, ErrExpiredPassword) || errors.Is(err, ErrUnauthorized) {
-				c.dropRelogin(user, pass) // retrying a rejected password ends in lockout
-			}
+	case c.relogin:
+		ok, lerr := c.passwordRelogin(ctx)
+		if lerr != nil {
+			return nil, lerr
+		}
+		if !ok {
 			return nil, err
 		}
 	default:
@@ -131,6 +132,32 @@ func (c *Client) rpc(ctx context.Context, method string, params []string, option
 	}
 	res, _, _, err = c.send(ctx, b)
 	return res, err
+}
+
+// passwordRelogin logs in again with the stored credentials unless another
+// goroutine already did; reloginMu makes concurrent 401s cost one login, so a
+// changed password costs one failure, not one per goroutine. ok is false when
+// no credentials are stored (never given, cleared, or dropped after a
+// rejection), and the caller returns its 401.
+func (c *Client) passwordRelogin(ctx context.Context) (ok bool, err error) {
+	c.reloginMu.Lock()
+	defer c.reloginMu.Unlock()
+	c.mu.Lock()
+	fresh, user, pass := c.sessionID, c.reloginUser, c.reloginPass
+	c.mu.Unlock()
+	switch {
+	case fresh != "":
+		return true, nil
+	case user == "":
+		return false, nil
+	}
+	if err := c.RemoteLoginContext(ctx, user, pass); err != nil {
+		if errors.Is(err, ErrInvalidPassword) || errors.Is(err, ErrExpiredPassword) || errors.Is(err, ErrUnauthorized) {
+			c.dropRelogin(user, pass) // retrying a rejected password ends in lockout
+		}
+		return true, err
+	}
+	return true, nil
 }
 
 // send makes one request with body b and returns the session it carried and

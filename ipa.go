@@ -38,8 +38,12 @@ type Client struct {
 	realm      string
 	httpClient *http.Client
 
+	// reloginMu serializes password re-login. Lock order: reloginMu, krbMu,
+	// mu; only reloginMu is held across an HTTP request.
+	reloginMu sync.Mutex
+
 	// krbMu keeps Destroy of a replaced Kerberos client out of an in-flight
-	// SPNEGO step. Lock order: krbMu, then mu.
+	// SPNEGO step.
 	krbMu sync.RWMutex
 
 	mu        sync.Mutex // guards the fields below; a Client is shared across goroutines
