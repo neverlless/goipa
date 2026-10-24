@@ -56,6 +56,9 @@ func WithRealm(realm string) Option {
 // /etc/ipa/ca.crt. It cannot be combined with WithHTTPClient.
 func WithCACert(pem []byte) Option {
 	return func(s *settings) error {
+		if len(pem) == 0 {
+			return needsValue("WithCACert")
+		}
 		s.caPEM = pem
 		return nil
 	}

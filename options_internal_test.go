@@ -5,6 +5,7 @@
 package ipa
 
 import (
+	"fmt"
 	"encoding/pem"
 	"net/http"
 	"net/http/httptest"
@@ -15,13 +16,13 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// Initialised at package init, before any test runs.
-var loadsAtInit = defaultsLoads.Load()
-
-func TestNoImportTimeIO(t *testing.T) {
-	if loadsAtInit != 0 {
-		t.Fatalf("defaults loaded %d times at init", loadsAtInit)
+// TestMain fails when package init (or an init()) already read /etc/ipa.
+func TestMain(m *testing.M) {
+	if n := defaultsLoads.Load(); n != 0 {
+		fmt.Fprintf(os.Stderr, "defaults loaded %d times before tests: import-time I/O\n", n)
+		os.Exit(1)
 	}
+	os.Exit(m.Run())
 }
 
 func TestLoadIPADefaults(t *testing.T) {

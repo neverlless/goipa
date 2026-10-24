@@ -53,6 +53,8 @@ func TestNew_Errors(t *testing.T) {
 	}{
 		{"bad ca", []ipa.Option{ipa.WithHost("h"), ipa.WithCACert([]byte("x"))}, "ipa: no certificate in CA PEM"},
 		{"ca and http", []ipa.Option{ipa.WithHost("h"), ipa.WithCACert(s.CACert()), ipa.WithHTTPClient(s.HTTPClient())}, "ipa: WithCACert and WithHTTPClient are mutually exclusive"},
+		{"nil ca", []ipa.Option{ipa.WithCACert(nil), ipa.WithHTTPClient(s.HTTPClient())}, "ipa: WithCACert needs a value"},
+		{"nil http client", []ipa.Option{ipa.WithHTTPClient(nil)}, "ipa: WithHTTPClient needs a value"},
 		{"empty host", []ipa.Option{ipa.WithHost("")}, "ipa: WithHost needs a value"},
 		{"empty krb5 path", []ipa.Option{ipa.WithKrb5Config("")}, "ipa: WithKrb5Config needs a value"},
 		{"nil krb5 data", []ipa.Option{ipa.WithKrb5ConfigData(nil)}, "ipa: WithKrb5ConfigData needs a value"},
