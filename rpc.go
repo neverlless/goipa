@@ -69,6 +69,15 @@ type Response struct {
 
 // Call FreeIPA API with method, params and options
 func (c *Client) rpc(ctx context.Context, method string, params []string, options Options) (*Response, error) {
+	anys := make([]any, len(params))
+	for i, p := range params {
+		anys[i] = p
+	}
+	return c.rpcParams(ctx, method, anys, options)
+}
+
+// rpcParams is rpc for positional arguments that are not all strings.
+func (c *Client) rpcParams(ctx context.Context, method string, params []any, options Options) (*Response, error) {
 	// The caller's map may be shared between goroutines; never write to it.
 	opts := maps.Clone(options)
 	if opts == nil {
@@ -76,9 +85,6 @@ func (c *Client) rpc(ctx context.Context, method string, params []string, option
 	}
 	if _, ok := opts["version"]; !ok {
 		opts["version"] = IpaClientVersion
-	}
-	if params == nil {
-		params = []string{}
 	}
 
 	data := []interface{}{
