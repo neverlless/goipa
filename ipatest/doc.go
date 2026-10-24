@@ -328,6 +328,42 @@
 //     command '<name>'", as Q14. Q44 and Q45 follow the ipa command
 //     catalogue and skip Handle overrides. TestServer_CommandNewerThanVersion,
 //     TestServer_HandleBypassesCatalogue.
+//   - Q110: automember rules (automember_add, _show, _find, _del) are kept
+//     per type, group or hostgroup; another type is 3009 ValidationError
+//     "invalid 'type': must be one of 'group', 'hostgroup'". show and del of
+//     a missing rule are 4001 "<cn>: Automember rule not found", a second
+//     add is 4002, and add of a group rule needs the group (4001 `group
+//     "<cn>" not found`). Host groups are not modelled, so a hostgroup rule
+//     needs no target and is never applied. show and find print dn without
+//     all; find's summary is "<n> rules matched".
+//     goipa.TestContractAutomemberRule, goipa.TestContractAutomemberMissing,
+//     goipa.TestContractAutomemberHostGroup.
+//   - Q111: automember_add_condition and _remove_condition on a missing rule
+//     are 4001 "Auto member rule: <cn> not found!". They answer completed
+//     and failed {"failed": {"automemberinclusiveregex": [...],
+//     "automemberexclusiveregex": [...]}}; add skips conditions the rule has
+//     without listing them, remove lists the missing ones as "key=regex".
+//     With nothing changed the result holds only the regex attributes sent.
+//     key is not checked against the schema (FreeIPA answers 4001 "<key> is
+//     not a valid attribute."). goipa.TestContractAutomemberRule,
+//     goipa.TestContractAutomemberRemoveCondition,
+//     goipa.TestContractAutomemberMissing.
+//   - Q112: user_add (not stageuser_add) and automember_rebuild of type
+//     group put a user into every group whose rule has an inclusive
+//     condition that matches and no exclusive one that does, or into the
+//     default group when no rule matches. Conditions match uid and the
+//     attributes User stores under their LDAP names (givenname, sn, title,
+//     mail, ...); others never match. Regexes are Go RE2, not the PCRE of
+//     389-ds. Rebuild only adds. goipa.TestContractAutomemberRule,
+//     goipa.TestContractAutomemberRebuild,
+//     goipa.TestContractAutomemberDefaultGroup.
+//   - Q113: automember_default_group_show answers automemberdefaultgroup as
+//     the group's DN in a list, or the string "No default (fallback) group
+//     set". _set of a missing group is 4001 `group "<cn>" not found`, of the
+//     current one 4202 EmptyModlist; _remove with none set is 4001 "No
+//     default (fallback) group set". goipa.TestContractAutomemberDefaultGroup.
+//   - Q114: automember_del deletes the rules named before the first missing
+//     one, then fails with 4001. goipa.TestContractAutomemberMissing.
 //
 // A response's version is the server release, 4.13.4 unless SetVersion
 // changes it, and its principal is
