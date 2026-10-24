@@ -115,6 +115,9 @@ type Server struct {
 	tokens    []*OTPToken
 	nextID    int // last uidnumber handed out
 	nextGID   int // last gidnumber handed out
+	roles     map[string]*ipa.Role
+	privs     map[string]*ipa.Privilege
+	perms     map[string]*ipa.Permission
 }
 
 // NewServer starts a server and closes it with tb.Cleanup.
@@ -143,6 +146,9 @@ func New() *Server {
 		version:  defaultVersion,
 		nextID:   firstID - 1,
 		nextGID:  firstID - 1,
+		roles:    seedRoles(),
+		privs:    seedPrivileges(),
+		perms:    seedPermissions(),
 	}
 	mux := http.NewServeMux()
 	mux.HandleFunc("/ipa/session/json", s.serveSessionJSON)

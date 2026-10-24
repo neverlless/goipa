@@ -328,6 +328,24 @@
 //     command '<name>'", as Q14. Q44 and Q45 follow the ipa command
 //     catalogue and skip Handle overrides. TestServer_CommandNewerThanVersion,
 //     TestServer_HandleBypassesCatalogue.
+//   - Q120: role_show, privilege_show and permission_show (and their _find
+//     twins) answer the attributes the ipa types read; a missing object is
+//     4001 "<cn>: role not found" (privilege, permission). New servers hold
+//     the "User Administrator" role, "User Administrators" privilege and
+//     "System: Add Users" permission with FreeIPA 4.13.4's values (4.9.13
+//     and 4.12.2 match); attributes outside the ipa types, such as
+//     ipapermissiontype and memberindirect_role, are left out. Roles and
+//     privileges are not linked: AddRole and AddPrivilege each take their
+//     own side. The finds match the criteria against cn and description,
+//     and the cn, description and type options exactly.
+//     goipa.TestContractRBACBuiltins, goipa.TestContractRBACFind,
+//     goipa.TestContractRBACNotFound.
+//   - Q121: role_add, role_del and role_add_member are modelled; the latter
+//     reports per-member failures with completed and
+//     failed.member.{user,group,host,hostgroup,service,idoverrideuser,
+//     sysaccount}, sysaccount only from 4.13 on in FreeIPA but always here.
+//     Only users, groups and hosts can be added; other kinds fail as "no
+//     such entry". goipa.TestContractRoleMembers.
 //
 // A response's version is the server release, 4.13.4 unless SetVersion
 // changes it, and its principal is
