@@ -390,6 +390,31 @@
 //     (sshd, login, sudo, ... and Sudo, ftp) and cannot be changed; a host
 //     group exists while some host is in it. goipa.TestContractHBACRuleMembers,
 //     goipa.TestContractHBACRuleWithTest.
+//   - Q100: dnszone_add makes the name absolute and answers FreeIPA's
+//     defaults: active, dynamic update off, idnssoamname the server
+//     (ipa.test.local.), idnssoarname the relative "hostmaster", SOA refresh
+//     3600, retry 900, expire 1209600, minimum 3600, a serial from the clock,
+//     an apex "@" with the server as NS and a "_kerberos" TXT record with the
+//     realm. DNS names (idnsname, idnssoamname, idnssoarname) come back as
+//     {"__dns_name__": name}. A second add is 4002 DuplicateEntry. New
+//     servers hold the zone test.local. with "ipa" A 127.0.0.1.
+//     goipa.TestContractDNSZoneLifecycle, goipa.TestContractDNSRecords.
+//   - Q101: dnszone_disable and dnszone_enable of a zone already in that
+//     state succeed. goipa.TestContractDNSZoneLifecycle.
+//   - Q102: dnsrecord_add merges the values into the name, creating it;
+//     values all present already are 4202 EmptyModlist, no *record option is
+//     3005 OptionError. A name in the zone given absolute is made relative,
+//     the zone itself is "@", and the "@" entry of dnsrecord_show/find is the
+//     zone entry with its SOA attributes. TestDNS_Errors, TestDNS_FindAndApex,
+//     goipa.TestContractDNSRecords.
+//   - Q103: dnsrecord_del removes the given values and the name with its
+//     last value; a value the name lacks is 4026 AttrValueNotFound (nothing
+//     is removed), del_all removes the name, neither is 3005 OptionError.
+//     TestDNS_Errors, goipa.TestContractDNSRecords.
+//   - Q104: dnsrecord_* in a missing zone, and dnszone_* of one, are 4001
+//     NotFound "<zone>: DNS zone not found"; a missing name is 4001 "<name>:
+//     DNS resource record not found". goipa.TestContractDNSRecordMissingZone,
+//     goipa.TestContractDNSRecords.
 //
 // A response's version is the server release, 4.13.4 unless SetVersion
 // changes it, and its principal is
@@ -403,6 +428,11 @@
 // out. Of HBAC and sudo rule management, only find, add, del and the member and
 // option calls the tests need; Handle is the way to reach the rest, as for
 // config_*, subid_show, stageuser_add_passkey and stageuser_remove_passkey.
+// Of DNS, only master zones and the record commands above: dnszone_add
+// ignores its SOA, TTL and policy options and the name server and overlap
+// checks, serials do not move, record values are neither validated nor
+// normalised, a CNAME may share a name with other records, and dnsrecord_find
+// filters by criteria and idnsname only.
 // Stage user passwords are not modelled: userpassword is ignored and random
 // behaves as for active users. Kerberos, LDAP search filters, size limits on
 // other commands, replication and HTTP fault injection are left out; wrap HTTPClient's

@@ -288,6 +288,45 @@ func twinCalls() []twinCall {
 			_, err := c.HBACRuleRemoveServiceContext(ctx, "r", []string{"sshd"}, nil)
 			return err
 		}},
+		{"DNSZoneShowContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.DNSZoneShowContext(ctx, "z.test.")
+			return err
+		}},
+		{"DNSZoneFindContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.DNSZoneFindContext(ctx, nil)
+			return err
+		}},
+		{"DNSZoneAddContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.DNSZoneAddContext(ctx, "z.test.", false)
+			return err
+		}},
+		{"DNSZoneDeleteContext", func(ctx context.Context, c *ipa.Client) error {
+			return c.DNSZoneDeleteContext(ctx, "z.test.")
+		}},
+		{"DNSZoneEnableContext", func(ctx context.Context, c *ipa.Client) error {
+			return c.DNSZoneEnableContext(ctx, "z.test.")
+		}},
+		{"DNSZoneDisableContext", func(ctx context.Context, c *ipa.Client) error {
+			return c.DNSZoneDisableContext(ctx, "z.test.")
+		}},
+		{"DNSRecordShowContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.DNSRecordShowContext(ctx, "z.test.", "www")
+			return err
+		}},
+		{"DNSRecordFindContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.DNSRecordFindContext(ctx, "z.test.", nil)
+			return err
+		}},
+		{"DNSRecordAddContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.DNSRecordAddContext(ctx, "z.test.", "www", "A", "192.0.2.1")
+			return err
+		}},
+		{"DNSRecordRemoveContext", func(ctx context.Context, c *ipa.Client) error {
+			return c.DNSRecordRemoveContext(ctx, "z.test.", "www", "A", "192.0.2.1")
+		}},
+		{"DNSRecordDeleteContext", func(ctx context.Context, c *ipa.Client) error {
+			return c.DNSRecordDeleteContext(ctx, "z.test.", "www")
+		}},
 	}
 }
 

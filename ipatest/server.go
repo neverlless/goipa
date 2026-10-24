@@ -118,6 +118,7 @@ type Server struct {
 	ca         *fakeCA             // created by the first cert_request
 	certs      map[string]*certRec // by decimal serial
 	hostgroups map[string]*HostGroup
+	dnsZones   map[string]*dnsZone // by absolute name
 }
 
 // NewServer starts a server and closes it with tb.Cleanup.
@@ -148,6 +149,7 @@ func New() *Server {
 		nextGID:    firstID - 1,
 		certs:      map[string]*certRec{},
 		hostgroups: map[string]*HostGroup{},
+		dnsZones:   seedDNS(),
 	}
 	mux := http.NewServeMux()
 	mux.HandleFunc("/ipa/session/json", s.serveSessionJSON)
