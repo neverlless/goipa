@@ -349,7 +349,8 @@ func init() {
 	}
 	builtins["hbacrule_add"] = func(s *Server, c Call) (any, *ipa.IpaError) {
 		return ruleAdd("HBAC rule", s.hbac, c, func(c Call) *hbacRec {
-			return &hbacRec{HBACRule: HBACRule{Description: str(c.Options["description"])}, uuid: newUUID()}
+			return &hbacRec{HBACRule: HBACRule{Description: str(c.Options["description"]), UserCategory: str(c.Options["usercategory"]),
+				HostCategory: str(c.Options["hostcategory"]), ServiceCategory: str(c.Options["servicecategory"])}, uuid: newUUID()}
 		}, (*hbacRec).render)
 	}
 	builtins["sudorule_add"] = func(s *Server, c Call) (any, *ipa.IpaError) {
@@ -361,10 +362,7 @@ func init() {
 	}
 	builtins["hbacrule_del"] = func(s *Server, c Call) (any, *ipa.IpaError) { return ruleDel("HBAC rule", s.hbac, c) }
 	builtins["sudorule_del"] = func(s *Server, c Call) (any, *ipa.IpaError) { return ruleDel("sudo rule", s.sudo, c) }
-	builtins["hbacrule_add_user"] = func(s *Server, c Call) (any, *ipa.IpaError) {
-		return ruleAddUser(s, s.hbac, "HBAC rule", c,
-			func(r *hbacRec) *[]string { return &r.Users }, func(r *hbacRec) *[]string { return &r.Groups }, (*hbacRec).render)
-	}
+	builtins["hbacrule_add_user"] = hbacMembers("user", true)
 	builtins["sudorule_add_user"] = func(s *Server, c Call) (any, *ipa.IpaError) {
 		return ruleAddUser(s, s.sudo, "sudo rule", c,
 			func(r *sudoRec) *[]string { return &r.Users }, func(r *sudoRec) *[]string { return &r.Groups }, (*sudoRec).render)

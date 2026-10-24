@@ -12,7 +12,8 @@ import (
 	"github.com/tidwall/gjson"
 )
 
-// HBACRule is a host-based access control rule.
+// HBACRule is a host-based access control rule. There is no HBACRuleMod:
+// change other attributes with Modify("hbacrule_mod", name).
 type HBACRule struct {
 	// cn, description
 	Name, Description string
@@ -61,22 +62,7 @@ func (c *Client) HBACRuleFind(options Options) ([]*HBACRule, error) {
 
 // HBACRuleFindContext is like HBACRuleFind but bounds the request with ctx.
 func (c *Client) HBACRuleFindContext(ctx context.Context, options Options) ([]*HBACRule, error) {
-	return findRules(ctx, c, "hbacrule_find", options, func(r gjson.Result) *HBACRule {
-		return &HBACRule{
-			Name:            r.Get("cn.0").String(),
-			Description:     r.Get("description.0").String(),
-			Enabled:         boolAttr(r, "ipaenabledflag"),
-			UserCategory:    r.Get("usercategory.0").String(),
-			HostCategory:    r.Get("hostcategory.0").String(),
-			ServiceCategory: r.Get("servicecategory.0").String(),
-			Users:           strList(r, "memberuser_user"),
-			Groups:          strList(r, "memberuser_group"),
-			Hosts:           strList(r, "memberhost_host"),
-			HostGroups:      strList(r, "memberhost_hostgroup"),
-			Services:        strList(r, "memberservice_hbacsvc"),
-			ServiceGroups:   strList(r, "memberservice_hbacsvcgroup"),
-		}
-	})
+	return findRules(ctx, c, "hbacrule_find", options, hbacRuleFrom)
 }
 
 // SudoRuleFind finds sudo rules with `sudorule_find`; options are passed

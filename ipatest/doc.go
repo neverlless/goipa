@@ -328,6 +328,27 @@
 //     command '<name>'", as Q14. Q44 and Q45 follow the ipa command
 //     catalogue and skip Handle overrides. TestServer_CommandNewerThanVersion,
 //     TestServer_HandleBypassesCatalogue.
+//   - Q70: hbacrule_add stores description and the user, host and service
+//     categories; hbacrule_show of a missing rule is 4001 "<cn>: HBAC rule
+//     not found" and shows members unless no_members is true.
+//     goipa.TestContractHBACRuleLifecycle, goipa.TestHBACRuleShow_FakeRule.
+//   - Q71: hbacrule_disable of a disabled rule is 4010 AlreadyInactive,
+//     hbacrule_enable of an enabled one 4009 AlreadyActive; success answers
+//     result true. goipa.TestContractHBACRuleEnableDisable.
+//   - Q72: hbacrule_{add,remove}_{user,host,service} take user/group,
+//     host/hostgroup and hbacsvc/hbacsvcgroup and answer as group_add_member
+//     with failed.memberuser, failed.memberhost and failed.memberservice:
+//     "no such entry", "This entry is already a member" or "This entry is
+//     not a member". goipa.TestContractHBACRuleMemberMissing,
+//     goipa.TestContractHBACRuleMembers.
+//   - Q73: adding users, hosts or services to a rule whose matching category
+//     is all is 4303 MutuallyExclusiveError "users cannot be added when user
+//     category='all'" (hosts/host, services/service); removing is not
+//     checked. goipa.TestContractHBACRuleCategoryConflict.
+//   - Q74: the HBAC services and service groups are FreeIPA's defaults
+//     (sshd, login, sudo, ... and Sudo, ftp) and cannot be changed; a host
+//     group exists while some host is in it. goipa.TestContractHBACRuleMembers,
+//     goipa.TestContractHBACRuleWithTest.
 //
 // A response's version is the server release, 4.13.4 unless SetVersion
 // changes it, and its principal is
