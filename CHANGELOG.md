@@ -7,6 +7,24 @@ existing exported identifiers keep their signatures).
 
 ## [Unreleased]
 
+### Added
+
+- `New(opts ...Option) (*Client, error)` with `WithHost`, `WithRealm`,
+  `WithCACert`, `WithHTTPClient`, `WithKrb5Config`, `WithKrb5ConfigData` and
+  `WithPasswordRelogin`. The old constructors are unchanged
+- `/etc/ipa/default.conf` and `/etc/ipa/ca.crt` are read when the first
+  client is created, not at import
+- `LoginWithKeytabData`, `LoginFromCCacheData` and in-memory Kerberos
+  configuration (`WithKrb5ConfigData`; idea from sitnikovv's fork), for
+  containers and secret stores
+- `WhoAmI` and `WhoAmIContext`
+- Expired sessions are recovered: Kerberos clients retry once through
+  SPNEGO; with `WithPasswordRelogin`, `RemoteLogin` clients log in again
+  and retry once (a password FreeIPA rejects is forgotten; needs sticky
+  sessions). Other clients get `ErrUnauthorized` and the session is cleared
+- `ipatest.Server.CACert`, and `whoami` and `session_logout` in `ipatest`
+- "Which login to use" guide in the README and package documentation
+
 ## [v0.5.0] - 2026-10-24
 
 Account lifecycle and access: stage users, lockout status and unlock,

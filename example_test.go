@@ -73,3 +73,55 @@ func ExampleClient_RemoteLogin() {
 	}
 	fmt.Println(u.Username)
 }
+
+// New names the server and CA explicitly, for a host not enrolled in
+// FreeIPA; compiled but not run.
+func ExampleNew() {
+	var caPEM []byte // the contents of the FreeIPA CA certificate
+
+	c, err := ipa.New(
+		ipa.WithHost("ipa.example.com"),
+		ipa.WithRealm("EXAMPLE.COM"),
+		ipa.WithCACert(caPEM),
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if err := c.RemoteLogin("jesse", "secret"); err != nil {
+		log.Fatal(err)
+	}
+}
+
+// With WithPasswordRelogin the client keeps the password in memory and logs
+// in again when the session expires; compiled but not run.
+func ExampleWithPasswordRelogin() {
+	c, err := ipa.New(
+		ipa.WithHost("ipa.example.com"),
+		ipa.WithPasswordRelogin(),
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if err := c.RemoteLogin("jesse", "secret"); err != nil {
+		log.Fatal(err)
+	}
+}
+
+// LoginWithKeytabData takes the keytab from memory, for example a secret
+// store; compiled but not run.
+func ExampleClient_LoginWithKeytabData() {
+	var keytab []byte // read from a secret store
+	var krb5conf []byte
+
+	c, err := ipa.New(
+		ipa.WithHost("ipa.example.com"),
+		ipa.WithRealm("EXAMPLE.COM"),
+		ipa.WithKrb5ConfigData(krb5conf),
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if err := c.LoginWithKeytabData(keytab, "svc-app"); err != nil {
+		log.Fatal(err)
+	}
+}
