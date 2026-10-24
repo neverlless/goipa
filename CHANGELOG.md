@@ -7,6 +7,14 @@ existing exported identifiers keep their signatures).
 
 ## [Unreleased]
 
+## [v0.8.0] - 2026-10-24
+
+Command catalogue: every command, argument and option of FreeIPA 4.9.0 to
+4.13.4, with the release that introduced each, generated from FreeIPA's own
+`API.txt`. Clients can opt in to checking every call against it before it
+is sent. Checked against real FreeIPA 4.9, 4.12 and 4.13 by the contract
+tests, which now run with validation on.
+
 ### Added
 
 - `Commands`, `LookupCommand`, `Command` and `Param`: the FreeIPA command
@@ -302,7 +310,8 @@ v0.0.1 – v0.0.7 were released by Andrew E. Bruno as
 [ubccr/goipa](https://github.com/ubccr/goipa/tags). This repository keeps
 that history.
 
-[Unreleased]: https://github.com/neverlless/goipa/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/neverlless/goipa/compare/v0.8.0...HEAD
+[v0.8.0]: https://github.com/neverlless/goipa/compare/v0.7.0...v0.8.0
 [v0.7.0]: https://github.com/neverlless/goipa/compare/v0.6.0...v0.7.0
 [v0.6.0]: https://github.com/neverlless/goipa/compare/v0.5.0...v0.6.0
 [v0.5.0]: https://github.com/neverlless/goipa/compare/v0.4.0...v0.5.0
