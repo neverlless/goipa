@@ -99,6 +99,8 @@ type Server struct {
 	stage     map[string]*userRec
 	groups    map[string]*groupRec
 	hosts     map[string]Host
+	hbac      map[string]*hbacRec
+	sudo      map[string]*sudoRec
 	tokens    []*OTPToken
 	nextID    int // last uidnumber handed out
 	nextGID   int // last gidnumber handed out
@@ -123,6 +125,8 @@ func New() *Server {
 		stage:    map[string]*userRec{},
 		groups:   map[string]*groupRec{},
 		hosts:    map[string]Host{serverFQDN: {HasKeytab: true}},
+		hbac:     seedAllowAll(),
+		sudo:     map[string]*sudoRec{},
 		nextID:   firstID - 1,
 		nextGID:  firstID - 1,
 	}

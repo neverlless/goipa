@@ -184,6 +184,14 @@
 //     summary "Stage user <uid> activated". If the active uid exists it is
 //     4002 `active user with name "<uid>" already exists` and the stage entry
 //     stays. TestContractStageActivateSummary, TestStageUserDuplicateAndDelete.
+//   - Q34: New seeds the HBAC rule allow_all (description "Allow all users to
+//     access any host from any host", user, host and service category all),
+//     as every FreeIPA has. hbacrule_find and sudorule_find hide members
+//     unless all is true or no_members is false (as Q1/U1); ipaenabledflag
+//     is ["TRUE"]/["FALSE"], categories are one-element lists, sudoorder a
+//     one-element string list. dn is ipaUniqueID=<uuid>,cn=hbac,... and
+//     ipaUniqueID=<uuid>,cn=sudorules,cn=sudo,... TestHBACRuleFind_AllFields,
+//     TestSudoRuleFind_AllFields.
 //
 // A response's version is the server release, 4.13.4, and its principal is
 // <uid>@TEST.LOCAL. An error a HandlerFunc returns without a Name gets the
@@ -192,7 +200,8 @@
 // # Not modelled
 //
 // Lockout status and unlock, password policy, subordinate IDs,
-// HBAC and sudo rules, hbactest and passkey management (planned for v0.5).
+// hbactest and passkey management (planned for v0.5); of HBAC and sudo rules
+// only find, add, del and the member and option calls the tests need.
 // Until then, Handle is the way to reach them. Kerberos, LDAP search
 // filters, size limits, replication and HTTP fault injection are left out;
 // wrap HTTPClient's transport for the latter.

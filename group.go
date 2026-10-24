@@ -38,6 +38,16 @@ func strList(res gjson.Result, path string) []string {
 	return out
 }
 
+// boolAttr reads a boolean FreeIPA attribute: true, [true], "TRUE" or
+// ["TRUE"], case-insensitive.
+func boolAttr(res gjson.Result, key string) bool {
+	v := res.Get(key)
+	if v.IsArray() {
+		v = v.Get("0")
+	}
+	return v.Bool() || strings.EqualFold(v.String(), "true")
+}
+
 func (g *Group) fromJSON(raw []byte) error {
 	if !gjson.ValidBytes(raw) {
 		return errors.New("invalid group record json")

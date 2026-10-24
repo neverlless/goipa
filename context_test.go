@@ -134,6 +134,14 @@ func twinCalls() []twinCall {
 			_, err := c.HostFindContext(ctx, nil)
 			return err
 		}},
+		{"HBACRuleFindContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.HBACRuleFindContext(ctx, nil)
+			return err
+		}},
+		{"SudoRuleFindContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.SudoRuleFindContext(ctx, nil)
+			return err
+		}},
 		{"StageUserAddContext", func(ctx context.Context, c *ipa.Client) error {
 			_, err := c.StageUserAddContext(ctx, &ipa.User{Username: "bob"})
 			return err
