@@ -32,8 +32,8 @@ to influence them.
       unchecked request and SPNEGO errors
 - [x] `go test ./...` runs without a server; CI with race detector,
       staticcheck, gosec, govulncheck; Dependabot
-- [ ] Tag v0.1.0 (only this tag: upstream v0.0.x tags carry the old module path)
-- [ ] Offer co-maintainership or upstreaming to ubccr/goipa in an issue
+- [x] Tag v0.1.0 (only this tag: upstream v0.0.x tags carry the old module path)
+- [x] Offer co-maintainership or upstreaming to ubccr/goipa in an issue (ubccr/goipa#19)
 
 ## v0.2.0 — Core: RPC, errors, context
 
