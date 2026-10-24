@@ -20,9 +20,12 @@ import (
 	"time"
 )
 
-const (
-	repo   = "https://github.com/freeipa/freeipa"
-	oldest = "4.9.0"
+const oldest = "4.9.0"
+
+// Variables so tests can point the network path at local servers.
+var (
+	repo    = "https://github.com/freeipa/freeipa"
+	rawBase = "https://raw.githubusercontent.com/freeipa/freeipa"
 )
 
 var tagRe = regexp.MustCompile(`^refs/tags/release-(\d+)-(\d+)-(\d+)$`)
@@ -57,7 +60,7 @@ func run(out, src string) error {
 	if len(rels) == 0 {
 		return fmt.Errorf("no releases found")
 	}
-	cmds, versions, err := merge(rels)
+	cmds, versions, err := merge(rels, allowedRemovals)
 	if err != nil {
 		return err
 	}
@@ -75,11 +78,16 @@ func readDir(dir string) ([]release, error) {
 		return nil, err
 	}
 	var rels []release
+	byVersion := map[string]string{}
 	for _, f := range files {
 		v := strings.ReplaceAll(strings.TrimSuffix(strings.TrimPrefix(filepath.Base(f), "API-"), ".txt"), "-", ".")
 		if _, ok := parseVersion(v); !ok || compareVersions(v, oldest) < 0 {
 			continue
 		}
+		if prev, dup := byVersion[v]; dup {
+			return nil, fmt.Errorf("%s and %s are both version %s", prev, f, v)
+		}
+		byVersion[v] = f
 		data, err := os.ReadFile(f) // #nosec G304 -- listed from the -src directory
 		if err != nil {
 			return nil, err
@@ -111,7 +119,7 @@ func fetch() ([]release, error) {
 			continue
 		}
 		tag := strings.TrimPrefix(ref, "refs/tags/")
-		cmds, err := fetchOne(client, "https://raw.githubusercontent.com/freeipa/freeipa/"+tag+"/API.txt")
+		cmds, err := fetchOne(client, rawBase+"/"+tag+"/API.txt")
 		if err != nil {
 			return nil, err
 		}
