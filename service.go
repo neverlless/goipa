@@ -142,8 +142,8 @@ func (c *Client) serviceMembers(ctx context.Context, method, principal string, l
 }
 
 // ServiceAddHost lets hosts manage a service (managedby) with
-// `service_add_host`; it requires the Service Administrators privilege
-// (System: Manage Service Principals). Per-host problems come back as
+// `service_add_host`; no FreeIPA permission grants writing a
+// service's managedby, so it needs an admin. Per-host problems come back as
 // *MemberError with the service as it stands.
 func (c *Client) ServiceAddHost(principal string, hosts []string) (*Service, error) {
 	return c.ServiceAddHostContext(context.Background(), principal, hosts)
@@ -155,8 +155,8 @@ func (c *Client) ServiceAddHostContext(ctx context.Context, principal string, ho
 }
 
 // ServiceRemoveHost stops hosts managing a service with
-// `service_remove_host`; it requires the Service Administrators privilege
-// (System: Manage Service Principals). Per-host problems come back as
+// `service_remove_host`; no FreeIPA permission grants writing a
+// service's managedby, so it needs an admin. Per-host problems come back as
 // *MemberError with the service as it stands.
 func (c *Client) ServiceRemoveHost(principal string, hosts []string) (*Service, error) {
 	return c.ServiceRemoveHostContext(context.Background(), principal, hosts)
