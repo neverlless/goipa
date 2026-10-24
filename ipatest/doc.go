@@ -328,6 +328,23 @@
 //     command '<name>'", as Q14. Q44 and Q45 follow the ipa command
 //     catalogue and skip Handle overrides. TestServer_CommandNewerThanVersion,
 //     TestServer_HandleBypassesCatalogue.
+//   - Q50: hostgroup_show, _find, _add, _del and the member and member
+//     manager calls. A host's membership is the union of Host.HostGroups and
+//     HostGroup.Hosts, as R2 for users; host_show's memberof_hostgroup lists
+//     it and removing the host clears both. hbactest sees the union too. A
+//     missing host group is 4001 "<cn>: host group not found"; hostgroup_del
+//     drops the group from other host groups and hosts. Member problems
+//     (no such entry, already a member, not a member, the group itself,
+//     Insufficient access for callers that are neither admins nor member
+//     managers) come back in failed under member.{host,hostgroup} or
+//     membermanager.{user,group}, as U3. TestContractHostGroupLifecycle,
+//     TestContractHostGroupMemberMissing, TestContractHostGroupManagers,
+//     TestHostGroupMembers_Fake, TestHostGroupDelete_DropsReferences.
+//   - Q51: a host in a nested host group is in the parent's
+//     memberindirect_host, not member_host, and host_show lists the parent
+//     in memberofindirect_hostgroup; a nested group's own nested groups are
+//     memberindirect_hostgroup. Host group names are not lower-cased.
+//     TestContractHostGroupMembers, TestHostGroupShow.
 //
 // A response's version is the server release, 4.13.4 unless SetVersion
 // changes it, and its principal is

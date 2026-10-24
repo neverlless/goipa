@@ -205,6 +205,37 @@ func twinCalls() []twinCall {
 		{"UserRemovePasskeyContext", func(ctx context.Context, c *ipa.Client) error {
 			return c.UserRemovePasskeyContext(ctx, "bob", testPasskey)
 		}},
+		{"HostGroupShowContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.HostGroupShowContext(ctx, "hg")
+			return err
+		}},
+		{"HostGroupFindContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.HostGroupFindContext(ctx, nil)
+			return err
+		}},
+		{"HostGroupAddContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.HostGroupAddContext(ctx, &ipa.HostGroup{Name: "hg"})
+			return err
+		}},
+		{"HostGroupDeleteContext", func(ctx context.Context, c *ipa.Client) error {
+			return c.HostGroupDeleteContext(ctx, "hg")
+		}},
+		{"HostGroupAddMemberContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.HostGroupAddMemberContext(ctx, "hg", []string{"h"}, nil)
+			return err
+		}},
+		{"HostGroupRemoveMemberContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.HostGroupRemoveMemberContext(ctx, "hg", []string{"h"}, nil)
+			return err
+		}},
+		{"HostGroupAddMemberManagerContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.HostGroupAddMemberManagerContext(ctx, "hg", []string{"bob"}, nil)
+			return err
+		}},
+		{"HostGroupRemoveMemberManagerContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.HostGroupRemoveMemberManagerContext(ctx, "hg", []string{"bob"}, nil)
+			return err
+		}},
 	}
 }
 
