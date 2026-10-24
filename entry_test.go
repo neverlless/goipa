@@ -66,3 +66,23 @@ func TestEntry_Forms(t *testing.T) {
 		t.Errorf("round trip: %s", out)
 	}
 }
+
+func TestEntry_DNSName(t *testing.T) {
+	var e ipa.Entry
+	in := `{"idnsname":[{"__dns_name__":"example.test."}],"one":{"__dns_name__":"a.test."},"many":[{"__dns_name__":"x."},"y."]}`
+	if err := json.Unmarshal([]byte(in), &e); err != nil {
+		t.Fatal(err)
+	}
+	if e.Str("idnsname") != "example.test." || e.DN("one") != "a.test." {
+		t.Error("Str")
+	}
+	if got := e.Strs("idnsname"); !reflect.DeepEqual(got, []string{"example.test."}) {
+		t.Errorf("Strs = %v", got)
+	}
+	if got := e.Strs("one"); !reflect.DeepEqual(got, []string{"a.test."}) {
+		t.Errorf("Strs(one) = %v", got)
+	}
+	if got := e.Strs("many"); !reflect.DeepEqual(got, []string{"x.", "y."}) {
+		t.Errorf("Strs(many) = %v", got)
+	}
+}
