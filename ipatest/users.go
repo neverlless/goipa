@@ -356,9 +356,21 @@ func (u *User) attrVals(attr string) (vals []string, ok bool) {
 // keeps as one string (Q41).
 var multiValued = map[string]bool{"mail": true, "ipasshpubkey": true, "ipauserauthtype": true}
 
-// applyAttrOpts is Q41: setattr, then addattr, then delattr, as FreeIPA's
-// process_attr_options does.
+// applyAttrOpts is Q41 for a user.
 func (u *User) applyAttrOpts(opts map[string]any) *ipa.IpaError {
+	merged, err := attrOpts(opts, u.attrVals, multiValued)
+	if err != nil {
+		return err
+	}
+	u.apply(merged)
+	return nil
+}
+
+// attrOpts is Q41: setattr, then addattr, then delattr, as FreeIPA's
+// process_attr_options does. attrVals reports an attribute's values and
+// whether the entry may hold it; the result holds the new values ([]any) of
+// every attribute touched.
+func attrOpts(opts map[string]any, attrVals func(string) ([]string, bool), multi map[string]bool) (map[string]any, *ipa.IpaError) {
 	type kv struct{ attr, val string }
 	parse := func(name string) (out []kv) {
 		for _, e := range strs(opts[name]) {
@@ -370,14 +382,14 @@ func (u *User) applyAttrOpts(opts map[string]any) *ipa.IpaError {
 	set, add, del := parse("setattr"), parse("addattr"), parse("delattr")
 	for _, l := range [][]kv{set, add, del} {
 		for _, e := range l {
-			if _, ok := u.attrVals(e.attr); !ok {
-				return &ipa.IpaError{Code: ipa.CodeObjectclassViolation, Name: "ObjectclassViolation", Message: fmt.Sprintf("attribute %q not allowed", e.attr)}
+			if _, ok := attrVals(e.attr); !ok {
+				return nil, &ipa.IpaError{Code: ipa.CodeObjectclassViolation, Name: "ObjectclassViolation", Message: fmt.Sprintf("attribute %q not allowed", e.attr)}
 			}
 		}
 	}
 	for _, e := range del { // FreeIPA checks this before any value lookup
-		if v, _ := u.attrVals(e.attr); len(v) == 0 && !slices.ContainsFunc(append(set, add...), func(o kv) bool { return o.attr == e.attr }) {
-			return &ipa.IpaError{Code: ipa.CodeValidation, Name: "ValidationError", Message: fmt.Sprintf("invalid '%s': No such attribute on this entry", e.attr)}
+		if v, _ := attrVals(e.attr); len(v) == 0 && !slices.ContainsFunc(append(set, add...), func(o kv) bool { return o.attr == e.attr }) {
+			return nil, &ipa.IpaError{Code: ipa.CodeValidation, Name: "ValidationError", Message: fmt.Sprintf("invalid '%s': No such attribute on this entry", e.attr)}
 		}
 	}
 	vals := map[string][]string{}
@@ -385,7 +397,7 @@ func (u *User) applyAttrOpts(opts map[string]any) *ipa.IpaError {
 		if v, ok := vals[attr]; ok {
 			return v
 		}
-		v, _ := u.attrVals(attr)
+		v, _ := attrVals(attr)
 		return slices.Clone(v)
 	}
 	for _, e := range set { // values of one attribute accumulate, "" adds none
@@ -406,14 +418,14 @@ func (u *User) applyAttrOpts(opts map[string]any) *ipa.IpaError {
 		v := cur(e.attr)
 		i := slices.Index(v, e.val)
 		if i < 0 {
-			return &ipa.IpaError{Code: ipa.CodeAttrValueNotFound, Name: "AttrValueNotFound", Message: fmt.Sprintf("'%s' does not contain '%s'", e.attr, e.val)}
+			return nil, &ipa.IpaError{Code: ipa.CodeAttrValueNotFound, Name: "AttrValueNotFound", Message: fmt.Sprintf("'%s' does not contain '%s'", e.attr, e.val)}
 		}
 		vals[e.attr] = slices.Delete(v, i, i+1)
 	}
 	merged := map[string]any{}
 	for a, v := range vals {
-		if len(v) > 1 && !multiValued[a] {
-			return &ipa.IpaError{Code: ipa.CodeOnlyOneValueAllowed, Name: "OnlyOneValueAllowed", Message: a + ": Only one value allowed."}
+		if len(v) > 1 && !multi[a] {
+			return nil, &ipa.IpaError{Code: ipa.CodeOnlyOneValueAllowed, Name: "OnlyOneValueAllowed", Message: a + ": Only one value allowed."}
 		}
 		l := make([]any, len(v))
 		for i := range v {
@@ -421,8 +433,7 @@ func (u *User) applyAttrOpts(opts map[string]any) *ipa.IpaError {
 		}
 		merged[a] = l
 	}
-	u.apply(merged)
-	return nil
+	return merged, nil
 }
 
 // uidArg is the primary key every user command takes.

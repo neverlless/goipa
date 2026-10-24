@@ -207,7 +207,26 @@ func (s *Server) recordArgs(c Call) (string, string, *dnsZone, *ipa.IpaError) {
 	if len(c.Args) < 2 || c.Args[1] == "" {
 		return "", "", nil, required("idnsname")
 	}
-	return zone, relName(zone, c.Args[1]), z, nil
+	name := relName(zone, c.Args[1])
+	if strings.HasSuffix(name, ".") {
+		return "", "", nil, invalid("invalid 'idnsname': out-of-zone data: record name must be a subdomain of the zone or a relative name")
+	}
+	return zone, name, z, nil
+}
+
+// suspiciousName is FreeIPA's warning for a relative name that ends in the
+// zone's name, likely a missing trailing dot (Q143).
+func suspiciousName(zone, name string) []map[string]any {
+	bare := strings.TrimSuffix(zone, ".")
+	if name != bare && !strings.HasSuffix(name, "."+bare) {
+		return nil
+	}
+	fqdn := name + "." + zone
+	return []map[string]any{{
+		"type": "warning", "name": "DNSSuspiciousRelativeName", "code": 13014,
+		"message": fmt.Sprintf("Relative record name '%s' contains the zone name '%s' as a suffix, which results in FQDN '%s'. This is usually a mistake caused by a missing dot at the end of the name specification.", name, zone, fqdn),
+		"data":    map[string]any{"record": name, "zone": zone, "fqdn": fqdn},
+	}}
 }
 
 // recordOpts are the *record options of c.
@@ -279,7 +298,11 @@ func dnsrecordAdd(s *Server, c Call) (any, *ipa.IpaError) {
 		return nil, &ipa.IpaError{Code: ipa.CodeEmptyModlist, Message: "no modifications to be performed"}
 	}
 	z.records[name] = r
-	return entry(name, z.renderRecord(zone, name, flag(c, "all")), ""), nil
+	out := entry(name, z.renderRecord(zone, name, flag(c, "all")), "")
+	if m := suspiciousName(zone, name); m != nil {
+		out["messages"] = m
+	}
+	return out, nil
 }
 
 func dnsrecordDel(s *Server, c Call) (any, *ipa.IpaError) {
@@ -293,6 +316,8 @@ func dnsrecordDel(s *Server, c Call) (any, *ipa.IpaError) {
 	}
 	del := recordOpts(c)
 	switch {
+	case flag(c, "del_all") && name == "@":
+		return nil, invalid("invalid 'del_all': Zone record '@' cannot be deleted")
 	case flag(c, "del_all"):
 		delete(z.records, name)
 	case len(del) == 0:
@@ -301,7 +326,7 @@ func dnsrecordDel(s *Server, c Call) (any, *ipa.IpaError) {
 		for k, vals := range del {
 			for _, v := range vals {
 				if !slices.Contains(r[k], v) {
-					return nil, &ipa.IpaError{Code: ipa.CodeAttrValueNotFound, Message: fmt.Sprintf("%s does not contain '%s'", k, v)}
+					return nil, &ipa.IpaError{Code: ipa.CodeAttrValueNotFound, Message: fmt.Sprintf("%s record does not contain '%s'", strings.ToUpper(strings.TrimSuffix(k, "record")), v)}
 				}
 			}
 		}
@@ -311,7 +336,7 @@ func dnsrecordDel(s *Server, c Call) (any, *ipa.IpaError) {
 				delete(r, k)
 			}
 		}
-		if len(r) == 0 {
+		if len(r) == 0 && name != "@" { // the apex is the zone entry and stays
 			delete(z.records, name)
 		}
 	}
