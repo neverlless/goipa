@@ -310,11 +310,8 @@ func TestContractHostShape(t *testing.T) {
 				t.Errorf("%s = %s, want a JSON bool", k, v.Raw)
 			}
 		}
-		// ipatest does not model hostgroup commands (it answers recordings,
-		// Q130); on a real server this pins memberof_hostgroup with all.
-		if b.name == "ipatest" {
-			return
-		}
+		// ipatest does not model hostgroup commands; on a real server this
+		// pins memberof_hostgroup with all.
 		hg := "hg" + randHex(t, 4)
 		if _, err := b.admin.RPC("hostgroup_add", []string{hg}, nil); err != nil {
 			t.Logf("memberof_hostgroup not checked: hostgroup_add: %v", err)
