@@ -5,6 +5,7 @@
 package ipa
 
 import (
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -95,5 +96,24 @@ func TestExpiredSession_CompareAndClear(t *testing.T) {
 	}
 	if c.SessionID() != fresh {
 		t.Errorf("SessionID = %q, want %q", c.SessionID(), fresh)
+	}
+}
+
+func TestSPNEGO401NotRetried(t *testing.T) {
+	orig := setSPNEGOHeader
+	t.Cleanup(func() { setSPNEGOHeader = orig })
+	var calls atomic.Int32
+	setSPNEGOHeader = func(_ *client.Client, r *http.Request, _ string) error {
+		calls.Add(1)
+		r.Header.Set("Authorization", "Negotiate rejected")
+		return nil
+	}
+	c, _ := expiryServer(t)
+	c.setKrbClient(client.NewWithPassword("u", "EXAMPLE.COM", "p", config.New()))
+	if _, err := c.Ping(); !errors.Is(err, ErrUnauthorized) {
+		t.Fatalf("err = %v, want ErrUnauthorized", err)
+	}
+	if calls.Load() != 1 {
+		t.Errorf("SPNEGO attempts = %d, want 1", calls.Load())
 	}
 }
