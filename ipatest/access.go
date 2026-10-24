@@ -384,9 +384,9 @@ func init() {
 		if r == nil {
 			return nil, notFound(cn, "sudo rule")
 		}
-		opts := strs(c.Options["ipasudoopt"])
-		if len(opts) == 0 {
-			return nil, required("ipasudoopt")
+		opts, err := s.sudoOpts(c)
+		if err != nil {
+			return nil, err
 		}
 		for _, opt := range opts {
 			if slices.Contains(r.Options, opt) {

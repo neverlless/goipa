@@ -347,6 +347,12 @@
 //     sudocmd_add and sudocmd_del keep only the command and its description;
 //     FreeIPA's refusal to delete a command a rule uses is not modelled.
 //     goipa.TestContractSudoRuleOptions, TestSudoCmd_AddDel.
+//   - Q83: at a 4.9 release sudorule_add_option and sudorule_remove_option
+//     reject any JSON list for ipasudoopt, even of one value, with 3008
+//     "invalid 'ipasudoopt': Only one value is allowed", although the schema
+//     marks it multivalued; 4.12.2 and later take a list. Releases between
+//     are not pinned and take a list. goipa.TestContractSudoRuleOptions,
+//     TestSudoOption_ListAt49.
 //
 // A response's version is the server release, 4.13.4 unless SetVersion
 // changes it, and its principal is

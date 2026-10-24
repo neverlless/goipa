@@ -73,3 +73,12 @@ func TestSudoRuleAddHost_HostGroupMissing(t *testing.T) {
 		t.Errorf("rule = %+v", r)
 	}
 }
+
+func TestSudoRuleAddOption_Several(t *testing.T) {
+	s, c := newFake(t)
+	s.AddSudoRule("r", ipatest.SudoRule{})
+	r, err := c.SudoRuleAddOption("r", "!authenticate", "!requiretty")
+	if err != nil || !reflect.DeepEqual(r.Options, []string{"!authenticate", "!requiretty"}) {
+		t.Fatalf("rule = %+v, %v", r, err)
+	}
+}

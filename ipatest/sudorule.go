@@ -119,6 +119,19 @@ func (r *sudoRec) external(attr string) *[]string {
 	return r.ext[attr]
 }
 
+// sudoOpts reads ipasudoopt; 4.9 takes no list there (Q83).
+func (s *Server) sudoOpts(c Call) ([]string, *ipa.IpaError) {
+	v := c.Options["ipasudoopt"]
+	if _, list := v.([]any); list && strings.HasPrefix(s.version, "4.9.") {
+		return nil, &ipa.IpaError{Code: ipa.CodeConversion, Message: "invalid 'ipasudoopt': Only one value is allowed"}
+	}
+	opts := strs(v)
+	if len(opts) == 0 {
+		return nil, required("ipasudoopt")
+	}
+	return opts, nil
+}
+
 func sudoRuleArg(s *Server, c Call) (string, *sudoRec, *ipa.IpaError) {
 	cn, err := ruleName(c)
 	if err != nil {
@@ -171,9 +184,9 @@ func init() {
 		if err != nil {
 			return nil, err
 		}
-		opts := strs(c.Options["ipasudoopt"])
-		if len(opts) == 0 {
-			return nil, required("ipasudoopt")
+		opts, err := s.sudoOpts(c)
+		if err != nil {
+			return nil, err
 		}
 		for _, o := range opts {
 			if !slices.Contains(r.Options, o) {

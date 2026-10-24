@@ -124,6 +124,26 @@ func (c *Client) sudoMembers(ctx context.Context, method, name string, lists map
 	return sudoRule(e), err
 }
 
+// sudoOptions sends one option as a scalar: FreeIPA 4.9 rejects any list
+// for ipasudoopt with 3008 "Only one value is allowed" (Q83).
+func (c *Client) sudoOptions(ctx context.Context, method, name string, options []string) (*SudoRule, error) {
+	if name == "" {
+		return nil, errSudoRuleName
+	}
+	if len(options) == 0 {
+		return nil, errors.New("ipa: " + method + ": nothing to add or remove")
+	}
+	var v any = options
+	if len(options) == 1 {
+		v = options[0]
+	}
+	e, _, err := Call[Entry](ctx, c, method, []string{name}, Options{"ipasudoopt": v, "all": true, "no_members": false})
+	if err != nil {
+		return nil, err
+	}
+	return sudoRule(e), nil
+}
+
 // SudoRuleAddUser adds users and groups to a sudo rule with
 // `sudorule_add_user`. Per-member problems are returned as *MemberError,
 // together with the rule as it stands.
@@ -282,7 +302,8 @@ func (c *Client) SudoRuleRemoveRunAsGroupContext(ctx context.Context, name strin
 
 // SudoRuleAddOption adds sudoers options (ipasudoopt, e.g. "!authenticate")
 // to a sudo rule with `sudorule_add_option`. An option the rule already has
-// fails the call with FreeIPA's DuplicateEntry (4002).
+// fails the call with FreeIPA's DuplicateEntry (4002). FreeIPA 4.9 takes one
+// option per call.
 // It needs the Sudo Administrator privilege (System: Modify Sudo rule).
 func (c *Client) SudoRuleAddOption(name string, options ...string) (*SudoRule, error) {
 	return c.SudoRuleAddOptionContext(context.Background(), name, options...)
@@ -290,12 +311,13 @@ func (c *Client) SudoRuleAddOption(name string, options ...string) (*SudoRule, e
 
 // SudoRuleAddOptionContext is like SudoRuleAddOption but bounds the request with ctx.
 func (c *Client) SudoRuleAddOptionContext(ctx context.Context, name string, options ...string) (*SudoRule, error) {
-	return c.sudoMembers(ctx, "sudorule_add_option", name, map[string][]string{"ipasudoopt": options})
+	return c.sudoOptions(ctx, "sudorule_add_option", name, options)
 }
 
 // SudoRuleRemoveOption removes sudoers options from a sudo rule with
 // `sudorule_remove_option`. An option the rule does not have fails the call
-// with FreeIPA's AttrValueNotFound (4026).
+// with FreeIPA's AttrValueNotFound (4026). FreeIPA 4.9 takes one option per
+// call.
 // It needs the Sudo Administrator privilege (System: Modify Sudo rule).
 func (c *Client) SudoRuleRemoveOption(name string, options ...string) (*SudoRule, error) {
 	return c.SudoRuleRemoveOptionContext(context.Background(), name, options...)
@@ -303,5 +325,5 @@ func (c *Client) SudoRuleRemoveOption(name string, options ...string) (*SudoRule
 
 // SudoRuleRemoveOptionContext is like SudoRuleRemoveOption but bounds the request with ctx.
 func (c *Client) SudoRuleRemoveOptionContext(ctx context.Context, name string, options ...string) (*SudoRule, error) {
-	return c.sudoMembers(ctx, "sudorule_remove_option", name, map[string][]string{"ipasudoopt": options})
+	return c.sudoOptions(ctx, "sudorule_remove_option", name, options)
 }
