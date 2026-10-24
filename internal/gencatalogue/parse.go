@@ -39,6 +39,8 @@ type release struct {
 
 var paramRe = regexp.MustCompile(`^([A-Za-z0-9]+)\('([^'?*+]+)([?*+]?)'(.*)\)$`)
 
+var autofillRe = regexp.MustCompile(`(^|, )autofill=True(,|$)`)
+
 // parse reads one API.txt; only command, arg and option lines matter.
 func parse(r io.Reader) ([]command, error) {
 	var cmds []command
@@ -64,7 +66,7 @@ func parse(r io.Reader) ([]command, error) {
 			p := param{
 				Name:     m[2],
 				Type:     m[1],
-				Required: (m[3] == "" || m[3] == "+") && !strings.Contains(m[4], "autofill=True"),
+				Required: (m[3] == "" || m[3] == "+") && !autofillRe.MatchString(m[4]),
 				Multi:    m[3] == "*" || m[3] == "+",
 			}
 			c := &cmds[len(cmds)-1]
@@ -109,7 +111,7 @@ var allowedRemovals = map[string]bool{
 // merge folds releases into one catalogue with the newest release's params
 // and the first release that had each name as its Since. A name that
 // disappears again is an error: a single Since could not describe it.
-func merge(rels []release) ([]command, []string, error) {
+func merge(rels []release, allowed map[string]bool) ([]command, []string, error) {
 	rels = slices.Clone(rels)
 	slices.SortFunc(rels, func(a, b release) int { return compareVersions(a.Version, b.Version) })
 	since := map[string]string{} // "cmd", "cmd\x00arg\x00name", "cmd\x00option\x00name"
@@ -132,7 +134,7 @@ func merge(rels []release) ([]command, []string, error) {
 				f := strings.Split(k, "\x00")
 				return nil, nil, fmt.Errorf("%s: %s %s %q reappears", rel.Version, f[0], f[1], f[2])
 			case seen[k]:
-			case allowedRemovals[k]:
+			case allowed[k]:
 				removed[k] = true
 			default:
 				keys = append(keys, k)
@@ -152,6 +154,11 @@ func merge(rels []release) ([]command, []string, error) {
 			}
 		}
 		latest = rel.Commands
+	}
+	for k := range allowed {
+		if !removed[k] {
+			return nil, nil, fmt.Errorf("stale allow-list entry %q: no such removal in the data", strings.ReplaceAll(k, "\x00", " "))
+		}
 	}
 	out := make([]command, 0, len(latest))
 	for _, c := range latest {
