@@ -15,6 +15,7 @@ existing exported identifiers keep their signatures).
 - HBAC and sudo: `HBACRuleFind`, `SudoRuleFind`, `HBACTest` (reads hbactest's result correctly and evaluates every rule, not only the first 100)
 - Passkeys: `UserAddPasskey`, `UserRemovePasskey`
 - `SyncOTPToken` and `ErrInvalidCredentials` (based on ubccr/goipa#2 by @farzandalaee)
+- `CodeOption` (3005 OptionError, an option the command does not take)
 - Every new call has a `…Context` twin
 - `ipatest` models stage users, user_status/user_unlock, password policies, sub-IDs, HBAC and sudo rules (with the default `allow_all` rule), hbactest, passkey mappings and token sync
 
