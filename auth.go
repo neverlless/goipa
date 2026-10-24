@@ -12,8 +12,10 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/jcmturner/gokrb5/v8/client"
+	"github.com/jcmturner/gokrb5/v8/config"
 	"github.com/jcmturner/gokrb5/v8/credentials"
 	"github.com/jcmturner/gokrb5/v8/keytab"
 )
@@ -47,11 +49,13 @@ func (c *Client) setKrbClient(cl *client.Client) {
 	}
 }
 
-// Clears out FreeIPA session id
+// Clears out FreeIPA session id and the credentials kept by
+// WithPasswordRelogin, so the Client does not log back in on its own.
 func (c *Client) ClearSession() {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	c.sessionID = ""
+	c.reloginUser, c.reloginPass = "", ""
 }
 
 // Set stick sessions.
@@ -75,8 +79,17 @@ func (c *Client) setSessionID(res *http.Response) error {
 		if cookie.Name != "ipa_session" {
 			continue
 		}
+		// FreeIPA's logout cookie deletes ipa_session; its exact form was not captured.
+		if cookie.Value == "" || cookie.MaxAge < 0 || (!cookie.Expires.IsZero() && cookie.Expires.Before(time.Now())) {
+			c.sessionID = ""
+			continue
+		}
 		if len(cookie.Value) != 32 && !strings.HasPrefix(cookie.Value, "MagBearerToken") {
 			return errors.New("invalid set-cookie header")
+		}
+		if cookie.Value == "MagBearerToken=" { // FreeIPA's logout cookie
+			c.sessionID = ""
+			continue
 		}
 		c.sessionID = cookie.Value
 	}
@@ -128,75 +141,115 @@ func (c *Client) RemoteLoginContext(ctx context.Context, uid, passwd string) err
 		return err
 	}
 
+	if c.relogin {
+		c.mu.Lock()
+		c.reloginUser, c.reloginPass = uid, passwd
+		c.mu.Unlock()
+	}
+
 	return nil
+}
+
+// krb5Config returns the client's Kerberos configuration: WithKrb5ConfigData,
+// else WithKrb5Config, else DefaultKerbConf.
+func (c *Client) krb5Config() (*config.Config, error) {
+	switch {
+	case c.krb5Data != "":
+		return loadKrb5ConfigData([]byte(c.krb5Data))
+	case c.krb5Path != "":
+		return loadKrb5Config(c.krb5Path)
+	}
+	return loadKrb5Config(DefaultKerbConf)
+}
+
+var errNoRealm = errors.New("ipa: realm is required for Kerberos login")
+
+func (c *Client) krbLogin(cl *client.Client) error {
+	if err := cl.Login(); err != nil {
+		return err
+	}
+	c.setKrbClient(cl)
+	return nil
+}
+
+// dropRelogin forgets the stored credentials if they are still uid/passwd.
+func (c *Client) dropRelogin(uid, passwd string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.reloginUser == uid && c.reloginPass == passwd {
+		c.reloginUser, c.reloginPass = "", ""
+	}
 }
 
 // Login to FreeIPA using local kerberos login username and password
 func (c *Client) Login(username, password string) error {
-	cfg, err := loadKrb5Config(DefaultKerbConf)
+	if c.realm == "" {
+		return errNoRealm
+	}
+	cfg, err := c.krb5Config()
 	if err != nil {
 		return err
 	}
-
-	cl := client.NewWithPassword(username, c.realm, password, cfg)
-
-	err = cl.Login()
-	if err != nil {
-		return err
-	}
-
-	c.setKrbClient(cl)
-
-	return nil
+	return c.krbLogin(client.NewWithPassword(username, c.realm, password, cfg))
 }
 
 // Login to FreeIPA using local kerberos login with keytab and username
 func (c *Client) LoginWithKeytab(ktab, username string) error {
-	cfg, err := loadKrb5Config(DefaultKerbConf)
-	if err != nil {
-		return err
-	}
-
 	kt, err := keytab.Load(ktab)
 	if err != nil {
 		return err
 	}
+	return c.loginKeytab(kt, username)
+}
 
-	cl := client.NewWithKeytab(username, c.realm, kt, cfg)
+// LoginWithKeytabData is like LoginWithKeytab but takes the keytab contents,
+// for containers and secret stores that have no file to point at.
+func (c *Client) LoginWithKeytabData(ktab []byte, username string) error {
+	kt := keytab.New()
+	if err := kt.Unmarshal(ktab); err != nil {
+		return fmt.Errorf("ipa: invalid keytab: %w", err)
+	}
+	return c.loginKeytab(kt, username)
+}
 
-	err = cl.Login()
+func (c *Client) loginKeytab(kt *keytab.Keytab, username string) error {
+	if c.realm == "" {
+		return errNoRealm
+	}
+	cfg, err := c.krb5Config()
 	if err != nil {
 		return err
 	}
-
-	c.setKrbClient(cl)
-
-	return nil
+	return c.krbLogin(client.NewWithKeytab(username, c.realm, kt, cfg))
 }
 
 // Login to FreeIPA using credentials cache
 func (c *Client) LoginFromCCache(cpath string) error {
-	cfg, err := loadKrb5Config(DefaultKerbConf)
-	if err != nil {
-		return err
-	}
-
 	ccache, err := credentials.LoadCCache(cpath)
 	if err != nil {
 		return err
 	}
+	return c.loginCCache(ccache)
+}
 
+// LoginFromCCacheData is like LoginFromCCache but takes the credentials cache
+// contents.
+func (c *Client) LoginFromCCacheData(ccache []byte) error {
+	cc := new(credentials.CCache)
+	if err := cc.Unmarshal(ccache); err != nil {
+		return fmt.Errorf("ipa: invalid ccache: %w", err)
+	}
+	return c.loginCCache(cc)
+}
+
+func (c *Client) loginCCache(ccache *credentials.CCache) error {
+	cfg, err := c.krb5Config()
+	if err != nil {
+		return err
+	}
 	cl, err := client.NewFromCCache(ccache, cfg, client.AssumePreAuthentication(true))
 	if err != nil {
 		return err
 	}
-
-	err = cl.Login()
-	if err != nil {
-		return err
-	}
-
-	c.setKrbClient(cl)
-
-	return nil
+	return c.krbLogin(cl)
 }

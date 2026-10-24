@@ -26,12 +26,15 @@ tokens.
 
 ## Features
 
-- Login: password (`Login`, `RemoteLogin`), keytab (`LoginWithKeytab`),
-  Kerberos credential cache (`LoginFromCCache`), or a saved session ID
-  (`NewDefaultClientWithSession`)
+- Login: password (`Login`, `RemoteLogin`), keytab (`LoginWithKeytab`,
+  `LoginWithKeytabData`), Kerberos credential cache (`LoginFromCCache`,
+  `LoginFromCCacheData`), or a saved session ID
+  (`NewDefaultClientWithSession`); see [Which login to use](#which-login-to-use)
+- Kerberos clients recover expired sessions; password re-login is opt-in
+  (`WithPasswordRelogin`); `WhoAmI`
 - Reads the host, realm and CA from `/etc/ipa/default.conf` and
   `/etc/ipa/ca.crt` on enrolled machines, or takes them explicitly
-  (`NewClient`, `NewClientCustomHttp`)
+  (`New` with `With*` options, `NewClient`, `NewClientCustomHttp`)
 - Users: show, find, add (with random or given password), modify, enable,
   disable, delete
 - Passwords: set, change (with OTP), reset; typed errors for policy, invalid
@@ -115,6 +118,48 @@ if err := client.RemoteLogin("jdoe", password); err != nil {
 }
 // Keep client.SessionID() and reuse it later with NewDefaultClientWithSession.
 ```
+
+## Which login to use
+
+| Method | How it authenticates | Needs | Use when |
+|---|---|---|---|
+| `RemoteLogin` | password over HTTPS (`/ipa/session/login_password`) | the CA; no Kerberos | web apps, scripts, hosts not enrolled |
+| `Login` | password through the KDC (Kerberos) | krb5.conf (`WithKrb5Config*`), realm | you have a password and want a ticket |
+| `LoginWithKeytab` / `LoginWithKeytabData` | keytab | krb5.conf, realm | services, daemons |
+| `LoginFromCCache` / `LoginFromCCacheData` | an existing ticket cache (kinit) | krb5.conf | CLI tools run by a logged-in user |
+| saved session (`SetSessionID`, `NewDefaultClientWithSession`) | the `ipa_session` cookie | none | restoring a web session |
+
+`Login` is Kerberos, not the web login: it needs a KDC and a krb5.conf. To
+log in with a password over HTTPS, use `RemoteLogin`.
+
+When a session expires (HTTP 401), the call is retried once:
+
+- Kerberos clients (`Login`, `LoginWithKeytab*`, `LoginFromCCache*`) clear the
+  session and retry through SPNEGO. If another goroutine has already got a
+  fresh session, it is reused.
+- `RemoteLogin` clients get `ErrUnauthorized` and the session is cleared,
+  unless the client was created with `WithPasswordRelogin`. Then goipa
+  logs in again with the password it kept in process memory and retries;
+  goroutines that hit the 401 together share one login. A password FreeIPA
+  rejects is forgotten, so it is not tried again, and `ClearSession` forgets
+  it too. This needs sticky sessions (the default).
+- A client restored from a saved session ID has neither, so it gets
+  `ErrUnauthorized`.
+
+For a host that is not enrolled in FreeIPA, give the host, realm and CA:
+
+```go
+client, err := ipa.New(
+	ipa.WithHost("ipa.example.com"),
+	ipa.WithRealm("EXAMPLE.COM"),
+	ipa.WithCACert(caPEM), // the contents of /etc/ipa/ca.crt
+)
+```
+
+Add `WithKrb5Config(path)` or `WithKrb5ConfigData(text)` for Kerberos logins,
+and `WithPasswordRelogin()` for the re-login above. With no options `New`
+reads `/etc/ipa/default.conf` and `/etc/ipa/ca.crt`, but only when a client is
+first created, not at import.
 
 Full API reference: [pkg.go.dev/github.com/neverlless/goipa](https://pkg.go.dev/github.com/neverlless/goipa).
 

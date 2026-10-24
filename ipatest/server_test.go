@@ -255,3 +255,15 @@ func TestNewWithoutTB(t *testing.T) {
 	s.Close()
 	s.Close()
 }
+
+func TestCACert(t *testing.T) {
+	s := ipatest.NewServer(t)
+	c, err := ipa.New(ipa.WithHost(s.Host()), ipa.WithCACert(s.CACert()))
+	if err != nil {
+		t.Fatal(err)
+	}
+	c.SetSessionID(s.Session("admin"))
+	if _, err := c.Ping(); err != nil {
+		t.Fatal(err)
+	}
+}

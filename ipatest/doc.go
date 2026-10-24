@@ -266,6 +266,16 @@
 //     are not checked against a secret. The Referer check of the form
 //     endpoints applies; SyncOTPToken sends one. TestContractSyncTokenResults,
 //     TestSyncOTPToken.
+//   - Q38: whoami answers {"object": "user", "command": "user_show/1",
+//     "arguments": [<caller uid>]} with no "result" key. TestWhoAmI,
+//     TestContractWhoAmI.
+//   - Q39: session_logout ends the caller's session, which then gets HTTP
+//     401 as after ExpireSession; its output is {"result": null}. The reply
+//     carries a cookie that deletes ipa_session (Max-Age=0), and goipa
+//     clears its session on it. The exact cookie FreeIPA sends was not
+//     captured but is a deletion (the real-server leg of
+//     TestContractSessionLogoutGives401).
+//     TestContractSessionLogoutGives401, TestSessionLogout.
 //
 // A response's version is the server release, 4.13.4, and its principal is
 // <uid>@TEST.LOCAL. An error a HandlerFunc returns without a Name gets the

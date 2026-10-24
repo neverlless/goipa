@@ -7,6 +7,42 @@ existing exported identifiers keep their signatures).
 
 ## [Unreleased]
 
+## [v0.6.0] - 2026-10-24
+
+Construction and authentication: an options-based `New` with no file I/O at
+import time, Kerberos login from memory, `WhoAmI`, and recovery from expired
+sessions. The session behaviour is checked against real FreeIPA 4.9, 4.12
+and 4.13 by the contract tests.
+
+### Added
+
+- `New(opts ...Option) (*Client, error)` with `WithHost`, `WithRealm`,
+  `WithCACert`, `WithHTTPClient`, `WithKrb5Config`, `WithKrb5ConfigData` and
+  `WithPasswordRelogin`. The old constructors keep their signatures
+- `LoginWithKeytabData`, `LoginFromCCacheData` and in-memory Kerberos
+  configuration (`WithKrb5ConfigData`; idea from sitnikovv's fork), for
+  containers and secret stores
+- `WhoAmI` and `WhoAmIContext`
+- Expired sessions are recovered: Kerberos clients retry once through
+  SPNEGO; with `WithPasswordRelogin`, `RemoteLogin` clients log in again
+  and retry once (a password FreeIPA rejects is forgotten; needs sticky
+  sessions; concurrent 401s cost one login). Other clients get
+  `ErrUnauthorized` and the session is cleared
+- `ipatest.Server.CACert`, and `whoami` and `session_logout` in `ipatest`
+- "Which login to use" guide in the README and package documentation
+
+### Changed
+
+- A 401 on a session request now clears the session (it was kept)
+- Clients with a Kerberos login, old constructors included, retry once
+  through SPNEGO after a 401
+- `NewDefaultClient*`, `NewClient` and `New` read `/etc/ipa` on first use
+  instead of at import; `NewClientCustomHttp` never reads it
+- `ClearSession` also forgets the credentials kept by `WithPasswordRelogin`
+- FreeIPA's logout cookie (an `ipa_session` cookie that deletes the session,
+  or `MagBearerToken=`) clears the session; before, `session_logout` failed
+  with "invalid set-cookie header"
+
 ## [v0.5.0] - 2026-10-24
 
 Account lifecycle and access: stage users, lockout status and unlock,
@@ -217,7 +253,8 @@ v0.0.1 – v0.0.7 were released by Andrew E. Bruno as
 [ubccr/goipa](https://github.com/ubccr/goipa/tags). This repository keeps
 that history.
 
-[Unreleased]: https://github.com/neverlless/goipa/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/neverlless/goipa/compare/v0.6.0...HEAD
+[v0.6.0]: https://github.com/neverlless/goipa/compare/v0.5.0...v0.6.0
 [v0.5.0]: https://github.com/neverlless/goipa/compare/v0.4.0...v0.5.0
 [v0.4.0]: https://github.com/neverlless/goipa/compare/v0.3.0...v0.4.0
 [v0.3.0]: https://github.com/neverlless/goipa/compare/v0.2.1...v0.3.0

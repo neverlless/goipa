@@ -140,20 +140,20 @@ against `ipatest` and an integration test.
 
 ## v0.6.0 — Construction and authentication
 
-- [ ] `New(opts ...Option) (*Client, error)` with `WithHost`, `WithRealm`,
+- [x] `New(opts ...Option) (*Client, error)` with `WithHost`, `WithRealm`,
       `WithCACert`, `WithHTTPClient`, `WithKrb5Config`; no file I/O at import
       time. Old constructors stay. `WithKrb5Config` takes a path (includes
-      resolved as in v0.2.1) or a `*config.Config`, since `DefaultKerbConf`
+      resolved as in v0.2.1) or the file contents, since `DefaultKerbConf`
       is a const and stays one
-- [ ] Kerberos login from in-memory config, keytab or credential cache, for
+- [x] Kerberos login from in-memory config, keytab or credential cache, for
       containers and secret stores (idea from sitnikovv's fork); `WhoAmI`
-- [ ] Expired session: clear it and retry once through Kerberos when the
+- [x] Expired session: clear it and retry once through Kerberos when the
       client has credentials
-- [ ] Opt-in re-login for password sessions: a client created with an
+- [x] Opt-in re-login for password sessions: a client created with an
       explicit option keeps the `RemoteLogin` credentials and logs in again
       once when a call returns 401. Off by default, because it keeps the
       password in memory
-- [ ] "Which login to use" table in the README and package doc: `RemoteLogin`
+- [x] "Which login to use" table in the README and package doc: `RemoteLogin`
       (password over HTTPS, no Kerberos), `Login` (password through the
       KDC, needs krb5.conf), `LoginWithKeytab`, `LoginFromCCache`, and a
       saved session. Says plainly that `Login` is Kerberos and shows the

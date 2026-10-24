@@ -8,6 +8,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
+	"encoding/pem"
 	"fmt"
 	"io"
 	"maps"
@@ -72,6 +73,8 @@ type Call struct {
 	Options map[string]any
 	// User is the authenticated caller's uid.
 	User string
+
+	session string // the caller's session id, for session_logout
 }
 
 func (c Call) clone() Call {
@@ -167,6 +170,11 @@ func (s *Server) Realm() string { return realm }
 
 // HTTPClient returns an HTTP client that trusts only this server.
 func (s *Server) HTTPClient() *http.Client { return s.srv.Client() }
+
+// CACert returns the server certificate as PEM, for ipa.WithCACert.
+func (s *Server) CACert() []byte {
+	return pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: s.srv.Certificate().Raw})
+}
 
 // Client returns a goipa client wired to the server, without a session.
 func (s *Server) Client() *ipa.Client {
@@ -275,7 +283,7 @@ func (s *Server) serveSessionJSON(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
-	s.serveRPC(w, r, uid)
+	s.serveRPC(w, r, uid, ck.Value)
 }
 
 // dropConnection closes the connection without a response, as the httpd
@@ -298,10 +306,10 @@ func (s *Server) serveNegotiateJSON(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	setSessionCookie(w, sid)
-	s.serveRPC(w, r, uid)
+	s.serveRPC(w, r, uid, sid)
 }
 
-func (s *Server) serveRPC(w http.ResponseWriter, r *http.Request, uid string) {
+func (s *Server) serveRPC(w http.ResponseWriter, r *http.Request, uid, sid string) {
 	if !s.refererOK(r) {
 		denied(w)
 		return
@@ -311,7 +319,7 @@ func (s *Server) serveRPC(w http.ResponseWriter, r *http.Request, uid string) {
 		Method string            `json:"method"`
 		Params []json.RawMessage `json:"params"`
 	}
-	c := Call{User: uid, Options: map[string]any{}}
+	c := Call{User: uid, Options: map[string]any{}, session: sid}
 	err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20)).Decode(&req)
 	if err == nil && len(req.Params) > 0 {
 		var args []any
@@ -355,6 +363,10 @@ func (s *Server) serveRPC(w http.ResponseWriter, r *http.Request, uid string) {
 	}
 	if ierr != nil {
 		result = nil
+	}
+	if c.Method == "session_logout" && h == nil && ierr == nil {
+		// Builtins return values only, so the logout cookie is attached here.
+		http.SetCookie(w, &http.Cookie{Name: "ipa_session", Path: "/ipa", MaxAge: -1, Secure: true, HttpOnly: true, SameSite: http.SameSiteStrictMode})
 	}
 	writeEnvelope(w, uid, result, ierr)
 }
