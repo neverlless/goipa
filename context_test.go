@@ -157,6 +157,12 @@ func twinCalls() []twinCall {
 		{"StageUserDeleteContext", func(ctx context.Context, c *ipa.Client) error {
 			return c.StageUserDeleteContext(ctx, "bob")
 		}},
+		{"UserAddPasskeyContext", func(ctx context.Context, c *ipa.Client) error {
+			return c.UserAddPasskeyContext(ctx, "bob", testPasskey)
+		}},
+		{"UserRemovePasskeyContext", func(ctx context.Context, c *ipa.Client) error {
+			return c.UserRemovePasskeyContext(ctx, "bob", testPasskey)
+		}},
 	}
 }
 

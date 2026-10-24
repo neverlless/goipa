@@ -7,7 +7,6 @@
 package ipa_test
 
 import (
-	"fmt"
 	"strings"
 	"testing"
 
@@ -255,14 +254,6 @@ func TestUserFind(t *testing.T) {
 }
 
 // serverAtLeast reports whether the FreeIPA release in version is major.minor or later.
-func serverAtLeast(version string, major, minor int) bool {
-	var ma, mi int
-	if _, err := fmt.Sscanf(version, "%d.%d", &ma, &mi); err != nil {
-		return false
-	}
-	return ma > major || ma == major && mi >= minor
-}
-
 func TestIntegrationUserFields(t *testing.T) {
 	c, err := newTestClientCCache()
 	require.NoError(t, err)
@@ -315,10 +306,7 @@ func TestIntegrationUserFields(t *testing.T) {
 	if !serverAtLeast(res.Version, 4, 11) {
 		t.Skipf("passkeys need FreeIPA 4.11, server is %s", res.Version)
 	}
-	// A fixed P-256 SubjectPublicKeyInfo; FreeIPA requires the credential id
-	// to be base64 too ("invalid id" otherwise).
-	const spki = "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEgJ0OGh7RCx0W7lUgaq4bbkS5+r9uuEXFc8lWWhNH0uphy0Xv4/2mTD9h4KbXWYcpr0bxLYvifagCSgDbVZZlcg=="
-	_, err = c.RPC("user_add_passkey", []string{username, "passkey:Z29pcGEtdGVzdC1pZA==," + spki}, nil)
+	_, err = c.RPC("user_add_passkey", []string{username, testPasskey}, nil)
 	require.NoError(t, err)
 	u, err = c.UserShow(username)
 	require.NoError(t, err)
