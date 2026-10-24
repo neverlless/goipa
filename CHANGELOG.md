@@ -23,7 +23,7 @@ existing exported identifiers keep their signatures).
   single attributes on any object, nested ones included
 - `Batch`: several commands in one round trip with per-command results;
   `BatchResult.Err` is an `error` holding a bare `*IpaError`
-- `CodeConversion` (3008) and `CodeOnlyOneValueAllowed` (4207)
+- `CodeConversion` (3008), `CodeObjectclassViolation` (4205) and `CodeOnlyOneValueAllowed` (4207)
 - `ipatest`: `SetVersion`, `sizelimit` truncation on `user_find`,
   `group_find` and `host_find`, `setattr`/`addattr`/`delattr` on `user_mod`
   and `stageuser_mod` (including `OnlyOneValueAllowed`), and `batch`
