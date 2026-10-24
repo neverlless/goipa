@@ -38,6 +38,19 @@ func TestModify_Options(t *testing.T) {
 	}
 }
 
+func TestModify_Keys(t *testing.T) {
+	c, f := newFakeIPA(t, 200, envelope(`{}`))
+	keys := []string{"example.test.", "www"}
+	m := c.Modify("dnsrecord_mod", keys...).Set("arecord", "192.0.2.1")
+	keys[1] = "changed"
+	if _, err := m.Run(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	if got := string(f.Calls()[0].Args); got != `["example.test.","www"]` {
+		t.Errorf("args = %s", got)
+	}
+}
+
 func TestModify_Apply(t *testing.T) {
 	s := ipatest.NewServer(t)
 	s.AddUser("bob", ipatest.User{First: "Bob", Last: "B", Email: "bob@x"})
@@ -94,7 +107,8 @@ func TestModify_Validation(t *testing.T) {
 	c, f := newFakeIPA(t, 200, envelope(`{}`))
 	for name, m := range map[string]*ipa.Modification{
 		"empty command": c.Modify("", "bob").Set("a", "b"),
-		"empty pkey":    c.Modify("user_mod", "").Set("a", "b"),
+		"no key":        c.Modify("user_mod").Set("a", "b"),
+		"empty key":     c.Modify("dnsrecord_mod", "zone", "").Set("a", "b"),
 		"empty attr":    c.Modify("user_mod", "bob").Set("", "b"),
 		"attr with =":   c.Modify("user_mod", "bob").Add("a=b", "c"),
 		"nothing to do": c.Modify("user_mod", "bob"),

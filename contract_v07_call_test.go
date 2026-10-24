@@ -40,7 +40,7 @@ func TestContractFindTruncated(t *testing.T) {
 				t.Fatal(err)
 			}
 		}
-		es, err := ipa.FindEntries(context.Background(), b.admin, "user_find", prefix, nil, 1)
+		es, err := ipa.FindEntries(context.Background(), b.admin, "user_find", []string{prefix}, nil, 1)
 		if err != ipa.ErrTruncated || len(es) != 1 {
 			t.Fatalf("%d entries, %v", len(es), err)
 		}

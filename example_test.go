@@ -144,7 +144,7 @@ func ExampleCall() {
 // server cut the search short; compiled but not run.
 func ExampleFindEntries() {
 	c := ipa.NewDefaultClient()
-	hosts, err := ipa.FindEntries(context.Background(), c, "host_find", "web", nil, 500)
+	hosts, err := ipa.FindEntries(context.Background(), c, "host_find", []string{"web"}, nil, 500)
 	if errors.Is(err, ipa.ErrTruncated) {
 		fmt.Println("more hosts match; narrow the search")
 	} else if err != nil {

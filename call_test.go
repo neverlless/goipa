@@ -90,7 +90,7 @@ func TestFindEntries_Truncated(t *testing.T) {
 	s := ipatest.NewServer(t)
 	c := s.ClientAs("admin")
 	addUsers(t, c, "u1", "u2", "u3")
-	es, err := ipa.FindEntries(context.Background(), c, "user_find", "u", nil, 2)
+	es, err := ipa.FindEntries(context.Background(), c, "user_find", []string{"u"}, nil, 2)
 	if err != ipa.ErrTruncated {
 		t.Fatalf("err = %v", err)
 	}
@@ -107,7 +107,7 @@ func TestFindEntries_NotTruncated(t *testing.T) {
 	s := ipatest.NewServer(t)
 	c := s.ClientAs("admin")
 	addUsers(t, c, "u1", "u2")
-	es, err := ipa.FindEntries(context.Background(), c, "user_find", "u", nil, 0)
+	es, err := ipa.FindEntries(context.Background(), c, "user_find", []string{"u"}, nil, 0)
 	if err != nil || len(es) < 2 {
 		t.Fatalf("%d, %v", len(es), err)
 	}
@@ -115,7 +115,7 @@ func TestFindEntries_NotTruncated(t *testing.T) {
 		t.Error("sizelimit sent")
 	}
 	// sizelimit above the match count is not a truncation
-	if _, err := ipa.FindEntries(context.Background(), c, "user_find", "u", nil, 50); err != nil {
+	if _, err := ipa.FindEntries(context.Background(), c, "user_find", []string{"u"}, nil, 50); err != nil {
 		t.Errorf("err = %v", err)
 	}
 }
@@ -124,16 +124,32 @@ func TestFindEntries_DoesNotModifyOptions(t *testing.T) {
 	s := ipatest.NewServer(t)
 	c := s.ClientAs("admin")
 	opts := ipa.Options{"uid": "u1"}
-	if _, err := ipa.FindEntries(context.Background(), c, "user_find", "", opts, 5); err != nil {
+	if _, err := ipa.FindEntries(context.Background(), c, "user_find", nil, opts, 5); err != nil {
 		t.Fatal(err)
 	}
 	if !reflect.DeepEqual(opts, ipa.Options{"uid": "u1"}) {
 		t.Errorf("opts = %v", opts)
 	}
 	// the caller's own all: false wins
-	_, _ = ipa.FindEntries(context.Background(), c, "user_find", "", ipa.Options{"all": false}, 0)
+	_, _ = ipa.FindEntries(context.Background(), c, "user_find", nil, ipa.Options{"all": false}, 0)
 	if lastFind(s).Options["all"] != false {
 		t.Error("all overridden")
+	}
+}
+
+func TestFindEntries_Args(t *testing.T) {
+	c, f := newFakeIPA(t, 200, envelope(`{"result":[],"count":0,"truncated":false}`))
+	for _, tc := range []struct {
+		args []string
+		want string
+	}{{nil, `[]`}, {[]string{"example.test.", "www"}, `["example.test.","www"]`}} {
+		if _, err := ipa.FindEntries(context.Background(), c, "dnsrecord_find", tc.args, nil, 0); err != nil {
+			t.Fatal(err)
+		}
+		cs := f.Calls()
+		if got := string(cs[len(cs)-1].Args); got != tc.want {
+			t.Errorf("args %v sent %s, want %s", tc.args, got, tc.want)
+		}
 	}
 }
 
@@ -148,7 +164,7 @@ func TestFindEntries_GroupHostLimit(t *testing.T) {
 		s.AddHost(n+".test.local", ipatest.Host{})
 	}
 	for _, m := range []string{"group_find", "host_find"} {
-		es, err := ipa.FindEntries(ctx, c, m, "a", nil, 1)
+		es, err := ipa.FindEntries(ctx, c, m, []string{"a"}, nil, 1)
 		if err != ipa.ErrTruncated || len(es) != 1 {
 			t.Errorf("%s: %d, %v", m, len(es), err)
 		}

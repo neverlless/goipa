@@ -7,6 +7,7 @@ package ipa
 import (
 	"context"
 	"errors"
+	"slices"
 	"strings"
 )
 
@@ -15,20 +16,25 @@ import (
 // for concurrent use.
 type Modification struct {
 	client        *Client
-	command, pkey string
+	command       string
+	keys          []string
 	set, add, del []string
 	err           error
 }
 
-// Modify starts a modification of the entry pkey with a *_mod command such
-// as "user_mod". Nothing is sent until Run.
-func (c *Client) Modify(command, pkey string) *Modification {
-	m := &Modification{client: c, command: command, pkey: pkey}
+// Modify starts a modification with a *_mod command such as "user_mod" of
+// the entry named by keys, the command's positional primary key(s): one for
+// most objects, more for nested ones such as dnsrecord_mod's zone and record
+// name. Nothing is sent until Run.
+func (c *Client) Modify(command string, keys ...string) *Modification {
+	m := &Modification{client: c, command: command, keys: slices.Clone(keys)}
 	switch {
 	case command == "":
 		m.err = errors.New("ipa: modify: empty command")
-	case pkey == "":
-		m.err = errors.New("ipa: modify: empty primary key")
+	case len(keys) == 0:
+		m.err = errors.New("ipa: modify: no key")
+	case slices.Contains(keys, ""):
+		m.err = errors.New("ipa: modify: empty key")
 	}
 	return m
 }
@@ -76,5 +82,5 @@ func (m *Modification) Run(ctx context.Context) (*Response, error) {
 			opts[k] = v
 		}
 	}
-	return m.client.rpc(ctx, m.command, []string{m.pkey}, opts)
+	return m.client.rpc(ctx, m.command, m.keys, opts)
 }

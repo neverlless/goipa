@@ -37,11 +37,12 @@ func Call[T any](ctx context.Context, c *Client, method string, args []string, o
 // server cut the search short.
 var ErrTruncated = errors.New("ipa: search truncated; raise sizelimit or narrow the search")
 
-// FindEntries runs a *_find command with all: true (unless opts sets all) and
-// sizelimit when it is above 0 (0 keeps the server default). When the server
-// reports the result truncated it returns the entries and ErrTruncated.
-// opts is not modified.
-func FindEntries(ctx context.Context, c *Client, method, criteria string, opts Options, sizelimit int) ([]Entry, error) {
+// FindEntries runs a *_find command with args as Call sends them (nil sends
+// none; the search criteria is optional in FreeIPA), all: true (unless opts
+// sets all) and sizelimit when it is above 0 (0 keeps the server default).
+// When the server reports the result truncated it returns the entries and
+// ErrTruncated. opts is not modified.
+func FindEntries(ctx context.Context, c *Client, method string, args []string, opts Options, sizelimit int) ([]Entry, error) {
 	o := maps.Clone(opts)
 	if o == nil {
 		o = Options{}
@@ -52,7 +53,7 @@ func FindEntries(ctx context.Context, c *Client, method, criteria string, opts O
 	if sizelimit > 0 {
 		o["sizelimit"] = sizelimit
 	}
-	entries, res, err := Call[[]Entry](ctx, c, method, []string{criteria}, o)
+	entries, res, err := Call[[]Entry](ctx, c, method, args, o)
 	if err != nil {
 		return nil, err
 	}
