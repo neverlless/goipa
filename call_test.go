@@ -153,6 +153,16 @@ func TestFindEntries_Args(t *testing.T) {
 	}
 }
 
+func TestFindEntries_StringSizelimit(t *testing.T) {
+	s := ipatest.NewServer(t)
+	c := s.ClientAs("admin")
+	addUsers(t, c, "u1", "u2")
+	es, err := ipa.FindEntries(context.Background(), c, "user_find", nil, ipa.Options{"sizelimit": "1"}, 0)
+	if err != ipa.ErrTruncated || len(es) != 1 {
+		t.Fatalf("%d, %v", len(es), err)
+	}
+}
+
 func TestFindEntries_GroupHostLimit(t *testing.T) {
 	s := ipatest.NewServer(t)
 	c := s.ClientAs("admin")

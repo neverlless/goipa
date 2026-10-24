@@ -351,6 +351,11 @@ func (u *User) attrVals(attr string) (vals []string, ok bool) {
 	return nil, false
 }
 
+// multiValued is the attributes applyAttrOpts lets hold several values. FreeIPA
+// also allows it for telephonenumber, mobile and userclass, which the fake
+// keeps as one string (Q41).
+var multiValued = map[string]bool{"mail": true, "ipasshpubkey": true, "ipauserauthtype": true}
+
 // applyAttrOpts is Q41: setattr, then addattr, then delattr, as FreeIPA's
 // process_attr_options does.
 func (u *User) applyAttrOpts(opts map[string]any) *ipa.IpaError {
@@ -368,6 +373,11 @@ func (u *User) applyAttrOpts(opts map[string]any) *ipa.IpaError {
 			if _, ok := u.attrVals(e.attr); !ok {
 				return &ipa.IpaError{Code: ipa.CodeValidation, Name: "ValidationError", Message: fmt.Sprintf("invalid '%s': attribute not allowed", e.attr)}
 			}
+		}
+	}
+	for _, e := range del { // FreeIPA checks this before any value lookup
+		if v, _ := u.attrVals(e.attr); len(v) == 0 && !slices.ContainsFunc(append(set, add...), func(o kv) bool { return o.attr == e.attr }) {
+			return &ipa.IpaError{Code: ipa.CodeValidation, Name: "ValidationError", Message: fmt.Sprintf("invalid '%s': No such attribute on this entry", e.attr)}
 		}
 	}
 	vals := map[string][]string{}
@@ -402,7 +412,7 @@ func (u *User) applyAttrOpts(opts map[string]any) *ipa.IpaError {
 	}
 	merged := map[string]any{}
 	for a, v := range vals {
-		if len(v) > 1 && a != "mail" && a != "ipasshpubkey" && a != "ipauserauthtype" {
+		if len(v) > 1 && !multiValued[a] {
 			return &ipa.IpaError{Code: ipa.CodeOnlyOneValueAllowed, Name: "OnlyOneValueAllowed", Message: a + ": Only one value allowed."}
 		}
 		l := make([]any, len(v))

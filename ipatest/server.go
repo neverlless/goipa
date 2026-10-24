@@ -15,6 +15,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"slices"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
@@ -451,6 +452,9 @@ func list(recs []map[string]any) map[string]any {
 // (Q40).
 func listLimited(c Call, recs []map[string]any) map[string]any {
 	n, _ := c.Options["sizelimit"].(float64)
+	if str, ok := c.Options["sizelimit"].(string); ok { // FreeIPA converts "5" too
+		n, _ = strconv.ParseFloat(str, 64)
+	}
 	if n <= 0 || len(recs) <= int(n) {
 		return list(recs)
 	}

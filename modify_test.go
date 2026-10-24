@@ -81,6 +81,7 @@ func TestModify_Apply(t *testing.T) {
 		{"duplicate", c.Modify("user_mod", "bob").Add("mail", "b2@x"), ipa.CodeAlreadyContainsValue},
 		{"absent", c.Modify("user_mod", "bob").Del("mail", "nope@x"), ipa.CodeAttrValueNotFound},
 		{"unknown", c.Modify("user_mod", "bob").Set("nosuch", "v"), ipa.CodeValidation},
+		{"no such attribute", c.Modify("user_mod", "bob").Del("ou", "x").Add("mail", "b2@x"), ipa.CodeValidation},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			_, err := tc.m.Run(context.Background())
@@ -121,6 +122,21 @@ func TestModify_Validation(t *testing.T) {
 	}
 	if n := len(f.Calls()); n != 0 {
 		t.Errorf("%d calls sent", n)
+	}
+}
+
+func TestModify_DelAbsentAttribute(t *testing.T) {
+	s := ipatest.NewServer(t)
+	s.AddUser("bob", ipatest.User{First: "Bob", Last: "B"})
+	c := s.ClientAs("admin")
+	_, err := c.Modify("user_mod", "bob").Del("title", "x").Run(context.Background())
+	var ie *ipa.IpaError
+	if !errors.As(err, &ie) || ie.Code != ipa.CodeValidation || ie.Message != "invalid 'title': No such attribute on this entry" {
+		t.Fatalf("err = %v", err)
+	}
+	// an attribute added in the same call may be deleted
+	if _, err := c.Modify("user_mod", "bob").Add("title", "x").Del("title", "x").Set("ou", "O").Run(context.Background()); err != nil {
+		t.Errorf("add+del: %v", err)
 	}
 }
 

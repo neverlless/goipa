@@ -277,7 +277,8 @@
 //     TestContractSessionLogoutGives401).
 //     TestContractSessionLogoutGives401, TestSessionLogout.
 //   - Q40: user_find, group_find and host_find honour sizelimit > 0: the
-//     first n entries in sorted order, truncated true and a
+//     first n entries in sorted order (a numeric string such as "5" counts
+//     too), truncated true and a
 //     SearchResultTruncated warning (code 13017). TestFindEntries_Truncated,
 //     TestContractFindTruncated.
 //   - Q41: user_mod (and stageuser_mod) takes setattr, addattr and delattr
@@ -285,12 +286,18 @@
 //     setattr attr=v replaces and attr= clears; addattr of a value already
 //     present is 4038 AlreadyContainsValue "'attr' already contains 'v'";
 //     delattr of an absent value is 4026 AttrValueNotFound "'attr' does not
-//     contain 'v'"; an attribute the fake does not model is 3009 "invalid
-//     'attr': attribute not allowed". The real codes and messages of the
+//     contain 'v'"; delattr of an attribute that has no values (and is not
+//     set or added in the same call) is first 3009 "invalid 'attr': No such
+//     attribute on this entry", as process_attr_options; an attribute the
+//     fake does not model is 3009 "invalid 'attr': attribute not allowed".
+//     The real codes and messages of the
 //     last three are checked by TestContractModify; TestModify_Apply pins
 //     the fake. More than one value for a single-valued attribute (two
 //     setattr values, or addattr on a set one) is 4207 OnlyOneValueAllowed
-//     "attr: Only one value allowed.", TestModify_SingleValued.
+//     "attr: Only one value allowed.", TestModify_SingleValued. Only mail,
+//     ipasshpubkey and ipauserauthtype take several values here;
+//     telephonenumber, mobile and userclass are multivalue in FreeIPA but
+//     one string in the fake, so the fake rejects what FreeIPA accepts.
 //   - Q42: batch runs each {"method", "params": [args, options]} entry as
 //     the caller, through the same lookup as a top-level call (Handle, then
 //     the modelled commands, else 905), with the batch's version when the

@@ -34,18 +34,6 @@ func TestContractModify(t *testing.T) {
 			_, err := m.Run(ctx)
 			return err
 		}
-		if err := run(b.admin.Modify("user_mod", uid).Set("title", "T")); err != nil {
-			t.Fatal(err)
-		}
-		if got := show().Get("title.0").String(); got != "T" {
-			t.Errorf("title = %q", got)
-		}
-		if err := run(b.admin.Modify("user_mod", uid).Add("mail", extra)); err != nil {
-			t.Fatal(err)
-		}
-		if n := len(show().Get("mail").Array()); n != 2 {
-			t.Errorf("mail count = %d, want 2", n)
-		}
 		// On the real server these only record the code; ipatest must match the brief.
 		record := func(what string, err error, code int) {
 			t.Helper()
@@ -61,6 +49,19 @@ func TestContractModify(t *testing.T) {
 			if b.name == "ipatest" && ie.Code != code {
 				t.Errorf("%s code = %d, want %d", what, ie.Code, code)
 			}
+		}
+		record("delattr of an attribute the entry lacks", run(b.admin.Modify("user_mod", uid).Del("title", "x")), ipa.CodeValidation)
+		if err := run(b.admin.Modify("user_mod", uid).Set("title", "T")); err != nil {
+			t.Fatal(err)
+		}
+		if got := show().Get("title.0").String(); got != "T" {
+			t.Errorf("title = %q", got)
+		}
+		if err := run(b.admin.Modify("user_mod", uid).Add("mail", extra)); err != nil {
+			t.Fatal(err)
+		}
+		if n := len(show().Get("mail").Array()); n != 2 {
+			t.Errorf("mail count = %d, want 2", n)
 		}
 		record("duplicate add", run(b.admin.Modify("user_mod", uid).Add("mail", extra)), ipa.CodeAlreadyContainsValue)
 		if err := run(b.admin.Modify("user_mod", uid).Del("mail", extra)); err != nil {
