@@ -30,8 +30,12 @@ type Group struct {
 }
 
 func strList(res gjson.Result, path string) []string {
+	v := res.Get(path)
+	if v.Type == gjson.Null {
+		return nil
+	}
 	var out []string
-	res.Get(path).ForEach(func(_, v gjson.Result) bool {
+	v.ForEach(func(_, v gjson.Result) bool {
 		out = append(out, v.String())
 		return true
 	})

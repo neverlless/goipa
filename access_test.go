@@ -223,8 +223,8 @@ func TestHBACTest_HostsAndServices(t *testing.T) {
 func TestHBACTest_Required(t *testing.T) {
 	s, c := newFake(t)
 	for _, a := range [][3]string{{"", "h", "s"}, {"u", "", "s"}, {"u", "h", ""}} {
-		if _, err := c.HBACTest(a[0], a[1], a[2]); err == nil {
-			t.Errorf("%v: no error", a)
+		if _, err := c.HBACTest(a[0], a[1], a[2]); err == nil || err.Error() != "ipa: user, host and service are required" {
+			t.Errorf("%v: err = %v", a, err)
 		}
 	}
 	if n := len(s.Calls()); n != 0 {

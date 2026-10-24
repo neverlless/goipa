@@ -5,6 +5,7 @@
 package ipa
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/tidwall/gjson"
@@ -28,6 +29,23 @@ func TestBoolAttr(t *testing.T) {
 	} {
 		if got := boolAttr(gjson.Parse(tc.json), "f"); got != tc.want {
 			t.Errorf("%s: got %v", tc.json, got)
+		}
+	}
+}
+
+func TestStrList(t *testing.T) {
+	for _, tc := range []struct {
+		json string
+		want []string
+	}{
+		{`{"f":["a","b"]}`, []string{"a", "b"}},
+		{`{"f":"a"}`, []string{"a"}},
+		{`{"f":null}`, nil},
+		{`{"f":[]}`, nil},
+		{`{}`, nil},
+	} {
+		if got := strList(gjson.Parse(tc.json), "f"); fmt.Sprint(got) != fmt.Sprint(tc.want) || (got == nil) != (tc.want == nil) {
+			t.Errorf("%s: got %#v", tc.json, got)
 		}
 	}
 }

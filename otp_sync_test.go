@@ -71,6 +71,11 @@ func TestSyncOTPToken_InvalidCredentials(t *testing.T) {
 }
 
 func TestSyncOTPToken_Errors(t *testing.T) {
+	want := map[string]string{
+		"400":       "ipa: token sync failed with HTTP status code: 400",
+		"error":     "ipa: token sync failed: error",
+		"no header": "ipa: token sync failed: ",
+	}
 	for name, h := range map[string]http.HandlerFunc{
 		"400":       func(w http.ResponseWriter, r *http.Request) { http.Error(w, "bad", 400) },
 		"error":     func(w http.ResponseWriter, r *http.Request) { w.Header().Set("X-IPA-TokenSync-Result", "error") },
@@ -85,9 +90,25 @@ func TestSyncOTPToken_Errors(t *testing.T) {
 			if err == nil || errors.Is(err, ipa.ErrInvalidCredentials) {
 				t.Fatalf("err = %v", err)
 			}
-			if name == "400" && !strings.Contains(err.Error(), "400") {
-				t.Errorf("err = %v", err)
+			if err.Error() != want[name] {
+				t.Errorf("err = %q, want %q", err, want[name])
 			}
 		})
+	}
+}
+
+func TestSyncOTPToken_Required(t *testing.T) {
+	requests := 0
+	srv := httptest.NewTLSServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { requests++ }))
+	defer srv.Close()
+	c := ipa.NewClientCustomHttp(strings.TrimPrefix(srv.URL, "https://"), "TEST.LOCAL", srv.Client())
+	for _, a := range [][4]string{{"", "p", "1", "2"}, {"u", "", "1", "2"}, {"u", "p", "", "2"}, {"u", "p", "1", ""}} {
+		err := c.SyncOTPToken(a[0], a[1], a[2], a[3], "")
+		if err == nil || err.Error() != "ipa: username, password and both codes are required" {
+			t.Errorf("%v: err = %v", a, err)
+		}
+	}
+	if requests != 0 {
+		t.Errorf("%d requests", requests)
 	}
 }

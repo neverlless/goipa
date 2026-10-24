@@ -156,7 +156,7 @@ func (c *Client) HBACTest(user, host, service string, rules ...string) (*HBACTes
 // HBACTestContext is like HBACTest but bounds the request with ctx.
 func (c *Client) HBACTestContext(ctx context.Context, user, host, service string, rules ...string) (*HBACTestResult, error) {
 	if user == "" || host == "" || service == "" {
-		return nil, errors.New("ipa: hbactest needs a user, a host and a service")
+		return nil, errors.New("ipa: user, host and service are required")
 	}
 	// sizelimit 0 = unlimited; the default evaluates only the first 100 rules.
 	options := Options{"user": user, "targethost": host, "service": service, "sizelimit": 0}
@@ -171,18 +171,9 @@ func (c *Client) HBACTestContext(ctx context.Context, user, host, service string
 	r := gjson.ParseBytes(res.Result.Raw)
 	return &HBACTestResult{
 		Granted:    r.Get("value").Bool(),
-		Matched:    nullList(r, "matched"),
-		NotMatched: nullList(r, "notmatched"),
-		Errors:     nullList(r, "error"),
-		Warnings:   nullList(r, "warning"),
+		Matched:    strList(r, "matched"),
+		NotMatched: strList(r, "notmatched"),
+		Errors:     strList(r, "error"),
+		Warnings:   strList(r, "warning"),
 	}, nil
-}
-
-// nullList is strList for a list FreeIPA sends as null when empty; gjson
-// would iterate a null as one element.
-func nullList(res gjson.Result, key string) []string {
-	if !res.Get(key).IsArray() {
-		return nil
-	}
-	return strList(res, key)
 }

@@ -261,6 +261,9 @@ func (c *Client) SyncOTPToken(username, password, firstCode, secondCode, tokenID
 
 // SyncOTPTokenContext is like SyncOTPToken but bounds the request with ctx.
 func (c *Client) SyncOTPTokenContext(ctx context.Context, username, password, firstCode, secondCode, tokenID string) error {
+	if username == "" || password == "" || firstCode == "" || secondCode == "" {
+		return errors.New("ipa: username, password and both codes are required")
+	}
 	form := url.Values{
 		"user":        {username},
 		"password":    {password},
@@ -285,7 +288,7 @@ func (c *Client) SyncOTPTokenContext(ctx context.Context, username, password, fi
 	defer res.Body.Close()
 
 	if res.StatusCode != 200 {
-		return fmt.Errorf("ipa: sync token failed with HTTP status code: %d", res.StatusCode)
+		return fmt.Errorf("ipa: token sync failed with HTTP status code: %d", res.StatusCode)
 	}
 
 	switch status := res.Header.Get("X-IPA-TokenSync-Result"); strings.ToLower(status) {
@@ -294,6 +297,6 @@ func (c *Client) SyncOTPTokenContext(ctx context.Context, username, password, fi
 	case "invalid-credentials":
 		return ErrInvalidCredentials
 	default:
-		return fmt.Errorf("ipa: sync token failed. Unknown status: %q", status)
+		return fmt.Errorf("ipa: token sync failed: %s", status)
 	}
 }
