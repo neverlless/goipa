@@ -22,7 +22,7 @@ const (
 type Host struct {
 	Description, Locality, Location, Platform, OSVersion string
 	MACAddresses, UserClass                              []string
-	HostGroups                                           []string // memberof_hostgroup
+	HostGroups                                           []string // memberof_hostgroup, with the host groups listing the host (Q50)
 	ManagedBy                                            []string // managedby_host
 	HasKeytab                                            bool
 }
@@ -64,7 +64,9 @@ func (s *Server) renderHost(fqdn string, h Host, members, all bool) map[string]a
 	set("macaddress", h.MACAddresses)
 	set("userclass", h.UserClass)
 	if members {
-		set("memberof_hostgroup", h.HostGroups)
+		mine := s.hostGroupsOf(fqdn)
+		set("memberof_hostgroup", mine)
+		set("memberofindirect_hostgroup", s.hostGroupAncestors(mine))
 		set("managedby_host", h.ManagedBy)
 	}
 	if all {
