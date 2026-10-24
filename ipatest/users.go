@@ -331,6 +331,100 @@ func (u *User) apply(opts map[string]any) {
 	}
 }
 
+// attrVals is the current values of an attribute apply knows, ok false if it
+// does not know it.
+func (u *User) attrVals(attr string) (vals []string, ok bool) {
+	one := map[string]*string{"givenname": &u.First, "sn": &u.Last, "homedirectory": &u.HomeDir,
+		"loginshell": &u.Shell, "displayname": &u.DisplayName, "telephonenumber": &u.Telephone,
+		"mobile": &u.Mobile, "userclass": &u.Category, "street": &u.Street, "l": &u.City, "st": &u.State,
+		"postalcode": &u.PostalCode, "preferredlanguage": &u.PreferredLanguage, "title": &u.Title, "ou": &u.OrgUnit}
+	switch p := one[attr]; {
+	case p != nil:
+		return strs(*p), true
+	case attr == "mail":
+		return slices.DeleteFunc(slices.Clone(u.mails()), func(v string) bool { return v == "" }), true
+	case attr == "ipasshpubkey":
+		return u.SSHPubKeys, true
+	case attr == "ipauserauthtype":
+		return u.AuthTypes, true
+	}
+	return nil, false
+}
+
+// multiValued is the attributes applyAttrOpts lets hold several values. FreeIPA
+// also allows it for telephonenumber, mobile and userclass, which the fake
+// keeps as one string (Q41).
+var multiValued = map[string]bool{"mail": true, "ipasshpubkey": true, "ipauserauthtype": true}
+
+// applyAttrOpts is Q41: setattr, then addattr, then delattr, as FreeIPA's
+// process_attr_options does.
+func (u *User) applyAttrOpts(opts map[string]any) *ipa.IpaError {
+	type kv struct{ attr, val string }
+	parse := func(name string) (out []kv) {
+		for _, e := range strs(opts[name]) {
+			a, v, _ := strings.Cut(e, "=")
+			out = append(out, kv{strings.ToLower(strings.TrimSpace(a)), strings.TrimSpace(v)})
+		}
+		return out
+	}
+	set, add, del := parse("setattr"), parse("addattr"), parse("delattr")
+	for _, l := range [][]kv{set, add, del} {
+		for _, e := range l {
+			if _, ok := u.attrVals(e.attr); !ok {
+				return &ipa.IpaError{Code: ipa.CodeObjectclassViolation, Name: "ObjectclassViolation", Message: fmt.Sprintf("attribute %q not allowed", e.attr)}
+			}
+		}
+	}
+	for _, e := range del { // FreeIPA checks this before any value lookup
+		if v, _ := u.attrVals(e.attr); len(v) == 0 && !slices.ContainsFunc(append(set, add...), func(o kv) bool { return o.attr == e.attr }) {
+			return &ipa.IpaError{Code: ipa.CodeValidation, Name: "ValidationError", Message: fmt.Sprintf("invalid '%s': No such attribute on this entry", e.attr)}
+		}
+	}
+	vals := map[string][]string{}
+	cur := func(attr string) []string {
+		if v, ok := vals[attr]; ok {
+			return v
+		}
+		v, _ := u.attrVals(attr)
+		return slices.Clone(v)
+	}
+	for _, e := range set { // values of one attribute accumulate, "" adds none
+		if _, ok := vals[e.attr]; !ok {
+			vals[e.attr] = nil
+		}
+		if e.val != "" {
+			vals[e.attr] = append(vals[e.attr], e.val)
+		}
+	}
+	for _, e := range add {
+		if slices.Contains(cur(e.attr), e.val) { // a no-op; alone it ends as EmptyModlist
+			continue
+		}
+		vals[e.attr] = append(cur(e.attr), e.val)
+	}
+	for _, e := range del {
+		v := cur(e.attr)
+		i := slices.Index(v, e.val)
+		if i < 0 {
+			return &ipa.IpaError{Code: ipa.CodeAttrValueNotFound, Name: "AttrValueNotFound", Message: fmt.Sprintf("'%s' does not contain '%s'", e.attr, e.val)}
+		}
+		vals[e.attr] = slices.Delete(v, i, i+1)
+	}
+	merged := map[string]any{}
+	for a, v := range vals {
+		if len(v) > 1 && !multiValued[a] {
+			return &ipa.IpaError{Code: ipa.CodeOnlyOneValueAllowed, Name: "OnlyOneValueAllowed", Message: a + ": Only one value allowed."}
+		}
+		l := make([]any, len(v))
+		for i := range v {
+			l[i] = v[i]
+		}
+		merged[a] = l
+	}
+	u.apply(merged)
+	return nil
+}
+
 // uidArg is the primary key every user command takes.
 func uidArg(c Call) (string, *ipa.IpaError) {
 	if len(c.Args) == 0 || c.Args[0] == "" {
@@ -429,7 +523,7 @@ func (s *Server) userFind(stage bool, c Call) (any, *ipa.IpaError) {
 		}
 		recs = append(recs, rec)
 	}
-	return list(recs), nil
+	return listLimited(c, recs), nil
 }
 
 func matches(c Call, opt, have string) bool {
@@ -491,6 +585,9 @@ func (s *Server) userMod(stage bool, c Call) (any, *ipa.IpaError) {
 	}
 	next := r.User.clone()
 	next.apply(c.Options) // empty strings clear attributes, as in FreeIPA
+	if err := next.applyAttrOpts(c.Options); err != nil {
+		return nil, err
+	}
 	if next.First == "" {
 		return nil, required("givenname")
 	}

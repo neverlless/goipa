@@ -20,6 +20,7 @@ const (
 	CodeACI                  = 2100
 	CodeOption               = 3005
 	CodeRequirement          = 3007
+	CodeConversion           = 3008
 	CodeValidation           = 3009
 	CodeNotFound             = 4001
 	CodeDuplicateEntry       = 4002
@@ -31,6 +32,8 @@ const (
 	CodeAlreadyContainsValue = 4038
 	CodeEmptyModlist         = 4202
 	CodeDatabase             = 4203
+	CodeObjectclassViolation = 4205
+	CodeOnlyOneValueAllowed  = 4207
 )
 
 // Sentinels for common FreeIPA errors. They are matched with errors.Is by

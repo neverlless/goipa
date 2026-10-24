@@ -6,6 +6,7 @@ package ipatest_test
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"io"
 	"net/http"
@@ -265,5 +266,37 @@ func TestCACert(t *testing.T) {
 	c.SetSessionID(s.Session("admin"))
 	if _, err := c.Ping(); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestBatchMalformedEntries(t *testing.T) {
+	s := ipatest.NewServer(t)
+	res := post(t, s, `{"method":"batch","params":[[{"params":[[],{}]},{"method":"ping"},{"method":"ping","params":"x"},{"method":"nope","params":[[],{}]},{"method":"ping","params":[[],{}]}],{"version":"2.251"}]}`, s.URL()+"/ipa/xml")
+	var env struct {
+		Result struct {
+			Count   int              `json:"count"`
+			Results []map[string]any `json:"results"`
+		} `json:"result"`
+	}
+	if err := json.NewDecoder(res.Body).Decode(&env); err != nil {
+		t.Fatal(err)
+	}
+	if env.Result.Count != 5 || len(env.Result.Results) != 5 {
+		t.Fatalf("%+v", env.Result)
+	}
+	for i, code := range []float64{ipa.CodeRequirement, ipa.CodeRequirement, ipa.CodeConversion, ipa.CodeCommand} {
+		if r := env.Result.Results[i]; r["error_code"] != code || r["error"] == nil || r["error_name"] == "" || r["error_kw"] == nil {
+			t.Errorf("result %d: %v", i, r)
+		}
+	}
+	if r := env.Result.Results[2]; r["error"] != "invalid 'params': must contain a tuple (list, dict)" || r["error_name"] != "ConversionError" {
+		t.Errorf("conversion: %v", r)
+	}
+	if r := env.Result.Results[4]; r["error"] != nil || r["summary"] == nil {
+		t.Errorf("ping: %v", r)
+	}
+	calls := s.Calls()
+	if last := calls[len(calls)-1]; last.Method != "ping" || last.Options["version"] != "2.251" {
+		t.Errorf("nested call %+v", last)
 	}
 }

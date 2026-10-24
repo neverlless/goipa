@@ -33,7 +33,8 @@ type PwPolicy struct {
 	DictCheck, UserCheck bool
 	// passwordgracelimit, FreeIPA 4.9.10+; -1 = no grace logins enforced
 	GraceLimit int
-	// ipapwddcredit, ipapwducredit, ipapwdlcredit, ipapwdocredit; FreeIPA 4.13+
+	// ipapwddcredit, ipapwducredit, ipapwdlcredit, ipapwdocredit; FreeIPA 4.13+,
+	// zero on older servers (they do not return the attributes)
 	DigitCredit, UpperCredit, LowerCredit, OtherCredit int
 }
 

@@ -276,8 +276,45 @@
 //     captured but is a deletion (the real-server leg of
 //     TestContractSessionLogoutGives401).
 //     TestContractSessionLogoutGives401, TestSessionLogout.
+//   - Q40: user_find, group_find and host_find honour sizelimit > 0: the
+//     first n entries in sorted order (a numeric string such as "5" counts
+//     too), truncated true and a
+//     SearchResultTruncated warning (code 13017). TestFindEntries_Truncated,
+//     TestContractFindTruncated.
+//   - Q41: user_mod (and stageuser_mod) takes setattr, addattr and delattr
+//     for the attributes it models, mail included, applied in that order.
+//     setattr attr=v replaces and attr= clears; addattr of a value already
+//     present adds nothing, so alone it is 4202 EmptyModlist;
+//     delattr of an absent value is 4026 AttrValueNotFound "'attr' does not
+//     contain 'v'"; delattr of an attribute that has no values (and is not
+//     set or added in the same call) is first 3009 "invalid 'attr': No such
+//     attribute on this entry", as process_attr_options; an attribute the
+//     fake does not model is 4205 ObjectclassViolation `attribute "attr" not
+//     allowed`. The duplicate addattr and the unknown attribute were
+//     verified on FreeIPA 4.9.13 and 4.13.4; all five are checked by
+//     TestContractModify; TestModify_Apply pins
+//     the fake. More than one value for a single-valued attribute (two
+//     setattr values, or addattr on a set one) is 4207 OnlyOneValueAllowed
+//     "attr: Only one value allowed.", TestModify_SingleValued. Only mail,
+//     ipasshpubkey and ipauserauthtype take several values here;
+//     telephonenumber, mobile and userclass are multivalue in FreeIPA but
+//     one string in the fake, so the fake rejects what FreeIPA accepts.
+//   - Q42: batch runs each {"method", "params": [args, options]} entry as
+//     the caller, through the same lookup as a top-level call (Handle, then
+//     the modelled commands, else 905), with the batch's version when the
+//     entry has none, and answers {"count": n, "results": [...]}: each
+//     command's output plus "error": null, or {error, error_code,
+//     error_name, error_kw} for a failure, without stopping the rest. An
+//     entry without method or params is 3007 RequirementError; params that
+//     are not [list, dict] are 3008 ConversionError "invalid 'params': must
+//     contain a tuple (list, dict)", as batch.py's _validate_request.
+//     Calls records the batch call, then each nested call. A nested batch
+//     is dispatched recursively, and a nested session_logout sends no
+//     deletion cookie (neither verified against FreeIPA). TestBatch,
+//     TestBatch_MiddleFails, TestBatchMalformedEntries, goipa.TestContractBatch.
 //
-// A response's version is the server release, 4.13.4, and its principal is
+// A response's version is the server release, 4.13.4 unless SetVersion
+// changes it, and its principal is
 // <uid>@TEST.LOCAL. An error a HandlerFunc returns without a Name gets the
 // FreeIPA name for its code.
 //
@@ -287,7 +324,7 @@
 // option calls the tests need; Handle is the way to reach the rest, as for
 // config_*, subid_show, stageuser_add_passkey and stageuser_remove_passkey.
 // Stage user passwords are not modelled: userpassword is ignored and random
-// behaves as for active users. Kerberos, LDAP search filters, size limits,
-// replication and HTTP fault injection are left out; wrap HTTPClient's
+// behaves as for active users. Kerberos, LDAP search filters, size limits on
+// other commands, replication and HTTP fault injection are left out; wrap HTTPClient's
 // transport for the latter.
 package ipatest

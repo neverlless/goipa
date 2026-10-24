@@ -15,6 +15,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"slices"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
@@ -23,8 +24,8 @@ import (
 )
 
 const (
-	realm         = "TEST.LOCAL"
-	serverVersion = "4.13.4"
+	realm          = "TEST.LOCAL"
+	defaultVersion = "4.13.4"
 )
 
 // errorNames fills IpaError.Name when a handler leaves it empty.
@@ -35,6 +36,7 @@ var errorNames = map[int]string{
 	ipa.CodeACI:                  "ACIError",
 	ipa.CodeOption:               "OptionError",
 	ipa.CodeRequirement:          "RequirementError",
+	ipa.CodeConversion:           "ConversionError",
 	ipa.CodeValidation:           "ValidationError",
 	ipa.CodeNotFound:             "NotFound",
 	ipa.CodeDuplicateEntry:       "DuplicateEntry",
@@ -46,6 +48,8 @@ var errorNames = map[int]string{
 	ipa.CodeAlreadyContainsValue: "AlreadyContainsValueError",
 	ipa.CodeEmptyModlist:         "EmptyModlist",
 	ipa.CodeDatabase:             "DatabaseError",
+	ipa.CodeObjectclassViolation: "ObjectclassViolation",
+	ipa.CodeOnlyOneValueAllowed:  "OnlyOneValueAllowed",
 }
 
 // builtin is a modelled command. It runs with s.mu held.
@@ -53,8 +57,8 @@ type builtin func(s *Server, c Call) (any, *ipa.IpaError)
 
 // builtins is filled from init functions, one file per object type.
 var builtins = map[string]builtin{
-	"ping": func(*Server, Call) (any, *ipa.IpaError) {
-		return map[string]any{"summary": "IPA server version " + serverVersion + ". API version 2.257"}, nil
+	"ping": func(s *Server, _ Call) (any, *ipa.IpaError) {
+		return map[string]any{"summary": "IPA server version " + s.version + ". API version 2.257"}, nil
 	},
 }
 
@@ -97,6 +101,7 @@ type Server struct {
 	sessions  map[string]string // session id -> uid
 	expired   map[string]bool   // session ids from ExpireSession
 	negotiate string
+	version   string // release reported in every envelope
 	calls     []Call
 	handlers  map[string]HandlerFunc
 	users     map[string]*userRec
@@ -135,6 +140,7 @@ func New() *Server {
 		hbac:     seedAllowAll(),
 		sudo:     map[string]*sudoRec{},
 		pwpol:    seedPwPolicies(),
+		version:  defaultVersion,
 		nextID:   firstID - 1,
 		nextGID:  firstID - 1,
 	}
@@ -239,6 +245,15 @@ func (s *Server) Calls() []Call {
 	return out
 }
 
+// SetVersion sets the FreeIPA release the server reports in every response
+// and in ping, default 4.13.4. It changes only that string, not which
+// commands are modelled.
+func (s *Server) SetVersion(v string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.version = v
+}
+
 // Handle makes fn serve method in place of the built-in command, or of the
 // 905 CommandError an unmodelled method gets. A nil fn removes the override.
 // fn runs without the server lock held, so it may call any Server method.
@@ -321,23 +336,8 @@ func (s *Server) serveRPC(w http.ResponseWriter, r *http.Request, uid, sid strin
 	}
 	c := Call{User: uid, Options: map[string]any{}, session: sid}
 	err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20)).Decode(&req)
-	if err == nil && len(req.Params) > 0 {
-		var args []any
-		if err = json.Unmarshal(req.Params[0], &args); err == nil {
-			for _, a := range args {
-				if str, ok := a.(string); ok {
-					c.Args = append(c.Args, str)
-				} else {
-					c.Args = append(c.Args, fmt.Sprint(a))
-				}
-			}
-		}
-	}
-	if err == nil && len(req.Params) > 1 {
-		err = json.Unmarshal(req.Params[1], &c.Options)
-	}
-	if c.Options == nil { // params[1] was null
-		c.Options = map[string]any{}
+	if err == nil {
+		err = decodeParams(&c, req.Params)
 	}
 	if err != nil {
 		http.Error(w, "bad JSON-RPC request: "+err.Error(), http.StatusBadRequest)
@@ -345,33 +345,75 @@ func (s *Server) serveRPC(w http.ResponseWriter, r *http.Request, uid, sid strin
 	}
 	c.Method = req.Method
 
+	var methods json.RawMessage
+	if len(req.Params) > 0 {
+		methods = req.Params[0]
+	}
+	result, ierr, custom := s.dispatch(c, methods)
+	if ierr != nil {
+		result = nil
+	}
+	if c.Method == "session_logout" && !custom && ierr == nil {
+		// Builtins return values only, so the logout cookie is attached here.
+		http.SetCookie(w, &http.Cookie{Name: "ipa_session", Path: "/ipa", MaxAge: -1, Secure: true, HttpOnly: true, SameSite: http.SameSiteStrictMode})
+	}
+	s.mu.Lock()
+	version := s.version
+	s.mu.Unlock()
+	writeEnvelope(w, uid, version, result, ierr)
+}
+
+// decodeParams fills c.Args and c.Options from JSON-RPC params [args, options].
+func decodeParams(c *Call, params []json.RawMessage) error {
+	if len(params) > 0 {
+		var args []any
+		if err := json.Unmarshal(params[0], &args); err != nil {
+			return err
+		}
+		for _, a := range args {
+			if str, ok := a.(string); ok {
+				c.Args = append(c.Args, str)
+			} else {
+				c.Args = append(c.Args, fmt.Sprint(a))
+			}
+		}
+	}
+	if len(params) > 1 {
+		if err := json.Unmarshal(params[1], &c.Options); err != nil {
+			return err
+		}
+	}
+	if c.Options == nil { // params[1] was null
+		c.Options = map[string]any{}
+	}
+	return nil
+}
+
+// dispatch records c and runs it: a handler without the lock, else batch,
+// else a builtin under s.mu, else 905. args is the raw params[0], which
+// batch needs; custom reports that a handler ran.
+func (s *Server) dispatch(c Call, args json.RawMessage) (result any, ierr *ipa.IpaError, custom bool) {
 	s.mu.Lock()
 	s.calls = append(s.calls, c.clone())
 	h := s.handlers[c.Method]
 	s.mu.Unlock()
 
-	var result any
-	var ierr *ipa.IpaError
-	if h != nil {
+	switch b := builtins[c.Method]; {
+	case h != nil:
 		result, ierr = h(c)
-	} else if b := builtins[c.Method]; b != nil {
+	case c.Method == "batch":
+		result, ierr = s.batch(c, args)
+	case b != nil:
 		s.mu.Lock()
 		result, ierr = b(s, c)
 		s.mu.Unlock()
-	} else {
+	default:
 		ierr = &ipa.IpaError{Code: ipa.CodeCommand, Message: fmt.Sprintf("unknown command '%s'", c.Method)}
 	}
-	if ierr != nil {
-		result = nil
-	}
-	if c.Method == "session_logout" && h == nil && ierr == nil {
-		// Builtins return values only, so the logout cookie is attached here.
-		http.SetCookie(w, &http.Cookie{Name: "ipa_session", Path: "/ipa", MaxAge: -1, Secure: true, HttpOnly: true, SameSite: http.SameSiteStrictMode})
-	}
-	writeEnvelope(w, uid, result, ierr)
+	return result, ierr, h != nil
 }
 
-func writeEnvelope(w http.ResponseWriter, uid string, result any, ierr *ipa.IpaError) {
+func writeEnvelope(w http.ResponseWriter, uid, version string, result any, ierr *ipa.IpaError) {
 	if ierr != nil && ierr.Name == "" {
 		e := *ierr
 		e.Name = errorNames[e.Code]
@@ -383,7 +425,7 @@ func writeEnvelope(w http.ResponseWriter, uid string, result any, ierr *ipa.IpaE
 		ID        int           `json:"id"`
 		Principal string        `json:"principal"`
 		Version   string        `json:"version"`
-	}{result, ierr, 0, uid + "@" + realm, serverVersion})
+	}{result, ierr, 0, uid + "@" + realm, version})
 	if err != nil {
 		http.Error(w, "cannot encode result: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -405,6 +447,26 @@ func list(recs []map[string]any) map[string]any {
 		"truncated": false,
 		"summary":   fmt.Sprintf("%d entries returned", len(recs)),
 	}
+}
+
+// listLimited is list for *_find commands: it honours the sizelimit option
+// (Q40).
+func listLimited(c Call, recs []map[string]any) map[string]any {
+	n, _ := c.Options["sizelimit"].(float64)
+	if str, ok := c.Options["sizelimit"].(string); ok { // FreeIPA converts "5" too
+		n, _ = strconv.ParseFloat(str, 64)
+	}
+	if n <= 0 || len(recs) <= int(n) {
+		return list(recs)
+	}
+	out := list(recs[:int(n)])
+	out["truncated"] = true
+	out["messages"] = []map[string]any{{
+		"type": "warning", "name": "SearchResultTruncated", "code": 13017,
+		"message": "Search result has been truncated: Configured size limit exceeded",
+		"data":    map[string]any{},
+	}}
+	return out
 }
 
 func notFound(pkey, object string) *ipa.IpaError {

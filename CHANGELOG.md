@@ -7,6 +7,35 @@ existing exported identifiers keep their signatures).
 
 ## [Unreleased]
 
+## [v0.7.0] - 2026-10-24
+
+Typed escape hatch and core API: any FreeIPA command can be called with
+typed decoding, truncated searches are reported, attributes can be changed
+one at a time, several commands can run in one round trip, and calls for
+features newer than the server fail early. Checked against real FreeIPA
+4.9, 4.12 and 4.13 by the contract tests.
+
+### Added
+
+- `Call[T]`, a generic typed call for any FreeIPA command, and `Entry`, a
+  result object with `Has`, `Str`, `Strs`, `Bool`, `Int`, `Time`, `Bytes`,
+  `DN` and `Raw` accessors that read FreeIPA's attribute lists,
+  `__datetime__` and `__base64__` values
+- `FindEntries(ctx, c, method, args, opts, sizelimit)` and `ErrTruncated`:
+  a `*_find` that reports a result truncated by the server's size limit
+  instead of returning it silently
+- `ServerVersion` and `ErrNotSupported`: passkey calls (FreeIPA 4.11) and
+  `SubIDFind`/`SubIDGenerate` (4.9.7) fail before sending when the known
+  server is older
+- `Modify(command, keys...)`: `setattr`/`addattr`/`delattr` updates of
+  single attributes on any object, nested ones included
+- `Batch`: several commands in one round trip with per-command results;
+  `BatchResult.Err` is an `error` holding a bare `*IpaError`
+- `CodeConversion` (3008), `CodeObjectclassViolation` (4205) and `CodeOnlyOneValueAllowed` (4207)
+- `ipatest`: `SetVersion`, `sizelimit` truncation on `user_find`,
+  `group_find` and `host_find`, `setattr`/`addattr`/`delattr` on `user_mod`
+  and `stageuser_mod` (including `OnlyOneValueAllowed`), and `batch`
+
 ## [v0.6.0] - 2026-10-24
 
 Construction and authentication: an options-based `New` with no file I/O at
@@ -253,7 +282,8 @@ v0.0.1 – v0.0.7 were released by Andrew E. Bruno as
 [ubccr/goipa](https://github.com/ubccr/goipa/tags). This repository keeps
 that history.
 
-[Unreleased]: https://github.com/neverlless/goipa/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/neverlless/goipa/compare/v0.7.0...HEAD
+[v0.7.0]: https://github.com/neverlless/goipa/compare/v0.6.0...v0.7.0
 [v0.6.0]: https://github.com/neverlless/goipa/compare/v0.5.0...v0.6.0
 [v0.5.0]: https://github.com/neverlless/goipa/compare/v0.4.0...v0.5.0
 [v0.4.0]: https://github.com/neverlless/goipa/compare/v0.3.0...v0.4.0

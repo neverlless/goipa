@@ -43,4 +43,16 @@
 // request with a context, except the Kerberos logins (Login, LoginWithKeytab,
 // LoginFromCCache and their Data variants; gokrb5 is not cancellable). RPC
 // calls any command goipa does not wrap.
+//
+// # Any command
+//
+// Call decodes the result of any command into a type of your choice; Entry
+// reads FreeIPA's attribute encoding (lists, dates, binary values):
+//
+//	u, _, err := ipa.Call[ipa.Entry](ctx, c, "user_show", []string{"jesse"}, ipa.Options{"all": true})
+//	fmt.Println(u.Str("uid"), u.Strs("mail"), u.Time("krbpasswordexpiration"))
+//
+// FindEntries returns ErrTruncated with the entries it got when the server
+// cut a search short; Modify changes single attributes; Batch sends several
+// commands in one round trip.
 package ipa

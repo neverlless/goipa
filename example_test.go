@@ -5,6 +5,8 @@
 package ipa_test
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"log"
 
@@ -123,5 +125,63 @@ func ExampleClient_LoginWithKeytabData() {
 	}
 	if err := c.LoginWithKeytabData(keytab, "svc-app"); err != nil {
 		log.Fatal(err)
+	}
+}
+
+// Call decodes any command's result; Entry reads FreeIPA's attribute
+// encoding. Compiled but not run.
+func ExampleCall() {
+	c := ipa.NewDefaultClient()
+	u, _, err := ipa.Call[ipa.Entry](context.Background(), c, "user_show",
+		[]string{"jesse"}, ipa.Options{"all": true})
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(u.Str("uid"), u.Strs("mail"), u.Time("krbpasswordexpiration"))
+}
+
+// FindEntries returns the entries it got together with ErrTruncated when the
+// server cut the search short; compiled but not run.
+func ExampleFindEntries() {
+	c := ipa.NewDefaultClient()
+	hosts, err := ipa.FindEntries(context.Background(), c, "host_find", []string{"web"}, nil, 500)
+	if errors.Is(err, ipa.ErrTruncated) {
+		fmt.Println("more hosts match; narrow the search")
+	} else if err != nil {
+		log.Fatal(err)
+	}
+	for _, h := range hosts {
+		fmt.Println(h.Str("fqdn"))
+	}
+}
+
+// Modify changes single attributes without reading the object first;
+// compiled but not run.
+func ExampleClient_Modify() {
+	c := ipa.NewDefaultClient()
+	_, err := c.Modify("user_mod", "jesse").
+		Set("title", "Engineer").
+		Add("mail", "jesse@example.com").
+		Run(context.Background())
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+// Batch runs several commands in one round trip; a failed command fills Err
+// and does not fail the batch. Compiled but not run.
+func ExampleClient_Batch() {
+	c := ipa.NewDefaultClient()
+	res, err := c.Batch(context.Background(),
+		ipa.BatchCall{Method: "user_show", Args: []string{"jesse"}},
+		ipa.BatchCall{Method: "group_show", Args: []string{"admins"}},
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+	for _, r := range res {
+		if r.Err != nil {
+			fmt.Println(r.Err)
+		}
 	}
 }

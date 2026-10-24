@@ -52,6 +52,8 @@ type Client struct {
 	sticky    bool
 	krbClient *client.Client
 
+	serverVersion string // envelope version of the last successful response
+
 	krb5Path    string // krb5.conf path; empty means DefaultKerbConf
 	krb5Data    string // krb5.conf text (a string keeps Client comparable); wins over krb5Path
 	relogin     bool
