@@ -76,8 +76,9 @@ func (c *Client) CertRequestContext(ctx context.Context, principal, csrPEM strin
 }
 
 // CertShow fetches the certificate with decimal serial number serial with
-// `cert_show`. Any authenticated user may read certificates (Retrieve
-// Certificates from the CA).
+// `cert_show`. It requires the Certificate Administrators or Host
+// Administrators privilege (Retrieve Certificates from the CA), or a host
+// principal named in the certificate's subject CN; anyone else gets ErrACI.
 func (c *Client) CertShow(serial string) (*Certificate, error) {
 	return c.CertShowContext(context.Background(), serial)
 }

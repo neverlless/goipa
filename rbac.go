@@ -90,8 +90,8 @@ func permissionFrom(e Entry) *Permission {
 	}
 }
 
-// RoleShow fetches a role with `role_show`. Any authenticated user may read
-// roles (System: Read Roles).
+// RoleShow fetches a role with `role_show`. It requires the RBAC Readers
+// privilege (System: Read Roles); to anyone else every role is ErrNotFound.
 func (c *Client) RoleShow(name string) (*Role, error) {
 	return c.RoleShowContext(context.Background(), name)
 }
@@ -105,8 +105,8 @@ func (c *Client) RoleShowContext(ctx context.Context, name string) (*Role, error
 }
 
 // RoleFind finds roles with `role_find`; options are passed through (e.g.
-// `cn`, `description`, `sizelimit`). Any authenticated user may read roles
-// (System: Read Roles).
+// `cn`, `description`, `sizelimit`). It requires the RBAC Readers privilege
+// (System: Read Roles); anyone else finds no roles.
 func (c *Client) RoleFind(options Options) ([]*Role, error) {
 	return c.RoleFindContext(context.Background(), options)
 }
@@ -116,8 +116,9 @@ func (c *Client) RoleFindContext(ctx context.Context, options Options) ([]*Role,
 	return findTyped(ctx, c, "role_find", []string{""}, options, roleFrom)
 }
 
-// PrivilegeShow fetches a privilege with `privilege_show`. Any authenticated
-// user may read privileges (System: Read Privileges).
+// PrivilegeShow fetches a privilege with `privilege_show`. It requires the
+// RBAC Readers privilege (System: Read Privileges); to anyone else every
+// privilege is ErrNotFound.
 func (c *Client) PrivilegeShow(name string) (*Privilege, error) {
 	return c.PrivilegeShowContext(context.Background(), name)
 }
@@ -131,8 +132,8 @@ func (c *Client) PrivilegeShowContext(ctx context.Context, name string) (*Privil
 }
 
 // PrivilegeFind finds privileges with `privilege_find`; options are passed
-// through (e.g. `cn`, `description`, `sizelimit`). Any authenticated user may
-// read privileges (System: Read Privileges).
+// through (e.g. `cn`, `description`, `sizelimit`). It requires the RBAC
+// Readers privilege (System: Read Privileges); anyone else finds none.
 func (c *Client) PrivilegeFind(options Options) ([]*Privilege, error) {
 	return c.PrivilegeFindContext(context.Background(), options)
 }
@@ -142,8 +143,9 @@ func (c *Client) PrivilegeFindContext(ctx context.Context, options Options) ([]*
 	return findTyped(ctx, c, "privilege_find", []string{""}, options, privilegeFrom)
 }
 
-// PermissionShow fetches a permission with `permission_show`. Any
-// authenticated user may read permissions (System: Read Permissions).
+// PermissionShow fetches a permission with `permission_show`. It requires
+// the RBAC Readers privilege (System: Read Permissions); to anyone else every
+// permission is ErrNotFound.
 func (c *Client) PermissionShow(name string) (*Permission, error) {
 	return c.PermissionShowContext(context.Background(), name)
 }
@@ -157,8 +159,8 @@ func (c *Client) PermissionShowContext(ctx context.Context, name string) (*Permi
 }
 
 // PermissionFind finds permissions with `permission_find`; options are passed
-// through (e.g. `cn`, `type`, `ipapermright`, `sizelimit`). Any authenticated
-// user may read permissions (System: Read Permissions).
+// through (e.g. `cn`, `type`, `ipapermright`, `sizelimit`). It requires the
+// RBAC Readers privilege (System: Read Permissions); anyone else finds none.
 func (c *Client) PermissionFind(options Options) ([]*Permission, error) {
 	return c.PermissionFindContext(context.Background(), options)
 }
