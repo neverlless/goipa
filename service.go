@@ -8,6 +8,7 @@ import (
 	"context"
 	"encoding/base64"
 	"errors"
+	"slices"
 
 	"github.com/tidwall/gjson"
 )
@@ -123,7 +124,7 @@ func (c *Client) ServiceDelete(principals ...string) error {
 
 // ServiceDeleteContext is like ServiceDelete but bounds the request with ctx.
 func (c *Client) ServiceDeleteContext(ctx context.Context, principals ...string) error {
-	if len(principals) == 0 {
+	if len(principals) == 0 || slices.Contains(principals, "") {
 		return errServicePrincipal
 	}
 	_, err := c.rpc(ctx, "service_del", principals, Options{"continue": false})

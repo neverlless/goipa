@@ -21,6 +21,7 @@ func TestHBACRule_EmptyKeys(t *testing.T) {
 		"add":     func() error { _, err := c.HBACRuleAdd(&ipa.HBACRule{}); return err }(),
 		"add nil": func() error { _, err := c.HBACRuleAdd(nil); return err }(),
 		"delete":  c.HBACRuleDelete(),
+		"del gap": c.HBACRuleDelete("r", ""),
 		"enable":  c.HBACRuleEnable(""),
 		"disable": c.HBACRuleDisable(""),
 		"member":  func() error { _, err := c.HBACRuleAddUser("", []string{"admin"}, nil); return err }(),

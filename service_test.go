@@ -21,6 +21,9 @@ func TestService_NothingToDo(t *testing.T) {
 	if err := c.ServiceDelete(); err == nil {
 		t.Error("ServiceDelete(): want error")
 	}
+	if err := c.ServiceDelete(testSvc, ""); err == nil {
+		t.Error("ServiceDelete with an empty principal: want error")
+	}
 	if _, err := c.ServiceShow(""); err == nil {
 		t.Error("ServiceShow(\"\"): want error")
 	}

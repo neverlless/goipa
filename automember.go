@@ -8,6 +8,7 @@ import (
 	"context"
 	"errors"
 	"maps"
+	"slices"
 	"strings"
 
 	"github.com/tidwall/gjson"
@@ -147,7 +148,7 @@ func (c *Client) AutomemberDeleteContext(ctx context.Context, typ string, names 
 	if err := checkAutomemberType(typ); err != nil {
 		return err
 	}
-	if len(names) == 0 {
+	if len(names) == 0 || slices.Contains(names, "") {
 		return errors.New("ipa: automember rule name is required")
 	}
 	_, err := c.rpc(ctx, "automember_del", names, Options{"type": typ})

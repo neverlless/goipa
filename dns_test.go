@@ -15,6 +15,7 @@ func TestDNS_NoRequestWithoutKeys(t *testing.T) {
 	s, c := newFake(t)
 	for name, err := range map[string]error{
 		"zone delete":   c.DNSZoneDelete(),
+		"zone del gap":  c.DNSZoneDelete("z.test.", ""),
 		"zone show":     func() error { _, err := c.DNSZoneShow(""); return err }(),
 		"zone add":      func() error { _, err := c.DNSZoneAdd("", false); return err }(),
 		"zone enable":   c.DNSZoneEnable(""),

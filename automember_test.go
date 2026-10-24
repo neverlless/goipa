@@ -23,6 +23,7 @@ func TestAutomember_NoRPCOnBadInput(t *testing.T) {
 		"empty name":       func() error { _, err := c.AutomemberShow(g, ""); return err },
 		"empty add name":   func() error { _, err := c.AutomemberAdd(g, "", "d"); return err },
 		"delete nothing":   func() error { return c.AutomemberDelete(g) },
+		"delete gap":       func() error { return c.AutomemberDelete(g, "x", "") },
 		"empty key":        func() error { _, err := c.AutomemberAddCondition(g, "x", "", []string{"^a"}, nil); return err },
 		"no conditions":    func() error { _, err := c.AutomemberAddCondition(g, "x", "uid", nil, []string{}); return err },
 		"remove nothing":   func() error { _, err := c.AutomemberRemoveCondition(g, "x", "uid", nil, nil); return err },

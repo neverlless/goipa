@@ -7,6 +7,7 @@ package ipa
 import (
 	"context"
 	"errors"
+	"slices"
 
 	"github.com/tidwall/gjson"
 )
@@ -84,7 +85,7 @@ func (c *Client) HBACRuleDelete(names ...string) error {
 
 // HBACRuleDeleteContext is like HBACRuleDelete but bounds the request with ctx.
 func (c *Client) HBACRuleDeleteContext(ctx context.Context, names ...string) error {
-	if len(names) == 0 {
+	if len(names) == 0 || slices.Contains(names, "") {
 		return errHBACRuleName
 	}
 	_, err := c.rpc(ctx, "hbacrule_del", names, Options{})

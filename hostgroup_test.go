@@ -55,6 +55,7 @@ func TestHostGroup_NoRequest(t *testing.T) {
 		"add":       func() error { _, err := c.HostGroupAdd(&ipa.HostGroup{}); return err }(),
 		"add nil":   func() error { _, err := c.HostGroupAdd(nil); return err }(),
 		"delete":    c.HostGroupDelete(),
+		"del gap":   c.HostGroupDelete("hg", ""),
 		"member":    func() error { _, err := c.HostGroupAddMember("hg", nil, nil); return err }(),
 		"no name":   func() error { _, err := c.HostGroupRemoveMember("", []string{"h"}, nil); return err }(),
 		"managers":  func() error { _, err := c.HostGroupAddMemberManager("hg", nil, []string{}); return err }(),

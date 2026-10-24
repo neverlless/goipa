@@ -7,6 +7,7 @@ package ipa
 import (
 	"context"
 	"errors"
+	"slices"
 )
 
 // HostGroup is a FreeIPA host group. Attribute changes go through Modify
@@ -93,7 +94,7 @@ func (c *Client) HostGroupDelete(names ...string) error {
 
 // HostGroupDeleteContext is like HostGroupDelete but bounds the request with ctx.
 func (c *Client) HostGroupDeleteContext(ctx context.Context, names ...string) error {
-	if len(names) == 0 {
+	if len(names) == 0 || slices.Contains(names, "") {
 		return errHostGroupName
 	}
 	_, err := c.rpc(ctx, "hostgroup_del", names, Options{"continue": false})

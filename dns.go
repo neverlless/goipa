@@ -8,6 +8,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/tidwall/gjson"
@@ -138,7 +139,7 @@ func (c *Client) DNSZoneDelete(names ...string) error {
 
 // DNSZoneDeleteContext is like DNSZoneDelete but bounds the request with ctx.
 func (c *Client) DNSZoneDeleteContext(ctx context.Context, names ...string) error {
-	if len(names) == 0 {
+	if len(names) == 0 || slices.Contains(names, "") {
 		return errZoneRequired
 	}
 	_, err := c.rpc(ctx, "dnszone_del", names, nil)
