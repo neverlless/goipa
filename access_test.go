@@ -5,6 +5,7 @@
 package ipa_test
 
 import (
+	"errors"
 	"reflect"
 	"testing"
 
@@ -128,8 +129,8 @@ func TestRuleCommands(t *testing.T) {
 	}
 	rpc("hbacrule_del", []string{"h"}, nil)
 	rpc("sudorule_del", []string{"s"}, nil)
-	if _, err := c.RPC("hbacrule_del", []string{"h"}, nil); err == nil {
-		t.Error("second delete succeeded")
+	if _, err := c.RPC("hbacrule_del", []string{"h"}, nil); !errors.Is(err, ipa.ErrNotFound) {
+		t.Errorf("second delete: %v", err)
 	}
 	if hr, _ = c.HBACRuleFind(ipa.Options{"cn": "h"}); len(hr) != 0 {
 		t.Errorf("not deleted: %+v", hr)

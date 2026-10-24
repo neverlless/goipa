@@ -190,8 +190,10 @@
 //     unless all is true or no_members is false (as Q1/U1); ipaenabledflag
 //     is ["TRUE"]/["FALSE"], categories are one-element lists, sudoorder a
 //     one-element string list. dn is ipaUniqueID=<uuid>,cn=hbac,... and
-//     ipaUniqueID=<uuid>,cn=sudorules,cn=sudo,... TestHBACRuleFind_AllFields,
-//     TestSudoRuleFind_AllFields.
+//     ipaUniqueID=<uuid>,cn=sudorules,cn=sudo,...
+//     TestHBACRuleFind_AllFields, TestSudoRuleFind_AllFields,
+//     TestRuleFindMembersVisibility, TestRuleFindFilters,
+//     TestRuleAddUserFailures.
 //
 // A response's version is the server release, 4.13.4, and its principal is
 // <uid>@TEST.LOCAL. An error a HandlerFunc returns without a Name gets the

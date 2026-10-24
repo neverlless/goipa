@@ -178,11 +178,18 @@ func ruleFind[T any](c Call, rules map[string]*T, desc func(*T) string, disabled
 	return list(recs), nil
 }
 
-func ruleAdd[T any](kind string, rules map[string]*T, c Call, mk func(Call) *T, render func(*T, string, bool, bool) map[string]any) (any, *ipa.IpaError) {
+func ruleName(c Call) (string, *ipa.IpaError) {
 	if len(c.Args) == 0 || c.Args[0] == "" {
-		return nil, required("name")
+		return "", required("cn")
 	}
-	cn := c.Args[0]
+	return c.Args[0], nil
+}
+
+func ruleAdd[T any](kind string, rules map[string]*T, c Call, mk func(Call) *T, render func(*T, string, bool, bool) map[string]any) (any, *ipa.IpaError) {
+	cn, err := ruleName(c)
+	if err != nil {
+		return nil, err
+	}
 	if rules[cn] != nil {
 		return nil, &ipa.IpaError{Code: ipa.CodeDuplicateEntry, Message: kind + ` with name "` + cn + `" already exists`}
 	}
@@ -211,10 +218,10 @@ func ruleDel[T any](kind string, rules map[string]*T, c Call) (any, *ipa.IpaErro
 // ruleAddUser is hbacrule_add_user and sudorule_add_user: user and group
 // options, group_add_member's output with failed.memberuser.{user,group}.
 func ruleAddUser[T any](s *Server, rules map[string]*T, kind string, c Call, users, groups func(*T) *[]string, render func(*T, string, bool, bool) map[string]any) (any, *ipa.IpaError) {
-	if len(c.Args) == 0 || c.Args[0] == "" {
-		return nil, required("name")
+	cn, err := ruleName(c)
+	if err != nil {
+		return nil, err
 	}
-	cn := c.Args[0]
 	r := rules[cn]
 	if r == nil {
 		return nil, notFound(cn, kind)
@@ -283,10 +290,10 @@ func init() {
 			func(r *sudoRec) *[]string { return &r.Users }, func(r *sudoRec) *[]string { return &r.Groups }, (*sudoRec).render)
 	}
 	builtins["sudorule_add_option"] = func(s *Server, c Call) (any, *ipa.IpaError) {
-		if len(c.Args) == 0 || c.Args[0] == "" {
-			return nil, required("name")
+		cn, err := ruleName(c)
+		if err != nil {
+			return nil, err
 		}
-		cn := c.Args[0]
 		r := s.sudo[cn]
 		if r == nil {
 			return nil, notFound(cn, "sudo rule")
