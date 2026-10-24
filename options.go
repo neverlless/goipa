@@ -23,6 +23,7 @@ type settings struct {
 	krb5Path    string
 	krb5Data    []byte
 	relogin     bool
+	validate    bool
 }
 
 // Option configures a Client built by New.
@@ -157,7 +158,7 @@ func New(opts ...Option) (*Client, error) {
 	}
 	return &Client{
 		host: s.host, realm: s.realm, httpClient: s.httpClient, sticky: true,
-		krb5Path: s.krb5Path, krb5Data: string(s.krb5Data), relogin: s.relogin,
+		krb5Path: s.krb5Path, krb5Data: string(s.krb5Data), relogin: s.relogin, validate: s.validate,
 	}, nil
 }
 

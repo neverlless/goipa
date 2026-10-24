@@ -185,3 +185,39 @@ func ExampleClient_Batch() {
 		}
 	}
 }
+
+// Commands lists what a server version supports; the sysaccount_* commands
+// came with FreeIPA 4.13.0.
+func ExampleCommands() {
+	old := map[string]bool{}
+	for _, c := range ipa.Commands("4.12.0") {
+		old[c.Name] = true
+	}
+	for _, c := range ipa.Commands("4.13.0") {
+		if !old[c.Name] {
+			fmt.Println(c.Name)
+		}
+	}
+	// Output:
+	// sysaccount_add
+	// sysaccount_del
+	// sysaccount_disable
+	// sysaccount_enable
+	// sysaccount_find
+	// sysaccount_mod
+	// sysaccount_policy
+	// sysaccount_show
+}
+
+// WithValidation checks every call against the command catalogue before it
+// is sent; compiled but not run.
+func ExampleWithValidation() {
+	c, err := ipa.New(ipa.WithHost("ipa.example.com"), ipa.WithRealm("EXAMPLE.COM"), ipa.WithValidation())
+	if err != nil {
+		log.Fatal(err)
+	}
+	_, err = c.RPC("user_show", []string{"jesse"}, ipa.Options{"no_such_option": true})
+	if errors.Is(err, ipa.ErrInvalidCall) {
+		fmt.Println("rejected before sending:", err)
+	}
+}

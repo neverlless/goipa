@@ -72,6 +72,39 @@ tokens.
 
 See the [roadmap](ROADMAP.md) for what is next.
 
+## Command catalogue and validation
+
+`Commands(version)` and `LookupCommand(name, version)` list every FreeIPA
+command from 4.9.0 up to the newest catalogued release (4.13.4): positional
+arguments, options with their types, and the release that introduced each.
+An empty version means everything. The data is generated from FreeIPA's
+`API.txt`; `go generate ./...` refreshes it, and a nightly CI job fails when
+a new release adds something the catalogue lacks.
+
+```go
+c, err := ipa.New(ipa.WithHost("ipa.example.com"), ipa.WithRealm("EXAMPLE.COM"), ipa.WithValidation())
+// ...
+_, err = c.RPC("user_show", []string{"jesse"}, ipa.Options{"no_such_option": true})
+errors.Is(err, ipa.ErrInvalidCall) // true, nothing was sent
+```
+
+`WithValidation` is off by default. It rejects unknown commands, too many
+positional arguments and unknown options (`ErrInvalidCall`), and commands or
+options newer than the server (`ErrNotSupported`), for typed methods, `RPC`,
+`Call`, `FindEntries` and every call inside `Batch`. It does not check values
+or required options, and it is skipped when the server is newer than the
+catalogue. Validation is opt-in through `New` only (the old constructors
+never validate), and an option key that names a positional argument is
+accepted. The server version comes from the replica that answered last, so in
+a mixed 4.9/4.13 fleet behind a load balancer a call valid on 4.13 can get
+`ErrNotSupported`; `Since` values are upstream releases, so distro backports
+are not known.
+
+For its built-in commands `ipatest` rejects options the command lacks at the
+`SetVersion` release (3005 `OptionError`, `Unknown option: <name>`) and
+commands added after that release (905). It does not count arguments or
+return `ErrNotSupported`, and `Handle` overrides are not checked.
+
 ## Install
 
 ```sh

@@ -191,7 +191,7 @@ and 4.13.
 Code generation is used only for data (the command catalogue), never for the
 public call API.
 
-- [ ] Command catalogue generated from FreeIPA's `API.txt` for each supported
+- [x] Command catalogue generated from FreeIPA's `API.txt` for each supported
       release (4.9 to 4.13): command names, positional args, option names
       and types, and the release that introduced each. `RPC` and `Call` can
       validate a method and its options against it (opt-in), and

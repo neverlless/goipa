@@ -43,9 +43,25 @@ jobs:
           docker logs --tail 200 goipa-ipa || true
           docker exec goipa-ipa tail -200 /var/log/httpd/error_log || true
 
+  catalogue:
+    name: Catalogue up to date
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+
+      - name: Regenerate
+        run: go generate ./... && git diff --exit-code -- catalogue_gen.go
+
   report:
     name: Report failure
-    needs: freeipa
+    needs: [freeipa, catalogue]
     if: failure() && github.event_name == 'schedule'
     runs-on: ubuntu-24.04
     timeout-minutes: 5

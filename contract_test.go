@@ -32,14 +32,33 @@ type backend struct {
 	admin *ipa.Client  // admin session
 }
 
-func (b backend) client() *ipa.Client { return ipa.NewClientCustomHttp(b.host, b.realm, b.http) }
+// client validates every call, so the suite also checks each typed method
+// against the command catalogue.
+func (b backend) client() *ipa.Client {
+	c, err := ipa.New(ipa.WithHost(b.host), ipa.WithRealm(b.realm), ipa.WithHTTPClient(b.http), ipa.WithValidation())
+	if err != nil {
+		panic(err) // only an empty option fails, which is a bug in the test setup
+	}
+	return c
+}
+
+// rawAdmin is an admin client without validation, for calls the catalogue
+// rejects on purpose.
+func (b backend) rawAdmin() *ipa.Client {
+	c := ipa.NewClientCustomHttp(b.host, b.realm, b.http)
+	c.SetSessionID(b.admin.SessionID())
+	return c
+}
 
 // extraBackends is set by contract_integration_test.go.
 var extraBackends func(t *testing.T) []backend
 
 func backends(t *testing.T) []backend {
 	srv := ipatest.NewServer(t)
-	out := []backend{{"ipatest", srv.Host(), srv.Realm(), srv.HTTPClient(), srv.ClientAs("admin")}}
+	b := backend{name: "ipatest", host: srv.Host(), realm: srv.Realm(), http: srv.HTTPClient()}
+	b.admin = b.client()
+	b.admin.SetSessionID(srv.Session("admin"))
+	out := []backend{b}
 	if extraBackends != nil {
 		out = append(out, extraBackends(t)...)
 	}
@@ -416,7 +435,7 @@ func TestContractResultShapes(t *testing.T) {
 // TestContractUnknownCommand pins Q14.
 func TestContractUnknownCommand(t *testing.T) {
 	forEachBackend(t, func(t *testing.T, b backend) {
-		_, err := b.admin.RPC("goipa_no_such_cmd", nil, nil)
+		_, err := b.rawAdmin().RPC("goipa_no_such_cmd", nil, nil)
 		var ie *ipa.IpaError
 		if !errors.As(err, &ie) || ie.Code != 905 {
 			t.Fatalf("got %v, want error 905", err)

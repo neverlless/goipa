@@ -7,6 +7,34 @@ existing exported identifiers keep their signatures).
 
 ## [Unreleased]
 
+## [v0.8.0] - 2026-10-24
+
+Command catalogue: every command, argument and option of FreeIPA 4.9.0 to
+4.13.4, with the release that introduced each, generated from FreeIPA's own
+`API.txt`. Clients can opt in to checking every call against it before it
+is sent. Checked against real FreeIPA 4.9, 4.12 and 4.13 by the contract
+tests, which now run with validation on.
+
+### Added
+
+- `Commands`, `LookupCommand`, `Command` and `Param`: the FreeIPA command
+  catalogue for releases 4.9.0 to 4.13.4 (positional arguments, options,
+  types and the release that introduced each), generated from `API.txt` with
+  `go generate`; a nightly CI job fails when it is out of date
+- `WithValidation` and `ErrInvalidCall`: opt-in check of every call against
+  the catalogue before it is sent, including each call inside `Batch`;
+  commands and options newer than the server give `ErrNotSupported`
+- `ipatest`: built-in commands reject options the command lacks at the
+  reported release (`OptionError`) and commands added after it;
+  `passkeyconfig_show` is modelled
+
+### Changed
+
+- `ipatest`: built-in commands now reject options they lack and commands
+  newer than the `SetVersion` release (3005 / 905), so consumer tests that
+  sent such options may fail on upgrade; `SetVersion` now affects behaviour,
+  not only the reported string. `Handle` overrides are not checked
+
 ## [v0.7.0] - 2026-10-24
 
 Typed escape hatch and core API: any FreeIPA command can be called with
@@ -282,7 +310,8 @@ v0.0.1 – v0.0.7 were released by Andrew E. Bruno as
 [ubccr/goipa](https://github.com/ubccr/goipa/tags). This repository keeps
 that history.
 
-[Unreleased]: https://github.com/neverlless/goipa/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/neverlless/goipa/compare/v0.8.0...HEAD
+[v0.8.0]: https://github.com/neverlless/goipa/compare/v0.7.0...v0.8.0
 [v0.7.0]: https://github.com/neverlless/goipa/compare/v0.6.0...v0.7.0
 [v0.6.0]: https://github.com/neverlless/goipa/compare/v0.5.0...v0.6.0
 [v0.5.0]: https://github.com/neverlless/goipa/compare/v0.4.0...v0.5.0

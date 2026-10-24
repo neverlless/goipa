@@ -40,6 +40,11 @@ func (c *Client) Batch(ctx context.Context, calls ...BatchCall) ([]BatchResult, 
 	methods := make([]any, len(calls))
 	for i, bc := range calls {
 		args, opts := bc.Args, bc.Options
+		if c.validate {
+			if err := validateCall(bc.Method, c.ServerVersion(), len(args), opts); err != nil {
+				return nil, fmt.Errorf("ipa: batch call %d: %w", i, err)
+			}
+		}
 		if args == nil {
 			args = []string{}
 		}
