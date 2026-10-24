@@ -332,23 +332,8 @@ func (s *Server) serveRPC(w http.ResponseWriter, r *http.Request, uid, sid strin
 	}
 	c := Call{User: uid, Options: map[string]any{}, session: sid}
 	err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20)).Decode(&req)
-	if err == nil && len(req.Params) > 0 {
-		var args []any
-		if err = json.Unmarshal(req.Params[0], &args); err == nil {
-			for _, a := range args {
-				if str, ok := a.(string); ok {
-					c.Args = append(c.Args, str)
-				} else {
-					c.Args = append(c.Args, fmt.Sprint(a))
-				}
-			}
-		}
-	}
-	if err == nil && len(req.Params) > 1 {
-		err = json.Unmarshal(req.Params[1], &c.Options)
-	}
-	if c.Options == nil { // params[1] was null
-		c.Options = map[string]any{}
+	if err == nil {
+		err = decodeParams(&c, req.Params)
 	}
 	if err != nil {
 		http.Error(w, "bad JSON-RPC request: "+err.Error(), http.StatusBadRequest)
@@ -356,26 +341,15 @@ func (s *Server) serveRPC(w http.ResponseWriter, r *http.Request, uid, sid strin
 	}
 	c.Method = req.Method
 
-	s.mu.Lock()
-	s.calls = append(s.calls, c.clone())
-	h := s.handlers[c.Method]
-	s.mu.Unlock()
-
-	var result any
-	var ierr *ipa.IpaError
-	if h != nil {
-		result, ierr = h(c)
-	} else if b := builtins[c.Method]; b != nil {
-		s.mu.Lock()
-		result, ierr = b(s, c)
-		s.mu.Unlock()
-	} else {
-		ierr = &ipa.IpaError{Code: ipa.CodeCommand, Message: fmt.Sprintf("unknown command '%s'", c.Method)}
+	var methods json.RawMessage
+	if len(req.Params) > 0 {
+		methods = req.Params[0]
 	}
+	result, ierr, custom := s.dispatch(c, methods)
 	if ierr != nil {
 		result = nil
 	}
-	if c.Method == "session_logout" && h == nil && ierr == nil {
+	if c.Method == "session_logout" && !custom && ierr == nil {
 		// Builtins return values only, so the logout cookie is attached here.
 		http.SetCookie(w, &http.Cookie{Name: "ipa_session", Path: "/ipa", MaxAge: -1, Secure: true, HttpOnly: true, SameSite: http.SameSiteStrictMode})
 	}
@@ -383,6 +357,56 @@ func (s *Server) serveRPC(w http.ResponseWriter, r *http.Request, uid, sid strin
 	version := s.version
 	s.mu.Unlock()
 	writeEnvelope(w, uid, version, result, ierr)
+}
+
+// decodeParams fills c.Args and c.Options from JSON-RPC params [args, options].
+func decodeParams(c *Call, params []json.RawMessage) error {
+	if len(params) > 0 {
+		var args []any
+		if err := json.Unmarshal(params[0], &args); err != nil {
+			return err
+		}
+		for _, a := range args {
+			if str, ok := a.(string); ok {
+				c.Args = append(c.Args, str)
+			} else {
+				c.Args = append(c.Args, fmt.Sprint(a))
+			}
+		}
+	}
+	if len(params) > 1 {
+		if err := json.Unmarshal(params[1], &c.Options); err != nil {
+			return err
+		}
+	}
+	if c.Options == nil { // params[1] was null
+		c.Options = map[string]any{}
+	}
+	return nil
+}
+
+// dispatch records c and runs it: a handler without the lock, else batch,
+// else a builtin under s.mu, else 905. args is the raw params[0], which
+// batch needs; custom reports that a handler ran.
+func (s *Server) dispatch(c Call, args json.RawMessage) (result any, ierr *ipa.IpaError, custom bool) {
+	s.mu.Lock()
+	s.calls = append(s.calls, c.clone())
+	h := s.handlers[c.Method]
+	s.mu.Unlock()
+
+	switch b := builtins[c.Method]; {
+	case h != nil:
+		result, ierr = h(c)
+	case c.Method == "batch":
+		result, ierr = s.batch(c, args)
+	case b != nil:
+		s.mu.Lock()
+		result, ierr = b(s, c)
+		s.mu.Unlock()
+	default:
+		ierr = &ipa.IpaError{Code: ipa.CodeCommand, Message: fmt.Sprintf("unknown command '%s'", c.Method)}
+	}
+	return result, ierr, h != nil
 }
 
 func writeEnvelope(w http.ResponseWriter, uid, version string, result any, ierr *ipa.IpaError) {

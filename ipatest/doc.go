@@ -280,6 +280,16 @@
 //     first n entries in sorted order, truncated true and a
 //     SearchResultTruncated warning (code 13017). TestFindEntries_Truncated,
 //     TestContractFindTruncated.
+//   - Q42: batch runs each {"method", "params": [args, options]} entry as
+//     the caller, through the same lookup as a top-level call (Handle, then
+//     the modelled commands, else 905), with the batch's version when the
+//     entry has none, and answers {"count": n, "results": [...]}: each
+//     command's output plus "error": null, or {error, error_code,
+//     error_name, error_kw} for a failure, without stopping the rest. An
+//     entry without method or params is 3007 RequirementError; params that
+//     are not [list, dict] are also 3007 here (FreeIPA: ConversionError).
+//     Calls records the batch call, then each nested call. TestBatch,
+//     TestBatch_MiddleFails, TestBatchMalformedEntries, goipa.TestContractBatch.
 //
 // A response's version is the server release, 4.13.4 unless SetVersion
 // changes it, and its principal is
