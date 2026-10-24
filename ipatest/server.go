@@ -96,6 +96,7 @@ type Server struct {
 	calls     []Call
 	handlers  map[string]HandlerFunc
 	users     map[string]*userRec
+	stage     map[string]*userRec
 	groups    map[string]*groupRec
 	hosts     map[string]Host
 	tokens    []*OTPToken
@@ -119,6 +120,7 @@ func New() *Server {
 		expired:  map[string]bool{},
 		handlers: map[string]HandlerFunc{},
 		users:    map[string]*userRec{},
+		stage:    map[string]*userRec{},
 		groups:   map[string]*groupRec{},
 		hosts:    map[string]Host{serverFQDN: {HasKeytab: true}},
 		nextID:   firstID - 1,

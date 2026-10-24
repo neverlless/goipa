@@ -477,3 +477,24 @@ func TestUserFind_MatchesAllMails(t *testing.T) {
 		t.Errorf("needle: Count = %d", res.Result.Count)
 	}
 }
+
+func TestStageUserSeedAndActivate(t *testing.T) {
+	s := ipatest.NewServer(t)
+	s.AddStageUser("sam", ipatest.User{Category: "staff"})
+	u, ok := s.StageUser("sam")
+	if !ok || !u.Locked || u.Email != "sam@example.com" {
+		t.Fatalf("StageUser = %+v, %v", u, ok)
+	}
+	if _, ok := s.User("sam"); ok {
+		t.Fatal("stage user is active")
+	}
+	if _, err := s.ClientAs("admin").StageUserActivate("sam"); err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := s.StageUser("sam"); ok {
+		t.Error("stage entry kept")
+	}
+	if a, ok := s.User("sam"); !ok || a.Locked || a.Category != "staff" {
+		t.Errorf("User = %+v, %v", a, ok)
+	}
+}

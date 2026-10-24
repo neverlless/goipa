@@ -134,6 +134,29 @@ func twinCalls() []twinCall {
 			_, err := c.HostFindContext(ctx, nil)
 			return err
 		}},
+		{"StageUserAddContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.StageUserAddContext(ctx, &ipa.User{Username: "bob"})
+			return err
+		}},
+		{"StageUserShowContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.StageUserShowContext(ctx, "bob")
+			return err
+		}},
+		{"StageUserFindContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.StageUserFindContext(ctx, nil)
+			return err
+		}},
+		{"StageUserModContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.StageUserModContext(ctx, &ipa.User{Username: "bob"})
+			return err
+		}},
+		{"StageUserActivateContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.StageUserActivateContext(ctx, "bob")
+			return err
+		}},
+		{"StageUserDeleteContext", func(ctx context.Context, c *ipa.Client) error {
+			return c.StageUserDeleteContext(ctx, "bob")
+		}},
 	}
 }
 

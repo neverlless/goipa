@@ -168,6 +168,21 @@
 //     already holds its own host, ipa.test.local, with a keytab.
 //     TestHostFind_HidesMembersByDefault, TestHostShow_Shape,
 //     TestHostShow_NotFound.
+//   - Q28: stage users live in their own store, with dn
+//     uid=<uid>,cn=staged users,cn=accounts,cn=provisioning,dc=test,dc=local,
+//     nsaccountlock always true, no uidnumber and no memberof_*.
+//     stageuser_find leaves out userclass unless all is true, as Q1.
+//     TestContractStageFindUserclassNeedsAll, TestContractStageUserLifecycle.
+//   - Q29: stageuser_add without givenname or sn is 3007; a duplicate stage
+//     uid is 4002 `stage user with name "<uid>" already exists`; active
+//     users are not checked. stageuser_del has the user_del shape; a missing
+//     entry is 4001 "<uid>: stage user not found". TestStageUserAdd_Required,
+//     TestContractStageUserLifecycle.
+//   - Q30: stageuser_activate moves the record to the active users with a
+//     fresh uidnumber and answers with the active entry (all attributes),
+//     summary "Stage user <uid> activated". If the active uid exists it is
+//     4002 `active user with name "<uid>" already exists` and the stage entry
+//     stays. TestContractStageActivateSummary, TestContractStageUserLifecycle.
 //
 // A response's version is the server release, 4.13.4, and its principal is
 // <uid>@TEST.LOCAL. An error a HandlerFunc returns without a Name gets the
@@ -175,7 +190,7 @@
 //
 // # Not modelled
 //
-// Stage users, lockout status and unlock, password policy, subordinate IDs,
+// Lockout status and unlock, password policy, subordinate IDs,
 // HBAC and sudo rules, hbactest and passkey management (planned for v0.5).
 // Until then, Handle is the way to reach them. Kerberos, LDAP search
 // filters, size limits, replication and HTTP fault injection are left out;
