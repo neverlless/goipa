@@ -64,8 +64,12 @@ func (c *Client) requireVersion(method, need string) error {
 		return nil
 	}
 	n, _ := parseVersion(need)
-	if h[0] < n[0] || h[0] == n[0] && (h[1] < n[1] || h[1] == n[1] && h[2] < n[2]) {
+	if versionLess(h, n) {
 		return fmt.Errorf("%w: %s needs FreeIPA %s, server is %s", ErrNotSupported, method, need, have)
 	}
 	return nil
+}
+
+func versionLess(a, b [3]int) bool {
+	return a[0] < b[0] || a[0] == b[0] && (a[1] < b[1] || a[1] == b[1] && a[2] < b[2])
 }
