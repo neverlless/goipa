@@ -7,6 +7,7 @@ package ipa_test
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"reflect"
 	"testing"
 
@@ -87,7 +88,11 @@ func TestBatch_MiddleFails(t *testing.T) {
 	if rs[0].Result == nil || rs[2].Result == nil || rs[0].Err != nil || rs[2].Err != nil {
 		t.Errorf("ok results: %+v %+v", rs[0], rs[2])
 	}
-	if e := rs[1].Err; rs[1].Result != nil || e == nil || e.Code != ipa.CodeNotFound || e.Name != "NotFound" || e.Message == "" || !json.Valid([]byte(e.Data)) {
+	e, ok := rs[1].Err.(*ipa.IpaError)
+	if !errors.Is(rs[1].Err, ipa.ErrNotFound) {
+		t.Errorf("errors.Is(%v, ErrNotFound) = false", rs[1].Err)
+	}
+	if rs[1].Result != nil || !ok || e.Code != ipa.CodeNotFound || e.Name != "NotFound" || e.Message == "" || !json.Valid([]byte(e.Data)) {
 		t.Errorf("failed result: %+v %+v", rs[1], rs[1].Err)
 	}
 }
@@ -99,7 +104,7 @@ func TestBatch_ErrorKw(t *testing.T) {
 		t.Fatal(err)
 	}
 	want := ipa.IpaError{Message: "'method' is required", Code: 3007, Name: "RequirementError", Data: `{"name":"method"}`}
-	if rs[0].Err == nil || *rs[0].Err != want {
+	if e, ok := rs[0].Err.(*ipa.IpaError); !ok || *e != want {
 		t.Errorf("err %+v", rs[0].Err)
 	}
 }
@@ -142,5 +147,22 @@ func TestBatch_DoesNotModifyOptions(t *testing.T) {
 	}
 	if !reflect.DeepEqual(opts, ipa.Options{"all": true}) {
 		t.Errorf("options changed: %v", opts)
+	}
+}
+
+func TestBatch_SessionExpiredRelogin(t *testing.T) {
+	srv, c, rt := reloginSetup(t, true)
+	srv.ExpireSession(c.SessionID())
+	rs, err := c.Batch(context.Background(),
+		ipa.BatchCall{Method: "user_show", Args: []string{"rita"}},
+		ipa.BatchCall{Method: "user_show", Args: []string{"ghost"}})
+	if err != nil || len(rs) != 2 {
+		t.Fatalf("%v, %v", rs, err)
+	}
+	if rs[0].Err != nil || !errors.Is(rs[1].Err, ipa.ErrNotFound) {
+		t.Errorf("results %+v", rs)
+	}
+	if n := rt.logins.Load(); n != 2 {
+		t.Errorf("logins = %d, want 2", n)
 	}
 }

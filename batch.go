@@ -19,17 +19,20 @@ type BatchCall struct {
 }
 
 // BatchResult is the outcome of one BatchCall: Result on success, otherwise
-// Err with FreeIPA's error_code, error_name, error and error_kw (as Data).
+// Err, always a bare *IpaError with FreeIPA's error_code, error_name, error
+// and error_kw (as Data); errors.Is, errors.As and err.(*ipa.IpaError) work
+// on it. Err is an error, not *IpaError, so Err != nil holds only on failure.
 type BatchResult struct {
 	Result *Result
-	Err    *IpaError
+	Err    error
 }
 
 // Batch runs calls in one FreeIPA batch request, in order, and returns one
 // BatchResult per call. A failed command does not stop the others and does
 // not make err non-nil; err is set only when the whole batch fails. The
 // commands are not atomic: earlier ones stay applied when a later one fails.
-// No call's Options is modified.
+// A result the client cannot decode fails the whole call, although the
+// server ran the commands. No call's Options is modified.
 func (c *Client) Batch(ctx context.Context, calls ...BatchCall) ([]BatchResult, error) {
 	if len(calls) == 0 {
 		return nil, errors.New("ipa: batch: no calls")

@@ -24,7 +24,7 @@ func TestContractBatch(t *testing.T) {
 		if rs[0].Result == nil || rs[0].Err != nil {
 			t.Errorf("results[0] = %+v", rs[0])
 		}
-		if rs[1].Err == nil || rs[1].Err.Code != ipa.CodeNotFound || rs[1].Err.Name != "NotFound" {
+		if e, ok := rs[1].Err.(*ipa.IpaError); !ok || e.Code != ipa.CodeNotFound || e.Name != "NotFound" {
 			t.Errorf("results[1] = %+v, err %+v", rs[1], rs[1].Err)
 		}
 	})
