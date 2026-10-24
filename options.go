@@ -169,7 +169,7 @@ type ipaDefaults struct {
 // values and the system roots.
 func loadIPADefaults(confPath, caPath string) ipaDefaults {
 	var d ipaDefaults
-	if pem, err := os.ReadFile(caPath); err == nil {
+	if pem, err := os.ReadFile(caPath); err == nil { // #nosec G304 -- /etc/ipa/ca.crt; tests pass their own
 		d.pool = x509.NewCertPool()
 		if !d.pool.AppendCertsFromPEM(pem) {
 			d.pool = nil
