@@ -550,11 +550,16 @@
 //
 // # Not modelled
 //
-// Certificates for user and service principals, profiles, sub-CAs, cert_find
-// and host_add's DNS check (every fqdn is accepted, as with force) are left
-// out. Of HBAC and sudo rule management, only find, add, del and the member and
-// option calls the tests need; Handle is the way to reach the rest, as for
-// config_*, subid_show, stageuser_add_passkey and stageuser_remove_passkey.
+// Certificates are issued (cert_request, cert_show, cert_revoke) for service
+// principals only, with the default profile; user and host certificates,
+// other profiles, sub-CAs, cert_find and the other cert commands are left
+// out, as is host_add's DNS check (every fqdn is accepted, as with force).
+// The *_mod commands of the families modelled since v0.9 (host groups,
+// services, HBAC and sudo rules, DNS, automember, RBAC) are not modelled,
+// nor are role, privilege and permission changes other than role_add,
+// role_del and role_add_member, HBAC services and service groups, or sudo
+// command groups; Handle is the way to reach the rest, as for config_*,
+// subid_show, stageuser_add_passkey and stageuser_remove_passkey.
 // Of DNS, only master zones and the record commands above: dnszone_add
 // ignores its SOA, TTL and policy options and the name server and overlap
 // checks, serials do not move, record values are neither validated nor
@@ -562,6 +567,6 @@
 // filters by criteria and idnsname only.
 // Stage user passwords are not modelled: userpassword is ignored and random
 // behaves as for active users. Kerberos, LDAP search filters, size limits on
-// other commands, replication and HTTP fault injection are left out; wrap HTTPClient's
-// transport for the latter.
+// other commands, replication and HTTP fault injection are left out; wrap
+// HTTPClient's transport for the latter.
 package ipatest
