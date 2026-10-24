@@ -34,13 +34,17 @@ func subIDFrom(res gjson.Result) *SubID {
 }
 
 // SubIDFind finds sub-ID ranges with `subid_find`; options are passed through
-// (e.g. `ipaowner`). Any authenticated user may read sub-IDs. FreeIPA 4.9.7+.
+// (e.g. `ipaowner`). Any authenticated user may read sub-IDs. FreeIPA 4.9.7+;
+// ErrNotSupported when the server version is known to be older.
 func (c *Client) SubIDFind(options Options) ([]*SubID, error) {
 	return c.SubIDFindContext(context.Background(), options)
 }
 
 // SubIDFindContext is like SubIDFind but bounds the request with ctx.
 func (c *Client) SubIDFindContext(ctx context.Context, options Options) ([]*SubID, error) {
+	if err := c.requireVersion("subid_find", "4.9.7"); err != nil {
+		return nil, err
+	}
 	options = maps.Clone(options)
 	if options == nil {
 		options = Options{}
@@ -61,7 +65,8 @@ func (c *Client) SubIDFindContext(ctx context.Context, options Options) ([]*SubI
 // SubIDGenerate allocates a range with `subid_generate`; owner "" means the
 // caller. For yourself it needs the Subordinate ID Selfservice User role, for
 // others Subordinate ID Administrators. One range per user: a second call
-// returns ErrDuplicateEntry. A server with sub-IDs disabled returns a 3009
+// returns ErrDuplicateEntry. Servers older than 4.9.7 give ErrNotSupported
+// when their version is known. A server with sub-IDs disabled returns a 3009
 // ValidationError.
 func (c *Client) SubIDGenerate(owner string) (*SubID, error) {
 	return c.SubIDGenerateContext(context.Background(), owner)
@@ -69,6 +74,9 @@ func (c *Client) SubIDGenerate(owner string) (*SubID, error) {
 
 // SubIDGenerateContext is like SubIDGenerate but bounds the request with ctx.
 func (c *Client) SubIDGenerateContext(ctx context.Context, owner string) (*SubID, error) {
+	if err := c.requireVersion("subid_generate", "4.9.7"); err != nil {
+		return nil, err
+	}
 	options := Options{"all": true}
 	if owner != "" {
 		options["ipaowner"] = owner

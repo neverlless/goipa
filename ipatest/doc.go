@@ -277,7 +277,8 @@
 //     TestContractSessionLogoutGives401).
 //     TestContractSessionLogoutGives401, TestSessionLogout.
 //
-// A response's version is the server release, 4.13.4, and its principal is
+// A response's version is the server release, 4.13.4 unless SetVersion
+// changes it, and its principal is
 // <uid>@TEST.LOCAL. An error a HandlerFunc returns without a Name gets the
 // FreeIPA name for its code.
 //
