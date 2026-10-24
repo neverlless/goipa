@@ -7,6 +7,18 @@ existing exported identifiers keep their signatures).
 
 ## [Unreleased]
 
+### Added
+
+- `Commands`, `LookupCommand`, `Command` and `Param`: the FreeIPA command
+  catalogue for releases 4.9.0 to 4.13.4 (positional arguments, options,
+  types and the release that introduced each), generated from `API.txt` with
+  `go generate`; a nightly CI job fails when it is out of date
+- `WithValidation` and `ErrInvalidCall`: opt-in check of every call against
+  the catalogue before it is sent, including each call inside `Batch`;
+  commands and options newer than the server give `ErrNotSupported`
+- `ipatest`: built-in commands reject options the command lacks at the
+  reported release (`OptionError`) and commands added after it; `passkeyconfig_show`
+
 ## [v0.7.0] - 2026-10-24
 
 Typed escape hatch and core API: any FreeIPA command can be called with

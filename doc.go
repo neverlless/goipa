@@ -55,4 +55,14 @@
 // FindEntries returns ErrTruncated with the entries it got when the server
 // cut a search short; Modify changes single attributes; Batch sends several
 // commands in one round trip.
+//
+// # Command catalogue
+//
+// Commands and LookupCommand describe every FreeIPA command from 4.9.0 on:
+// positional arguments, options, and the release that introduced each. The
+// data is generated from FreeIPA's API.txt (go generate). New(...,
+// WithValidation()) checks each call against it before sending and returns
+// ErrInvalidCall (or ErrNotSupported for a feature newer than the server). It
+// is off by default, does not check values or required options, and does
+// nothing when the server is newer than the newest catalogued release.
 package ipa
