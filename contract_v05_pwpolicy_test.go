@@ -30,6 +30,10 @@ func TestContractPwPolicyGlobal(t *testing.T) {
 		if got := gjson.GetBytes(raw.Result.Data, "krbmaxpwdlife.0").String(); got != "90" {
 			t.Errorf("krbmaxpwdlife = %q, want 90", got)
 		}
+		_, err = b.admin.RPC("pwpolicy_show", nil, ipa.Options{"all": true, "no_members": false})
+		if ierr := new(ipa.IpaError); !errors.As(err, &ierr) || ierr.Code != ipa.CodeOption {
+			t.Errorf("no_members err = %v, want 3005 OptionError", err)
+		}
 		t.Logf("ipapwddictcheck raw: %s", gjson.GetBytes(raw.Result.Data, "ipapwddictcheck").Raw)
 		if b.name == "ipatest" {
 			if got := gjson.GetBytes(raw.Result.Data, "ipapwddictcheck").Raw; got != `["FALSE"]` {

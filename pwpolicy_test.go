@@ -97,6 +97,25 @@ func TestPwPolicyShow_Wire(t *testing.T) {
 	if _, err := c.PwPolicyShow("nope"); !errors.Is(err, ipa.ErrNotFound) {
 		t.Errorf("unknown group err = %v", err)
 	}
+	s.AddUser("bob", ipatest.User{First: "B", Last: "B"})
+	if _, err := c.UserPwPolicy("bob"); err != nil {
+		t.Fatal(err)
+	}
+	for _, call := range s.Calls() {
+		if _, ok := call.Options["no_members"]; ok || call.Options["all"] != true {
+			t.Errorf("options = %v; want all without no_members", call.Options)
+		}
+	}
+}
+
+func TestPwPolicyShow_UnknownOption(t *testing.T) {
+	s := ipatest.NewServer(t)
+	_, err := s.ClientAs("admin").RPC("pwpolicy_show", nil, ipa.Options{"all": true, "no_members": false})
+	var ierr *ipa.IpaError
+	if !errors.As(err, &ierr) || ierr.Code != ipa.CodeOption || ierr.Name != "OptionError" ||
+		ierr.Message != "Unknown option: no_members" {
+		t.Errorf("err = %#v", err)
+	}
 }
 
 func TestUserPwPolicy_Resolution(t *testing.T) {

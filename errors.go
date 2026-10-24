@@ -18,6 +18,7 @@ const (
 	CodeCommand              = 905
 	CodeReferer              = 911
 	CodeACI                  = 2100
+	CodeOption               = 3005
 	CodeRequirement          = 3007
 	CodeValidation           = 3009
 	CodeNotFound             = 4001

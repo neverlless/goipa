@@ -201,8 +201,10 @@
 //     Any caller may read it ([unverified] V7). pwpolicy_add needs an existing
 //     group (4001) and cospriority (3007); login_password and change_password
 //     use the global MaxFailures (0 disables lockout) and MinLength.
+//     pwpolicy_show takes only all, raw, rights, user and version; any other
+//     option is 3005 OptionError "Unknown option: <name>".
 //     TestContractPwPolicyGlobal, TestUserPwPolicy_Resolution,
-//     TestPwPolicy_AddDelAndLoginUseGlobal.
+//     TestPwPolicy_AddDelAndLoginUseGlobal, TestPwPolicyShow_UnknownOption.
 //   - Q33: sub-ID ranges start at 2147483648 and advance by 65536 (uid and gid
 //     equal). subid_find filters by ipaowner, ipauniqueid, ipasubuidnumber and
 //     description; values are lists of strings, plus dn

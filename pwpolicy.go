@@ -63,7 +63,6 @@ func pwPolicyFrom(res gjson.Result) *PwPolicy {
 }
 
 func (c *Client) pwPolicyShow(ctx context.Context, args []string, options Options) (*PwPolicy, error) {
-	options["no_members"] = false
 	options["all"] = true
 	res, err := c.rpc(ctx, "pwpolicy_show", args, options)
 	if err != nil {

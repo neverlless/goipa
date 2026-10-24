@@ -32,6 +32,7 @@ var errorNames = map[int]string{
 	ipa.CodeCommand:              "CommandError",
 	ipa.CodeReferer:              "RefererError",
 	ipa.CodeACI:                  "ACIError",
+	ipa.CodeOption:               "OptionError",
 	ipa.CodeRequirement:          "RequirementError",
 	ipa.CodeValidation:           "ValidationError",
 	ipa.CodeNotFound:             "NotFound",

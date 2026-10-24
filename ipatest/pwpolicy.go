@@ -6,6 +6,7 @@ package ipatest
 
 import (
 	"fmt"
+	"maps"
 	"slices"
 	"strconv"
 	"time"
@@ -140,6 +141,11 @@ func (s *Server) userPolicy(uid string) (string, bool) {
 
 func init() {
 	builtins["pwpolicy_show"] = func(s *Server, c Call) (any, *ipa.IpaError) {
+		for _, k := range slices.Sorted(maps.Keys(c.Options)) {
+			if !slices.Contains([]string{"all", "raw", "rights", "user", "version"}, k) {
+				return nil, &ipa.IpaError{Code: ipa.CodeOption, Message: "Unknown option: " + k}
+			}
+		}
 		cn := globalPolicy
 		if len(c.Args) > 0 && c.Args[0] != "" {
 			cn = c.Args[0]
