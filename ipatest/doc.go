@@ -266,6 +266,9 @@
 //     are not checked against a secret. The Referer check of the form
 //     endpoints applies; SyncOTPToken sends one. TestContractSyncTokenResults,
 //     TestSyncOTPToken.
+//   - Q39: session_logout ends the caller's session, which then gets HTTP
+//     401 as after ExpireSession; its output is {"result": null}.
+//     TestContractSessionLogoutGives401, TestSessionLogout.
 //
 // A response's version is the server release, 4.13.4, and its principal is
 // <uid>@TEST.LOCAL. An error a HandlerFunc returns without a Name gets the

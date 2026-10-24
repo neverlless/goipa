@@ -73,6 +73,8 @@ type Call struct {
 	Options map[string]any
 	// User is the authenticated caller's uid.
 	User string
+
+	session string // the caller's session id, for session_logout
 }
 
 func (c Call) clone() Call {
@@ -281,7 +283,7 @@ func (s *Server) serveSessionJSON(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
-	s.serveRPC(w, r, uid)
+	s.serveRPC(w, r, uid, ck.Value)
 }
 
 // dropConnection closes the connection without a response, as the httpd
@@ -304,10 +306,10 @@ func (s *Server) serveNegotiateJSON(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	setSessionCookie(w, sid)
-	s.serveRPC(w, r, uid)
+	s.serveRPC(w, r, uid, sid)
 }
 
-func (s *Server) serveRPC(w http.ResponseWriter, r *http.Request, uid string) {
+func (s *Server) serveRPC(w http.ResponseWriter, r *http.Request, uid, sid string) {
 	if !s.refererOK(r) {
 		denied(w)
 		return
@@ -317,7 +319,7 @@ func (s *Server) serveRPC(w http.ResponseWriter, r *http.Request, uid string) {
 		Method string            `json:"method"`
 		Params []json.RawMessage `json:"params"`
 	}
-	c := Call{User: uid, Options: map[string]any{}}
+	c := Call{User: uid, Options: map[string]any{}, session: sid}
 	err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20)).Decode(&req)
 	if err == nil && len(req.Params) > 0 {
 		var args []any

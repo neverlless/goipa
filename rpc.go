@@ -21,6 +21,9 @@ import (
 
 const maxResponseSize = 64 << 20
 
+// setSPNEGOHeader is a var so tests can stand in for a KDC.
+var setSPNEGOHeader = spnego.SetSPNEGOHeader
+
 // Result returned from a FreeIPA JSON rpc call
 type Result struct {
 	Summary   string          `json:"summary"`
@@ -98,6 +101,39 @@ func (c *Client) rpc(ctx context.Context, method string, params []string, option
 		return nil, err
 	}
 
+	res, sent, err := c.send(ctx, b)
+	var herr *HTTPError
+	if sent == "" || !errors.As(err, &herr) || herr.StatusCode != http.StatusUnauthorized {
+		return res, err
+	}
+
+	// The session expired. A 401 means FreeIPA rejected the request before
+	// running the command, so sending it again is safe; at most once.
+	c.mu.Lock()
+	if c.sessionID == sent { // another goroutine may already hold a fresh one
+		c.sessionID = ""
+	}
+	fresh, krb, user, pass := c.sessionID, c.krbClient, c.reloginUser, c.reloginPass
+	c.mu.Unlock()
+
+	switch {
+	case fresh != "" || krb != nil: // send uses the fresh session or SPNEGO
+	case c.relogin && user != "":
+		if err := c.RemoteLoginContext(ctx, user, pass); err != nil {
+			if errors.Is(err, ErrInvalidPassword) || errors.Is(err, ErrExpiredPassword) || errors.Is(err, ErrUnauthorized) {
+				c.dropRelogin(user, pass) // retrying a rejected password ends in lockout
+			}
+			return nil, err
+		}
+	default:
+		return nil, err
+	}
+	res, _, err = c.send(ctx, b)
+	return res, err
+}
+
+// send makes one request with body b and returns the session it carried.
+func (c *Client) send(ctx context.Context, b []byte) (*Response, string, error) {
 	c.krbMu.RLock()
 	c.mu.Lock()
 	sessionID, krbClient := c.sessionID, c.krbClient
@@ -108,10 +144,10 @@ func (c *Client) rpc(ctx context.Context, method string, params []string, option
 		ipaURL = fmt.Sprintf("https://%s/ipa/session/json", c.host)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, "POST", ipaURL, bytes.NewBuffer(b))
+	req, err := http.NewRequestWithContext(ctx, "POST", ipaURL, bytes.NewReader(b))
 	if err != nil {
 		c.krbMu.RUnlock()
-		return nil, err
+		return nil, sessionID, err
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Referer", fmt.Sprintf("https://%s/ipa/xml", c.host))
@@ -121,50 +157,50 @@ func (c *Client) rpc(ctx context.Context, method string, params []string, option
 		req.Header.Set("Cookie", fmt.Sprintf("ipa_session=%s", sessionID))
 	} else if krbClient != nil {
 		// use Kerberos auth (SPNEGO)
-		if err := spnego.SetSPNEGOHeader(krbClient, req, ""); err != nil {
+		if err := setSPNEGOHeader(krbClient, req, ""); err != nil {
 			c.krbMu.RUnlock()
-			return nil, err
+			return nil, sessionID, err
 		}
 	}
 	c.krbMu.RUnlock()
 
 	res, err := c.httpClient.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, sessionID, err
 	}
 	defer res.Body.Close()
 
 	if res.StatusCode != http.StatusOK {
-		return nil, &HTTPError{StatusCode: res.StatusCode, Status: res.Status}
+		return nil, sessionID, &HTTPError{StatusCode: res.StatusCode, Status: res.Status}
 	}
 
 	if err = c.setSessionID(res); err != nil {
-		return nil, err
+		return nil, sessionID, err
 	}
 
 	rawJSON, err := io.ReadAll(io.LimitReader(res.Body, maxResponseSize+1))
 	if err != nil {
-		return nil, err
+		return nil, sessionID, err
 	}
 	if len(rawJSON) > maxResponseSize {
-		return nil, fmt.Errorf("ipa: response larger than %d bytes", maxResponseSize)
+		return nil, sessionID, fmt.Errorf("ipa: response larger than %d bytes", maxResponseSize)
 	}
 
 	var ipaRes Response
 	err = json.Unmarshal(rawJSON, &ipaRes)
 	if err != nil {
-		return nil, err
+		return nil, sessionID, err
 	}
 
 	if ipaRes.Error != nil {
-		return nil, ipaRes.Error
+		return nil, sessionID, ipaRes.Error
 	}
 
 	if ipaRes.Result == nil {
-		return nil, errors.New("ipa: response has neither result nor error")
+		return nil, sessionID, errors.New("ipa: response has neither result nor error")
 	}
 
-	return &ipaRes, nil
+	return &ipaRes, sessionID, nil
 }
 
 // RPC calls any FreeIPA command, an escape hatch for commands goipa does not

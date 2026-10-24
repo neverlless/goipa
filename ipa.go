@@ -27,6 +27,12 @@ const (
 // context. Kerberos login and SPNEGO header generation are not cancellable
 // (gokrb5 has no context support), so Login, LoginWithKeytab and
 // LoginFromCCache have no Context twins.
+//
+// When FreeIPA answers 401 for an expired session, the Client drops that
+// session and, if it can, sends the request again once: a Kerberos client
+// gets a new session through SPNEGO, a RemoteLogin client logs in again only
+// with WithPasswordRelogin. Other clients get an error matching
+// ErrUnauthorized.
 type Client struct {
 	host       string
 	realm      string
