@@ -236,3 +236,19 @@ func TestHBACTest_Required(t *testing.T) {
 		t.Errorf("%d calls", n)
 	}
 }
+
+func TestHBACTest_HostGroupMember(t *testing.T) {
+	s, c := newFake(t)
+	s.AddHost("in.test.local", ipatest.Host{})
+	s.AddHost("out.test.local", ipatest.Host{})
+	s.AddHostGroup("web", ipatest.HostGroup{Hosts: []string{"in.test.local"}})
+	s.AddHBACRule("r", ipatest.HBACRule{UserCategory: "all", ServiceCategory: "all", HostGroups: []string{"web"}})
+	got, err := c.HBACTest("alice", "in.test.local", "sshd", "r")
+	if err != nil || !got.Granted || !reflect.DeepEqual(got.Matched, []string{"r"}) {
+		t.Errorf("host in group = %+v, %v", got, err)
+	}
+	got, err = c.HBACTest("alice", "out.test.local", "sshd", "r")
+	if err != nil || got.Granted {
+		t.Errorf("host not in group = %+v, %v", got, err)
+	}
+}
