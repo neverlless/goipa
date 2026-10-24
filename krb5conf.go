@@ -32,6 +32,15 @@ func loadKrb5Config(path string) (*config.Config, error) {
 		return nil, errors.New("configuration file could not be opened: " + path + " " + err.Error())
 	}
 
+	return parseKrb5Config(path, data)
+}
+
+// loadKrb5ConfigData is loadKrb5Config for krb5.conf text already in memory.
+func loadKrb5ConfigData(data []byte) (*config.Config, error) {
+	return parseKrb5Config("", data)
+}
+
+func parseKrb5Config(path string, data []byte) (*config.Config, error) {
 	var lines []string
 	found, err := expandKrb5Conf(path, data, nil, &lines)
 	if err != nil {

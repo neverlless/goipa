@@ -156,6 +156,10 @@ func twinCalls() []twinCall {
 			_, err := c.HBACRuleFindContext(ctx, nil)
 			return err
 		}},
+		{"WhoAmIContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.WhoAmIContext(ctx)
+			return err
+		}},
 		{"HBACTestContext", func(ctx context.Context, c *ipa.Client) error {
 			_, err := c.HBACTestContext(ctx, "bob", "h.test.local", "sshd")
 			return err
@@ -222,7 +226,8 @@ func TestContextCancelReachesTransport(t *testing.T) {
 
 // Methods that do no network I/O, or cannot honour ctx (gokrb5).
 var noTwin = map[string]bool{"Host": true, "Realm": true, "SessionID": true, "SetSessionID": true,
-	"ClearSession": true, "StickySession": true, "Login": true, "LoginWithKeytab": true, "LoginFromCCache": true}
+	"ClearSession": true, "StickySession": true, "Login": true, "LoginWithKeytab": true, "LoginFromCCache": true,
+	"LoginWithKeytabData": true, "LoginFromCCacheData": true}
 
 func TestEveryMethodHasContextTwin(t *testing.T) {
 	typ := reflect.TypeFor[*ipa.Client]()

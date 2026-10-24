@@ -266,6 +266,9 @@
 //     are not checked against a secret. The Referer check of the form
 //     endpoints applies; SyncOTPToken sends one. TestContractSyncTokenResults,
 //     TestSyncOTPToken.
+//   - Q38: whoami answers {"object": "user", "command": "user_show/1",
+//     "arguments": [<caller uid>]} with no "result" key. TestWhoAmI,
+//     TestContractWhoAmI.
 //
 // A response's version is the server release, 4.13.4, and its principal is
 // <uid>@TEST.LOCAL. An error a HandlerFunc returns without a Name gets the
