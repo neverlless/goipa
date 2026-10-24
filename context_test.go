@@ -150,6 +150,14 @@ func twinCalls() []twinCall {
 			_, err := c.StageUserModContext(ctx, &ipa.User{Username: "bob"})
 			return err
 		}},
+		{"SubIDFindContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.SubIDFindContext(ctx, nil)
+			return err
+		}},
+		{"SubIDGenerateContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.SubIDGenerateContext(ctx, "bob")
+			return err
+		}},
 		{"StageUserActivateContext", func(ctx context.Context, c *ipa.Client) error {
 			_, err := c.StageUserActivateContext(ctx, "bob")
 			return err
