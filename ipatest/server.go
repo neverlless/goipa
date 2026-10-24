@@ -125,6 +125,8 @@ type Server struct {
 	perms      map[string]*ipa.Permission
 	replay     fs.FS
 	services   map[string]*serviceRec
+	amRules    map[string]map[string]*amRule
+	amDefs     map[string]string // default group cn by type
 }
 
 // NewServer starts a server and closes it with tb.Cleanup.
@@ -161,6 +163,8 @@ func New() *Server {
 		perms:      seedPermissions(),
 		replay:     shippedReplay(),
 		services:   map[string]*serviceRec{},
+		amRules:    map[string]map[string]*amRule{"group": {}, "hostgroup": {}},
+		amDefs:     map[string]string{},
 	}
 	mux := http.NewServeMux()
 	mux.HandleFunc("/ipa/session/json", s.serveSessionJSON)

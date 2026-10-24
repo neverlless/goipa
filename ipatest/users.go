@@ -559,7 +559,11 @@ func (s *Server) userAdd(stage bool, c Call) (any, *ipa.IpaError) {
 	if u.Last == "" {
 		return nil, required("sn")
 	}
-	rec := s.putUser(stage, uid, u).withRandom(s, c, uid)
+	r := s.putUser(stage, uid, u)
+	if !stage {
+		s.applyAutomember(uid)
+	}
+	rec := r.withRandom(s, c, uid)
 	return entry(uid, rec, fmt.Sprintf("Added %s %q", userObject(stage), uid)), nil
 }
 
