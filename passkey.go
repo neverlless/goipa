@@ -12,7 +12,8 @@ import (
 // UserAddPasskey adds a passkey mapping with `user_add_passkey`. The mapping
 // is passkey:<credential id b64>,<public key b64 SPKI>[,<user id>]. Users may
 // manage their own mappings; for others the Passkey Administrators privilege
-// is needed. FreeIPA 4.11+ (older servers return 905 CommandError). A
+// is needed. FreeIPA 4.11+: when the server version is known to be older it
+// returns ErrNotSupported without sending (see ServerVersion). A
 // duplicate returns 4038, an invalid mapping 3009. Read mappings with
 // UserShow (User.Passkeys).
 func (c *Client) UserAddPasskey(username, mapping string) error {
@@ -38,6 +39,9 @@ func (c *Client) UserRemovePasskeyContext(ctx context.Context, username, mapping
 func (c *Client) passkey(ctx context.Context, method, username, mapping string) error {
 	if username == "" || mapping == "" {
 		return errors.New("ipa: username and passkey mapping are required")
+	}
+	if err := c.requireVersion(method, "4.11"); err != nil {
+		return err
 	}
 	_, err := c.rpc(ctx, method, []string{username, mapping}, Options{})
 	return err

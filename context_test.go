@@ -227,7 +227,8 @@ func TestContextCancelReachesTransport(t *testing.T) {
 // Methods that do no network I/O, or cannot honour ctx (gokrb5).
 var noTwin = map[string]bool{"Host": true, "Realm": true, "SessionID": true, "SetSessionID": true,
 	"ClearSession": true, "StickySession": true, "Login": true, "LoginWithKeytab": true, "LoginFromCCache": true,
-	"LoginWithKeytabData": true, "LoginFromCCacheData": true}
+	"LoginWithKeytabData": true, "LoginFromCCacheData": true,
+	"ServerVersion": true}
 
 func TestEveryMethodHasContextTwin(t *testing.T) {
 	typ := reflect.TypeFor[*ipa.Client]()

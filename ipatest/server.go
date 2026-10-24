@@ -23,8 +23,8 @@ import (
 )
 
 const (
-	realm         = "TEST.LOCAL"
-	serverVersion = "4.13.4"
+	realm          = "TEST.LOCAL"
+	defaultVersion = "4.13.4"
 )
 
 // errorNames fills IpaError.Name when a handler leaves it empty.
@@ -53,8 +53,8 @@ type builtin func(s *Server, c Call) (any, *ipa.IpaError)
 
 // builtins is filled from init functions, one file per object type.
 var builtins = map[string]builtin{
-	"ping": func(*Server, Call) (any, *ipa.IpaError) {
-		return map[string]any{"summary": "IPA server version " + serverVersion + ". API version 2.257"}, nil
+	"ping": func(s *Server, _ Call) (any, *ipa.IpaError) {
+		return map[string]any{"summary": "IPA server version " + s.version + ". API version 2.257"}, nil
 	},
 }
 
@@ -97,6 +97,7 @@ type Server struct {
 	sessions  map[string]string // session id -> uid
 	expired   map[string]bool   // session ids from ExpireSession
 	negotiate string
+	version   string // release reported in every envelope
 	calls     []Call
 	handlers  map[string]HandlerFunc
 	users     map[string]*userRec
@@ -135,6 +136,7 @@ func New() *Server {
 		hbac:     seedAllowAll(),
 		sudo:     map[string]*sudoRec{},
 		pwpol:    seedPwPolicies(),
+		version:  defaultVersion,
 		nextID:   firstID - 1,
 		nextGID:  firstID - 1,
 	}
@@ -237,6 +239,15 @@ func (s *Server) Calls() []Call {
 		out[i] = c.clone()
 	}
 	return out
+}
+
+// SetVersion sets the FreeIPA release the server reports in every response
+// and in ping, default 4.13.4. It changes only that string, not which
+// commands are modelled.
+func (s *Server) SetVersion(v string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.version = v
 }
 
 // Handle makes fn serve method in place of the built-in command, or of the
@@ -368,10 +379,13 @@ func (s *Server) serveRPC(w http.ResponseWriter, r *http.Request, uid, sid strin
 		// Builtins return values only, so the logout cookie is attached here.
 		http.SetCookie(w, &http.Cookie{Name: "ipa_session", Path: "/ipa", MaxAge: -1, Secure: true, HttpOnly: true, SameSite: http.SameSiteStrictMode})
 	}
-	writeEnvelope(w, uid, result, ierr)
+	s.mu.Lock()
+	version := s.version
+	s.mu.Unlock()
+	writeEnvelope(w, uid, version, result, ierr)
 }
 
-func writeEnvelope(w http.ResponseWriter, uid string, result any, ierr *ipa.IpaError) {
+func writeEnvelope(w http.ResponseWriter, uid, version string, result any, ierr *ipa.IpaError) {
 	if ierr != nil && ierr.Name == "" {
 		e := *ierr
 		e.Name = errorNames[e.Code]
@@ -383,7 +397,7 @@ func writeEnvelope(w http.ResponseWriter, uid string, result any, ierr *ipa.IpaE
 		ID        int           `json:"id"`
 		Principal string        `json:"principal"`
 		Version   string        `json:"version"`
-	}{result, ierr, 0, uid + "@" + realm, serverVersion})
+	}{result, ierr, 0, uid + "@" + realm, version})
 	if err != nil {
 		http.Error(w, "cannot encode result: "+err.Error(), http.StatusInternalServerError)
 		return
