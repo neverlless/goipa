@@ -6,6 +6,7 @@ package ipa
 
 import (
 	"context"
+	"errors"
 	"maps"
 
 	"github.com/tidwall/gjson"
@@ -131,4 +132,57 @@ func findRules[T any](ctx context.Context, c *Client, method string, options Opt
 		out = append(out, parse(r))
 	}
 	return out, nil
+}
+
+// HBACTestResult is the outcome of HBACTest.
+type HBACTestResult struct {
+	// value
+	Granted bool
+	// matched, notmatched: names of the rules that did and did not match
+	Matched, NotMatched []string
+	// error, warning
+	Errors, Warnings []string
+}
+
+// HBACTest runs `hbactest`. It evaluates HBAC rules on the server: every
+// enabled rule, or only rules. Any authenticated user may run it; it reads
+// rules and group membership as the caller. FreeIPA ignores an unknown user,
+// host or service instead of failing, so a typo reads as denied. Names in
+// rules that do not exist are listed in Errors.
+func (c *Client) HBACTest(user, host, service string, rules ...string) (*HBACTestResult, error) {
+	return c.HBACTestContext(context.Background(), user, host, service, rules...)
+}
+
+// HBACTestContext is like HBACTest but bounds the request with ctx.
+func (c *Client) HBACTestContext(ctx context.Context, user, host, service string, rules ...string) (*HBACTestResult, error) {
+	if user == "" || host == "" || service == "" {
+		return nil, errors.New("ipa: hbactest needs a user, a host and a service")
+	}
+	// sizelimit 0 = unlimited; the default evaluates only the first 100 rules.
+	options := Options{"user": user, "targethost": host, "service": service, "sizelimit": 0}
+	if len(rules) > 0 {
+		options["rules"] = rules
+	}
+	res, err := c.rpc(ctx, "hbactest", []string{}, options)
+	if err != nil {
+		return nil, err
+	}
+	// hbactest has no "result" key: value and the lists sit in the result object.
+	r := gjson.ParseBytes(res.Result.Raw)
+	return &HBACTestResult{
+		Granted:    r.Get("value").Bool(),
+		Matched:    nullList(r, "matched"),
+		NotMatched: nullList(r, "notmatched"),
+		Errors:     nullList(r, "error"),
+		Warnings:   nullList(r, "warning"),
+	}, nil
+}
+
+// nullList is strList for a list FreeIPA sends as null when empty; gjson
+// would iterate a null as one element.
+func nullList(res gjson.Result, key string) []string {
+	if !res.Get(key).IsArray() {
+		return nil
+	}
+	return strList(res, key)
 }

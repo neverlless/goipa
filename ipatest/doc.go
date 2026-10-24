@@ -224,6 +224,15 @@
 //     TestHBACRuleFind_AllFields, TestSudoRuleFind_AllFields,
 //     TestRuleFindMembersVisibility, TestRuleFindFilters,
 //     TestRuleAddUserFailures.
+//   - Q35: hbactest needs user, targethost and service (3007 otherwise) and
+//     answers with no result key: value, summary "Access granted: True|False",
+//     and matched, notmatched, error and warning as lists or null. The rules
+//     are the enabled ones, or those named in rules (an unknown name goes to
+//     error). A rule matches when its user, host and service parts all do:
+//     category all, the name listed, or a group of the user (nested ones
+//     included) or a hostgroup of the host listed. Service groups are not
+//     expanded. An unknown user or host just has no groups.
+//     TestContractHBACTest, TestHBACTest_*.
 //
 // A response's version is the server release, 4.13.4, and its principal is
 // <uid>@TEST.LOCAL. An error a HandlerFunc returns without a Name gets the
@@ -231,7 +240,7 @@
 //
 // # Not modelled
 //
-// Password policy and hbactest (planned for v0.5); of HBAC and sudo rules
+// Password policy (planned for v0.5); of HBAC and sudo rules
 // only find, add, del and the member and option calls the tests need.
 // Until then, Handle is the way to reach them. Kerberos, LDAP search
 // filters, size limits, replication and HTTP fault injection are left out;

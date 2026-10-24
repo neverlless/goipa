@@ -136,3 +136,98 @@ func TestRuleCommands(t *testing.T) {
 		t.Errorf("not deleted: %+v", hr)
 	}
 }
+
+func TestHBACTest_SendsSizelimitZero(t *testing.T) {
+	s, c := newFake(t)
+	if _, err := c.HBACTest("alice", "ipa.test.local", "sshd"); err != nil {
+		t.Fatal(err)
+	}
+	calls := s.Calls()
+	last := calls[len(calls)-1]
+	o := last.Options
+	if last.Method != "hbactest" || len(last.Args) != 0 || o["sizelimit"] != float64(0) ||
+		o["user"] != "alice" || o["targethost"] != "ipa.test.local" || o["service"] != "sshd" {
+		t.Errorf("call = %+v", last)
+	}
+	if _, ok := o["rules"]; ok {
+		t.Errorf("rules sent without being asked: %v", o["rules"])
+	}
+	if _, err := c.HBACTest("alice", "ipa.test.local", "sshd", "r1", "r2"); err != nil {
+		t.Fatal(err)
+	}
+	calls = s.Calls()
+	if got := calls[len(calls)-1].Options["rules"]; !reflect.DeepEqual(got, []any{"r1", "r2"}) {
+		t.Errorf("rules = %#v", got)
+	}
+}
+
+func TestHBACTest_NullLists(t *testing.T) {
+	s, c := newFake(t)
+	s.Handle("hbactest", func(ipatest.Call) (any, *ipa.IpaError) {
+		return map[string]any{"value": false, "summary": "Access granted: False",
+			"matched": nil, "notmatched": []string{"r"}, "error": nil, "warning": nil}, nil
+	})
+	got, err := c.HBACTest("alice", "h", "sshd")
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := &ipa.HBACTestResult{NotMatched: []string{"r"}}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("got %#v, want %#v", got, want)
+	}
+}
+
+func TestHBACTest_NestedGroup(t *testing.T) {
+	s, c := newFake(t)
+	s.AddUser("u", ipatest.User{})
+	s.AddUser("other", ipatest.User{})
+	s.AddGroup("g1", ipatest.Group{Members: []string{"u"}})
+	s.AddGroup("g2", ipatest.Group{MemberGroups: []string{"g1"}})
+	s.AddHBACRule("r", ipatest.HBACRule{Groups: []string{"g2"}, HostCategory: "all", ServiceCategory: "all"})
+	s.AddHBACRule("off", ipatest.HBACRule{Disabled: true, UserCategory: "all", HostCategory: "all", ServiceCategory: "all"})
+	s.AddHBACRule("allow_all", ipatest.HBACRule{Disabled: true})
+	got, err := c.HBACTest("u", "ipa.test.local", "sshd")
+	if err != nil || !got.Granted || !reflect.DeepEqual(got.Matched, []string{"r"}) {
+		t.Fatalf("u = %+v, %v", got, err)
+	}
+	got, err = c.HBACTest("other", "ipa.test.local", "sshd")
+	if err != nil || got.Granted || !reflect.DeepEqual(got.NotMatched, []string{"r"}) {
+		t.Fatalf("other = %+v, %v", got, err)
+	}
+	// Explicit rules include disabled ones; unknown names are errors.
+	got, err = c.HBACTest("other", "ipa.test.local", "sshd", "off", "nope")
+	if err != nil || !got.Granted || !reflect.DeepEqual(got.Matched, []string{"off"}) || !reflect.DeepEqual(got.Errors, []string{"nope"}) {
+		t.Fatalf("explicit = %+v, %v", got, err)
+	}
+}
+
+func TestHBACTest_HostsAndServices(t *testing.T) {
+	s, c := newFake(t)
+	s.AddHost("web.test.local", ipatest.Host{HostGroups: []string{"web"}})
+	s.AddHBACRule("allow_all", ipatest.HBACRule{Disabled: true})
+	s.AddHBACRule("r", ipatest.HBACRule{UserCategory: "all", HostGroups: []string{"web"}, Services: []string{"sshd"}})
+	for _, tc := range []struct {
+		host, svc string
+		want      bool
+	}{{"web.test.local", "sshd", true}, {"web.test.local", "ftp", false}, {"ipa.test.local", "sshd", false}} {
+		got, err := c.HBACTest("nobody", tc.host, tc.svc)
+		if err != nil || got.Granted != tc.want {
+			t.Errorf("%s/%s = %+v, %v, want %v", tc.host, tc.svc, got, err, tc.want)
+		}
+	}
+	if _, err := c.RPC("hbactest", nil, ipa.Options{"user": "u", "service": "s"}); err == nil {
+		t.Error("missing targethost accepted")
+	}
+}
+
+func TestHBACTest_Required(t *testing.T) {
+	s, c := newFake(t)
+	for _, a := range [][3]string{{"", "h", "s"}, {"u", "", "s"}, {"u", "h", ""}} {
+		if _, err := c.HBACTest(a[0], a[1], a[2]); err == nil {
+			t.Errorf("%v: no error", a)
+		}
+	}
+	if n := len(s.Calls()); n != 0 {
+		t.Errorf("%d calls", n)
+	}
+}
