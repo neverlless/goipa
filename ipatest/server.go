@@ -113,8 +113,10 @@ type Server struct {
 	sudo      map[string]*sudoRec
 	pwpol     map[string]PwPolicy
 	tokens    []*OTPToken
-	nextID    int // last uidnumber handed out
-	nextGID   int // last gidnumber handed out
+	nextID    int                 // last uidnumber handed out
+	nextGID   int                 // last gidnumber handed out
+	ca        *fakeCA             // created by the first cert_request
+	certs     map[string]*certRec // by decimal serial
 }
 
 // NewServer starts a server and closes it with tb.Cleanup.
@@ -143,6 +145,7 @@ func New() *Server {
 		version:  defaultVersion,
 		nextID:   firstID - 1,
 		nextGID:  firstID - 1,
+		certs:    map[string]*certRec{},
 	}
 	mux := http.NewServeMux()
 	mux.HandleFunc("/ipa/session/json", s.serveSessionJSON)

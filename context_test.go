@@ -21,6 +21,17 @@ type twinCall struct {
 
 func twinCalls() []twinCall {
 	return []twinCall{
+		{"CertRequestContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.CertRequestContext(ctx, "host/h", "csr")
+			return err
+		}},
+		{"CertShowContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.CertShowContext(ctx, "1")
+			return err
+		}},
+		{"CertRevokeContext", func(ctx context.Context, c *ipa.Client) error {
+			return c.CertRevokeContext(ctx, "1", 0)
+		}},
 		{"RPCContext", func(ctx context.Context, c *ipa.Client) error {
 			_, err := c.RPCContext(ctx, "ping", nil, nil)
 			return err

@@ -119,3 +119,41 @@ func init() {
 	builtins["host_show"] = hostShow
 	builtins["host_find"] = hostFind
 }
+
+// hostAdd is host_add without DNS: every fqdn is accepted, as with force.
+func hostAdd(s *Server, c Call) (any, *ipa.IpaError) {
+	if len(c.Args) == 0 || c.Args[0] == "" {
+		return nil, required("fqdn")
+	}
+	fqdn := strings.ToLower(c.Args[0])
+	if _, ok := s.hosts[fqdn]; ok {
+		return nil, &ipa.IpaError{Code: ipa.CodeDuplicateEntry, Message: `host with name "` + fqdn + `" already exists`}
+	}
+	h := Host{}
+	h.Description, _ = c.Options["description"].(string)
+	s.hosts[fqdn] = h
+	all := flag(c, "all")
+	return entry(fqdn, s.renderHost(fqdn, h, all || !flag(c, "no_members"), all), `Added host "`+fqdn+`"`), nil
+}
+
+func hostDel(s *Server, c Call) (any, *ipa.IpaError) {
+	for _, fqdn := range c.Args {
+		if _, ok := s.hosts[fqdn]; !ok {
+			return nil, notFound(fqdn, "host")
+		}
+	}
+	deleted := append([]string{}, c.Args...)
+	for _, fqdn := range deleted {
+		delete(s.hosts, fqdn)
+	}
+	return map[string]any{
+		"result":  map[string]any{"failed": []string{}},
+		"value":   deleted,
+		"summary": `Deleted host "` + strings.Join(deleted, ",") + `"`,
+	}, nil
+}
+
+func init() {
+	builtins["host_add"] = hostAdd
+	builtins["host_del"] = hostDel
+}

@@ -328,6 +328,21 @@
 //     command '<name>'", as Q14. Q44 and Q45 follow the ipa command
 //     catalogue and skip Handle overrides. TestServer_CommandNewerThanVersion,
 //     TestServer_HandleBypassesCatalogue.
+//   - Q90: cert_request signs the CSR with an in-memory CA (ECDSA P-256,
+//     "CN=Certificate Authority,O=TEST.LOCAL", created on first use) for an
+//     existing host principal host/<fqdn>[@REALM] only; the subject is
+//     "CN=<fqdn>,O=TEST.LOCAL", validity two years, serials sequential from
+//     2. cert_request and cert_show answer certificate as base64 DER,
+//     serial_number as a JSON number, valid_not_before/valid_not_after in
+//     ipalib's "Mon Jan 02 15:04:05 2006 UTC" layout, and revoked.
+//     goipa.TestContractCert.
+//   - Q91: cert_revoke marks the certificate revoked; cert_show then answers
+//     revoked true and revocation_reason, the code given (default 0).
+//     goipa.TestContractCert.
+//   - Q92: cert_show and cert_revoke of an unknown serial are 4001 NotFound.
+//     goipa.TestContractCertShowMissing.
+//   - Q93: a CSR whose CN is not the principal's host is 3009
+//     ValidationError on csr. goipa.TestContractCertRequestWrongCN.
 //
 // A response's version is the server release, 4.13.4 unless SetVersion
 // changes it, and its principal is
@@ -336,7 +351,9 @@
 //
 // # Not modelled
 //
-// Of HBAC and sudo rule management, only find, add, del and the member and
+// Certificates for user and service principals, profiles, sub-CAs, cert_find
+// and host_add's DNS check (every fqdn is accepted, as with force) are left
+// out. Of HBAC and sudo rule management, only find, add, del and the member and
 // option calls the tests need; Handle is the way to reach the rest, as for
 // config_*, subid_show, stageuser_add_passkey and stageuser_remove_passkey.
 // Stage user passwords are not modelled: userpassword is ignored and random
