@@ -52,7 +52,10 @@ func withRealm(principal string) string {
 func (s *Server) AddService(principal string, svc Service) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.services[withRealm(principal)] = &serviceRec{Service: svc.clone()}
+	rec := &serviceRec{Service: svc.clone()}
+	lowerHostGroups(rec.KeytabRetrieve.HostGroups)
+	lowerHostGroups(rec.KeytabCreate.HostGroups)
+	s.services[withRealm(principal)] = rec
 }
 
 // Service returns a copy of service principal; the realm may be left out.
@@ -210,6 +213,9 @@ func serviceMembers(attr string, add bool, lists func(*serviceRec) map[string]*[
 		for kind, list := range lists(r) {
 			failed[kind] = [][]string{}
 			for _, n := range strs(c.Options[kind]) {
+				if kind == "hostgroup" {
+					n = hostGroupKey(n)
+				}
 				msg := ""
 				switch {
 				case !exists[kind](n):

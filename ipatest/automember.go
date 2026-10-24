@@ -73,6 +73,14 @@ func renderRule(typ, cn string, r *amRule, all, dn bool) map[string]any {
 	return out
 }
 
+// amName is the key of a rule: a host group rule is named after a host group.
+func amName(typ, cn string) string {
+	if typ == "hostgroup" {
+		return hostGroupKey(cn)
+	}
+	return cn
+}
+
 func (s *Server) amRuleArg(c Call) (string, string, *amRule, *ipa.IpaError) {
 	typ, err := amType(c)
 	if err != nil {
@@ -81,7 +89,7 @@ func (s *Server) amRuleArg(c Call) (string, string, *amRule, *ipa.IpaError) {
 	if len(c.Args) == 0 || c.Args[0] == "" {
 		return "", "", nil, required("cn")
 	}
-	cn := c.Args[0]
+	cn := amName(typ, c.Args[0])
 	r := s.amRules[typ][cn]
 	if r == nil {
 		return "", "", nil, notFound(cn, "Automember rule")
@@ -133,7 +141,7 @@ func automemberAdd(s *Server, c Call) (any, *ipa.IpaError) {
 	if len(c.Args) == 0 || c.Args[0] == "" {
 		return nil, required("cn")
 	}
-	cn := c.Args[0]
+	cn := amName(typ, c.Args[0])
 	if s.amRules[typ][cn] != nil {
 		return nil, &ipa.IpaError{Code: ipa.CodeDuplicateEntry, Message: fmt.Sprintf("Automember rule with name %q already exists", cn)}
 	}
@@ -164,6 +172,7 @@ func automemberDel(s *Server, c Call) (any, *ipa.IpaError) {
 		return nil, err
 	}
 	for _, cn := range c.Args {
+		cn = amName(typ, cn)
 		if s.amRules[typ][cn] == nil {
 			return nil, notFound(cn, "Automember rule")
 		}
@@ -185,7 +194,7 @@ func conditionCmd(add bool) builtin {
 		}
 		cn := ""
 		if len(c.Args) > 0 {
-			cn = c.Args[0]
+			cn = amName(typ, c.Args[0])
 		}
 		r := s.amRules[typ][cn]
 		if r == nil {
@@ -262,7 +271,7 @@ func defaultGroupSet(s *Server, c Call) (any, *ipa.IpaError) {
 	if err != nil {
 		return nil, err
 	}
-	g := str(c.Options["automemberdefaultgroup"])
+	g := amName(typ, str(c.Options["automemberdefaultgroup"]))
 	switch {
 	case g == "":
 		return nil, required("automemberdefaultgroup")

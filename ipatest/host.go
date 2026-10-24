@@ -40,7 +40,9 @@ func (h Host) clone() Host {
 func (s *Server) AddHost(fqdn string, h Host) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.hosts[fqdn] = h.clone()
+	h = h.clone()
+	lowerHostGroups(h.HostGroups)
+	s.hosts[fqdn] = h
 }
 
 func (s *Server) renderHost(fqdn string, h Host, members, all bool) map[string]any {

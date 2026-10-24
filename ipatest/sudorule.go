@@ -76,6 +76,9 @@ func sudoMember(add bool, k sudoKind) builtin {
 		for _, sl := range k.slots {
 			failed[sl.opt] = [][]string{}
 			for _, n := range strs(c.Options[sl.opt]) {
+				if sl.opt == "hostgroup" {
+					n = hostGroupKey(n)
+				}
 				known := sl.exists(s, n)
 				dst := sl.list(r)
 				if !known && sl.ext != "" {
