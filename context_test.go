@@ -25,6 +25,14 @@ func twinCalls() []twinCall {
 			_, err := c.RPCContext(ctx, "ping", nil, nil)
 			return err
 		}},
+		{"PwPolicyShowContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.PwPolicyShowContext(ctx, "")
+			return err
+		}},
+		{"UserPwPolicyContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.UserPwPolicyContext(ctx, "bob")
+			return err
+		}},
 		{"PingContext", func(ctx context.Context, c *ipa.Client) error {
 			_, err := c.PingContext(ctx)
 			return err

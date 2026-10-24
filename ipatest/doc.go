@@ -184,6 +184,25 @@
 //     summary "Stage user <uid> activated". If the active uid exists it is
 //     4002 `active user with name "<uid>" already exists` and the stage entry
 //     stays. TestContractStageActivateSummary, TestStageUserDuplicateAndDelete.
+//   - Q31: user_status answers one entry for ipa.test.local: server and now
+//     are scalars, krblastfailedauth is ["N/A"] or the time of the last wrong
+//     password (User.LastFailedLogin), krbloginfailedcount is the scalar "0"
+//     until a login fails and ["n"] afterwards, as on a real IPA. The summary
+//     is "Account disabled: True|False"; a missing user is 4001. user_unlock
+//     zeroes the counter. TestContractUserStatusAndUnlock, TestUserStatus_*.
+//   - Q32: New seeds global_policy with FreeIPA's defaults (90 days, 1 hour,
+//     minlength 8, 6 failures, 60 s interval, 600 s lockout, grace limit -1).
+//     pwpolicy_show without cn is the global policy; option user resolves the
+//     lowest cospriority among the user's groups, nested ones included, else
+//     global (4001 for a missing user, "<cn>: password policy not found" for
+//     an unknown cn). Numbers are one-element string lists in wire units, the
+//     credits and the two checks (["TRUE"]/["FALSE"]) are always present,
+//     cospriority only for group policies, zero optional ones are omitted.
+//     Any caller may read it ([unverified] V7). pwpolicy_add needs an existing
+//     group (4001) and cospriority (3007); login_password and change_password
+//     use the global MaxFailures (0 disables lockout) and MinLength.
+//     TestContractPwPolicyGlobal, TestUserPwPolicy_Resolution,
+//     TestPwPolicy_AddDelAndLoginUseGlobal.
 //   - Q33: sub-ID ranges start at 2147483648 and advance by 65536 (uid and gid
 //     equal). subid_find filters by ipaowner, ipauniqueid, ipasubuidnumber and
 //     description; values are lists of strings, plus dn
@@ -193,27 +212,6 @@
 //     `Subordinate id with with name "<id>" or for user "<owner>" already
 //     exists.` (FreeIPA's typo). A non-preserving user_del drops the range.
 //     TestContractSubIDGenerate, TestSubID_FindAndUserDelete.
-//   - Q36: user_add_passkey and user_remove_passkey take one mapping,
-//     passkey:<id>,<key>[,<userid>]; id and key must be standard base64 and
-//     the key a PKIX public key, else 3009 `invalid 'passkey': …`. A duplicate
-//     is 4038 `'ipapasskey' already contains '<mapping>'`, an absent one on
-//     remove 4026 `'ipapasskey' does not contain '<mapping>'`. The answer
-//     holds uid and ipapasskey. Any caller may manage any user's mappings.
-//     TestPasskeyCommands, TestContractPasskeys.
-//   - Q37: /ipa/session/sync_token answers HTTP 400 with an HTML body when
-//     user, password, first_code or second_code is missing. Otherwise it is
-//     200 with X-IPA-TokenSync-Result invalid-credentials (unknown user, no
-//     password or a different one, no enabled token of the user, or none with
-//     the given token UUID, or a code that is not Digits digits) or ok. Codes
-//     are not checked against a secret. The Referer check of the form
-//     endpoints applies; SyncOTPToken sends one. TestContractSyncTokenResults,
-//     TestSyncOTPToken.
-//   - Q31: user_status answers one entry for ipa.test.local: server and now
-//     are scalars, krblastfailedauth is ["N/A"] or the time of the last wrong
-//     password (User.LastFailedLogin), krbloginfailedcount is the scalar "0"
-//     until a login fails and ["n"] afterwards, as on a real IPA. The summary
-//     is "Account disabled: True|False"; a missing user is 4001. user_unlock
-//     zeroes the counter. TestContractUserStatusAndUnlock, TestUserStatus_*.
 //   - Q34: New seeds the HBAC rule allow_all (description "Allow all users to
 //     access any host from any host", user, host and service category all),
 //     as every FreeIPA has. hbacrule_find and sudorule_find hide members
@@ -233,6 +231,21 @@
 //     included) or a hostgroup of the host listed. Service groups are not
 //     expanded. An unknown user or host just has no groups.
 //     TestContractHBACTest, TestHBACTest_*.
+//   - Q36: user_add_passkey and user_remove_passkey take one mapping,
+//     passkey:<id>,<key>[,<userid>]; id and key must be standard base64 and
+//     the key a PKIX public key, else 3009 `invalid 'passkey': …`. A duplicate
+//     is 4038 `'ipapasskey' already contains '<mapping>'`, an absent one on
+//     remove 4026 `'ipapasskey' does not contain '<mapping>'`. The answer
+//     holds uid and ipapasskey. Any caller may manage any user's mappings.
+//     TestPasskeyCommands, TestContractPasskeys.
+//   - Q37: /ipa/session/sync_token answers HTTP 400 with an HTML body when
+//     user, password, first_code or second_code is missing. Otherwise it is
+//     200 with X-IPA-TokenSync-Result invalid-credentials (unknown user, no
+//     password or a different one, no enabled token of the user, or none with
+//     the given token UUID, or a code that is not Digits digits) or ok. Codes
+//     are not checked against a secret. The Referer check of the form
+//     endpoints applies; SyncOTPToken sends one. TestContractSyncTokenResults,
+//     TestSyncOTPToken.
 //
 // A response's version is the server release, 4.13.4, and its principal is
 // <uid>@TEST.LOCAL. An error a HandlerFunc returns without a Name gets the
@@ -240,9 +253,8 @@
 //
 // # Not modelled
 //
-// Password policy (planned for v0.5); of HBAC and sudo rules
-// only find, add, del and the member and option calls the tests need.
-// Until then, Handle is the way to reach them. Kerberos, LDAP search
-// filters, size limits, replication and HTTP fault injection are left out;
-// wrap HTTPClient's transport for the latter.
+// Of HBAC and sudo rule management, only find, add, del and the member and
+// option calls the tests need; Handle is the way to reach the rest. Kerberos,
+// LDAP search filters, size limits, replication and HTTP fault injection are
+// left out; wrap HTTPClient's transport for the latter.
 package ipatest
