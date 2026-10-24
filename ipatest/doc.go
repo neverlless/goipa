@@ -351,10 +351,13 @@
 //     in memberofindirect_hostgroup; a nested group's own nested groups are
 //     memberindirect_hostgroup. hostgroup_* lower-case the host group
 //     name (AddHostGroup and HostGroup too); hostgroup_find's criteria
-//     match case-insensitively. Host group names given to other commands
-//     are taken as they are.
+//     match case-insensitively. Host group names in rules, keytab access,
+//     nested groups, automember rules and the seed helpers resolve in any
+//     case and are kept lower-cased.
 //     TestContractHostGroupMembers, TestHostGroupShow,
-//     goipa.TestContractHostGroupMixedCase.
+//     goipa.TestContractHostGroupMixedCase,
+//     goipa.TestContractHostGroupMixedCaseReferences,
+//     goipa.TestContractAutomemberHostGroupMixedCase.
 //   - Q90: cert_request signs the CSR with an in-memory CA (ECDSA P-256,
 //     "CN=Certificate Authority,O=TEST.LOCAL", created on first use) for an
 //     existing host principal host/<fqdn>[@REALM] only; the subject is

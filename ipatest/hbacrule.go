@@ -101,6 +101,9 @@ func hbacMembers(part string, add bool) builtin {
 		completed := 0
 		for _, l := range lists {
 			for _, n := range strs(c.Options[l.opt]) {
+				if l.opt == "hostgroup" {
+					n = hostGroupKey(n)
+				}
 				in := slices.Contains(*l.dst, n)
 				switch {
 				case add && in:

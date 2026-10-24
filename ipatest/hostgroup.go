@@ -33,20 +33,32 @@ func (g HostGroup) clone() HostGroup {
 	return g
 }
 
-// AddHostGroup creates or replaces host group cn; the name is lower-cased,
-// as FreeIPA does (Q51).
+// hostGroupKey is how FreeIPA keeps a host group name, wherever it is
+// named (Q51).
+func hostGroupKey(n string) string { return strings.ToLower(n) }
+
+// lowerHostGroups lower-cases the host group names in l in place.
+func lowerHostGroups(l []string) {
+	for i, n := range l {
+		l[i] = hostGroupKey(n)
+	}
+}
+
+// AddHostGroup creates or replaces host group cn; the name, and the names of
+// its nested groups, are lower-cased, as FreeIPA does (Q51).
 func (s *Server) AddHostGroup(cn string, g HostGroup) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	g = g.clone()
-	s.hostgroups[strings.ToLower(cn)] = &g
+	lowerHostGroups(g.HostGroups)
+	s.hostgroups[hostGroupKey(cn)] = &g
 }
 
 // HostGroup returns a copy of host group cn.
 func (s *Server) HostGroup(cn string) (HostGroup, bool) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	g, ok := s.hostgroups[strings.ToLower(cn)]
+	g, ok := s.hostgroups[hostGroupKey(cn)]
 	if !ok {
 		return HostGroup{}, false
 	}
@@ -144,7 +156,7 @@ func (s *Server) hostGroupArg(c Call) (string, *HostGroup, *ipa.IpaError) {
 	if len(c.Args) == 0 || c.Args[0] == "" {
 		return "", nil, required("cn")
 	}
-	cn := strings.ToLower(c.Args[0])
+	cn := hostGroupKey(c.Args[0])
 	g := s.hostgroups[cn]
 	if g == nil {
 		return "", nil, notFound(cn, "host group")
@@ -193,7 +205,7 @@ func hostGroupAdd(s *Server, c Call) (any, *ipa.IpaError) {
 	if len(c.Args) == 0 || c.Args[0] == "" {
 		return nil, required("cn")
 	}
-	cn := strings.ToLower(c.Args[0])
+	cn := hostGroupKey(c.Args[0])
 	if s.hostgroups[cn] != nil {
 		return nil, &ipa.IpaError{Code: ipa.CodeDuplicateEntry, Message: fmt.Sprintf("host group with name %q already exists", cn)}
 	}
@@ -211,7 +223,7 @@ func dropName(l []string, n string) []string {
 func hostGroupDel(s *Server, c Call) (any, *ipa.IpaError) {
 	deleted := make([]string, len(c.Args))
 	for i, cn := range c.Args {
-		deleted[i] = strings.ToLower(cn)
+		deleted[i] = hostGroupKey(cn)
 		if s.hostgroups[deleted[i]] == nil {
 			return nil, notFound(cn, "host group")
 		}
@@ -284,6 +296,9 @@ func hostGroupMemberCmd(add, managers bool) builtin {
 		for _, kind := range kinds {
 			list := lists[kind]
 			for _, n := range strs(c.Options[kind]) {
+				if !managers && kind == "hostgroup" {
+					n = hostGroupKey(n)
+				}
 				msg := ""
 				switch {
 				case !allowed:

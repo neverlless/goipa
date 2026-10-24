@@ -69,7 +69,9 @@ func (r SudoRule) clone() SudoRule {
 func (s *Server) AddHBACRule(cn string, r HBACRule) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.hbac[cn] = &hbacRec{HBACRule: r.clone(), uuid: newUUID()}
+	rec := &hbacRec{HBACRule: r.clone(), uuid: newUUID()}
+	lowerHostGroups(rec.HostGroups)
+	s.hbac[cn] = rec
 }
 
 // dropFromRules removes a deleted user (or group) from every rule's users
@@ -95,7 +97,9 @@ func drop(users, groups []string, group bool, is func(string) bool) ([]string, [
 func (s *Server) AddSudoRule(cn string, r SudoRule) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.sudo[cn] = &sudoRec{SudoRule: r.clone(), uuid: newUUID()}
+	rec := &sudoRec{SudoRule: r.clone(), uuid: newUUID()}
+	lowerHostGroups(rec.HostGroups)
+	s.sudo[cn] = rec
 }
 
 func seedAllowAll() map[string]*hbacRec {
