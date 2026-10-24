@@ -240,46 +240,6 @@ func ruleDel[T any](kind string, rules map[string]*T, c Call) (any, *ipa.IpaErro
 	}, nil
 }
 
-// ruleAddUser is hbacrule_add_user and sudorule_add_user: user and group
-// options, group_add_member's output with failed.memberuser.{user,group}.
-func ruleAddUser[T any](s *Server, rules map[string]*T, kind string, c Call, users, groups func(*T) *[]string, render func(*T, string, bool, bool) map[string]any) (any, *ipa.IpaError) {
-	cn, err := ruleName(c)
-	if err != nil {
-		return nil, err
-	}
-	r := rules[cn]
-	if r == nil {
-		return nil, notFound(cn, kind)
-	}
-	failed := map[string][][]string{"user": {}, "group": {}}
-	completed := 0
-	for _, k := range []struct {
-		opt string
-		has func(string) bool
-		dst *[]string
-	}{
-		{"user", func(n string) bool { return s.users[n] != nil }, users(r)},
-		{"group", func(n string) bool { return s.groups[n] != nil }, groups(r)},
-	} {
-		for _, n := range strs(c.Options[k.opt]) {
-			switch {
-			case !k.has(n):
-				failed[k.opt] = append(failed[k.opt], []string{n, "no such entry"})
-			case slices.Contains(*k.dst, n):
-				failed[k.opt] = append(failed[k.opt], []string{n, "This entry is already a member"})
-			default:
-				*k.dst = append(*k.dst, n)
-				completed++
-			}
-		}
-	}
-	return map[string]any{
-		"result":    render(r, cn, true, flag(c, "all")),
-		"completed": completed,
-		"failed":    map[string]any{"memberuser": failed},
-	}, nil
-}
-
 // hbactest implements Q35. Called with s.mu held.
 func (s *Server) hbactest(c Call) (any, *ipa.IpaError) {
 	for _, o := range []string{"user", "targethost", "service"} {
