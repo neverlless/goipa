@@ -621,7 +621,37 @@ func changePassword(s *Server, w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("X-IPA-Pwchange-Result", result)
 }
 
+func syncToken(s *Server, w http.ResponseWriter, r *http.Request) {
+	for _, k := range []string{"user", "password", "first_code", "second_code"} {
+		if r.FormValue(k) == "" {
+			http.Error(w, "<html><body>Bad Request</body></html>", http.StatusBadRequest)
+			return
+		}
+	}
+	uid, c1, c2 := r.FormValue("user"), r.FormValue("first_code"), r.FormValue("second_code")
+	u := s.users[uid]
+	ok := false
+	if u != nil && u.Password != "" && u.Password == r.FormValue("password") {
+		for _, t := range s.tokens {
+			if t.Owner == uid && !t.Disabled && (r.FormValue("token") == "" || t.UUID == r.FormValue("token")) &&
+				len(c1) == t.Digits && len(c2) == t.Digits && isDigits(c1) && isDigits(c2) {
+				ok = true
+			}
+		}
+	}
+	result := "ok"
+	if !ok {
+		result = "invalid-credentials"
+	}
+	w.Header().Set("X-IPA-TokenSync-Result", result)
+}
+
+func isDigits(v string) bool {
+	return strings.Trim(v, "0123456789") == ""
+}
+
 func init() {
+	forms["/ipa/session/sync_token"] = syncToken
 	builtins["user_show"] = userShow(false)
 	builtins["user_find"] = userFind(false)
 	builtins["user_add"] = userAdd(false)
