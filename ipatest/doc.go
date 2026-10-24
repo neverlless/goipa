@@ -348,12 +348,15 @@
 //   - Q63: service_add_host of a host already managing the service fails
 //     that member ("This entry is already a member"); the host may be
 //     removed and added back. goipa.TestContractServiceManagedBy.
-//   - Q64: service_disable drops the keys (has_keytab false) and every
-//     usercertificate; a service with neither is 4010 AlreadyInactive
-//     "This entry is already disabled". service_add_cert takes base64 DER
-//     and the certificates come back as {"__base64__": ...}; revocation is
-//     not modelled. TestService_SeededAndDisable,
-//     goipa.TestContractServiceDisable.
+//   - Q64: service_disable drops the keys (has_keytab false); a service
+//     without keys is 4010 AlreadyInactive "This entry is already
+//     disabled". FreeIPA also revokes and removes the certificates its CA
+//     issued, but one it did not issue neither counts nor goes; every
+//     certificate here comes from service_add_cert (base64 DER, returned
+//     as {"__base64__": ...}) and is treated as foreign. FreeIPA 4.13.4
+//     answers 903 to service_disable and service_del of a service holding
+//     a certificate without subjectAltName; not modelled.
+//     TestService_SeededAndDisable, goipa.TestContractServiceDisable.
 //
 // A response's version is the server release, 4.13.4 unless SetVersion
 // changes it, and its principal is

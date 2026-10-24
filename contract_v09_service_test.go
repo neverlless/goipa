@@ -43,7 +43,9 @@ func newServiceUser(t *testing.T, b backend) string {
 }
 
 // serviceTestCert is a throwaway DER certificate FreeIPA's CA did not issue.
-func serviceTestCert(t *testing.T) []byte {
+// FreeIPA 4.13.4 fails cert_find, and so service_del, with 903 on a
+// certificate without subjectAltName.
+func serviceTestCert(t *testing.T, host string) []byte {
 	t.Helper()
 	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	if err != nil {
@@ -54,6 +56,7 @@ func serviceTestCert(t *testing.T) []byte {
 		Subject:      pkix.Name{CommonName: "goipa contract test"},
 		NotBefore:    time.Now().Add(-time.Hour),
 		NotAfter:     time.Now().Add(time.Hour),
+		DNSNames:     []string{host},
 	}
 	der, err := x509.CreateCertificate(rand.Reader, tmpl, tmpl, &key.PublicKey, key)
 	if err != nil {
@@ -178,21 +181,22 @@ func TestContractServiceManagedBy(t *testing.T) {
 // TestContractServiceDisable pins Q64.
 func TestContractServiceDisable(t *testing.T) {
 	forEachBackend(t, func(t *testing.T, b backend) {
-		principal, _ := newService(t, b)
+		principal, host := newService(t, b)
 		var ie *ipa.IpaError
 		if err := b.admin.ServiceDisable(principal); !errors.As(err, &ie) || ie.Code != ipa.CodeAlreadyInactive {
 			t.Fatalf("disable without keys: %v, want 4010", err)
 		}
-		der := serviceTestCert(t)
+		der := serviceTestCert(t, host)
 		mustRPC(t, b.admin, "service_add_cert", []string{principal}, ipa.Options{"usercertificate": []string{base64.StdEncoding.EncodeToString(der)}})
 		svc, err := b.admin.ServiceShow(principal)
 		if err != nil || len(svc.Certificates) != 1 || !bytes.Equal(svc.Certificates[0], der) {
 			t.Fatalf("show: %v, %d certificates", err, len(svc.Certificates))
 		}
-		if err := b.admin.ServiceDisable(principal); err != nil {
-			t.Fatal(err)
+		// A certificate the IPA CA did not issue neither counts nor goes.
+		if err := b.admin.ServiceDisable(principal); !errors.As(err, &ie) || ie.Code != ipa.CodeAlreadyInactive {
+			t.Fatalf("disable with a foreign certificate: %v, want 4010", err)
 		}
-		if svc, err = b.admin.ServiceShow(principal); err != nil || svc.HasKeytab || len(svc.Certificates) != 0 {
+		if svc, err = b.admin.ServiceShow(principal); err != nil || svc.HasKeytab || len(svc.Certificates) != 1 {
 			t.Fatalf("after disable: %v, %+v", err, svc)
 		}
 	})
