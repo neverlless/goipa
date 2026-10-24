@@ -12,8 +12,6 @@ import (
 	ipa "github.com/neverlless/goipa"
 )
 
-const statusTime = "2006-01-02T15:04:05Z"
-
 // userStatus implements user_status, Q31.
 func userStatus(s *Server, c Call) (any, *ipa.IpaError) {
 	uid, r, err := s.userArg(c)
@@ -24,7 +22,7 @@ func userStatus(s *Server, c Call) (any, *ipa.IpaError) {
 		if t.IsZero() {
 			return []string{"N/A"}
 		}
-		return []string{t.UTC().Format(statusTime)}
+		return []string{t.UTC().Format(time.RFC3339)}
 	}
 	var count any = "0"
 	if r.FailedLogins != 0 {
@@ -33,14 +31,18 @@ func userStatus(s *Server, c Call) (any, *ipa.IpaError) {
 	rec := map[string]any{
 		"dn":                    "uid=" + uid + "," + baseDN,
 		"server":                serverFQDN,
-		"now":                   time.Now().UTC().Format(statusTime),
+		"now":                   time.Now().UTC().Format(time.RFC3339),
 		"krblastsuccessfulauth": []string{"N/A"},
 		"krblastfailedauth":     when(r.LastFailedLogin),
 		"krbloginfailedcount":   count,
 		"passwordgraceusertime": "0",
 	}
 	out := list([]map[string]any{rec})
-	out["summary"] = fmt.Sprintf("Account disabled: %s", map[bool]string{true: "True", false: "False"}[r.Locked])
+	disabled := "False"
+	if r.Locked {
+		disabled = "True"
+	}
+	out["summary"] = "Account disabled: " + disabled
 	return out, nil
 }
 

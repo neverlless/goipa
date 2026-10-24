@@ -17,7 +17,7 @@ func TestUserStatus_ValueForms(t *testing.T) {
 	s.Handle("user_status", func(ipatest.Call) (any, *ipa.IpaError) {
 		return map[string]any{"result": []map[string]any{
 			{"dn": "x", "server": "r1", "now": "2026-10-22T10:00:01Z", "krbloginfailedcount": "0", "krblastfailedauth": []string{"N/A"}, "krblastsuccessfulauth": []string{"N/A"}},
-			{"dn": "x", "server": "r2", "now": "2026-10-22T10:00:01Z", "krbloginfailedcount": []string{"3"}, "krblastfailedauth": []string{"2026-10-22T10:00:00Z"}},
+			{"dn": "x", "server": "r2", "now": "2026-10-22T10:00:01Z", "krbloginfailedcount": []string{"3"}, "krblastsuccessfulauth": []string{"2026-10-21T09:00:00Z"}, "krblastfailedauth": []string{"2026-10-22T10:00:00Z"}},
 		}}, nil
 	})
 	sts, err := c.UserStatus("bob")
@@ -27,10 +27,10 @@ func TestUserStatus_ValueForms(t *testing.T) {
 	if len(sts) != 2 {
 		t.Fatalf("len = %d", len(sts))
 	}
-	if sts[0].FailedLogins != 0 || !sts[0].LastFailure.IsZero() || sts[0].Now.IsZero() {
+	if sts[0].FailedLogins != 0 || !sts[0].LastFailure.IsZero() || sts[0].Now.IsZero() || !sts[0].LastSuccess.IsZero() {
 		t.Errorf("r1 = %+v", sts[0])
 	}
-	if want := time.Date(2026, 10, 22, 10, 0, 0, 0, time.UTC); sts[1].FailedLogins != 3 || !sts[1].LastFailure.Equal(want) {
+	if want := time.Date(2026, 10, 22, 10, 0, 0, 0, time.UTC); sts[1].FailedLogins != 3 || !sts[1].LastSuccess.Equal(time.Date(2026, 10, 21, 9, 0, 0, 0, time.UTC)) || !sts[1].LastFailure.Equal(want) {
 		t.Errorf("r2 = %+v", sts[1])
 	}
 	calls := s.Calls()

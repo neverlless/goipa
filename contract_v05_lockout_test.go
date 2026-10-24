@@ -38,17 +38,23 @@ func TestContractUserStatusAndUnlock(t *testing.T) {
 			t.Fatal("no replicas")
 		}
 		maxFails := 0
+		var worst *ipa.ReplicaStatus
 		for _, s := range sts {
 			if s.Err != "" {
 				t.Errorf("replica %s: %s", s.Server, s.Err)
 			}
-			maxFails = max(maxFails, s.FailedLogins)
+			if s.FailedLogins > maxFails {
+				maxFails, worst = s.FailedLogins, s
+			}
 			if s.Now.IsZero() {
 				t.Errorf("replica %s: zero Now", s.Server)
 			}
 		}
 		if maxFails < 2 {
 			t.Errorf("max FailedLogins = %d, want >= 2", maxFails)
+		}
+		if worst != nil && worst.LastFailure.IsZero() {
+			t.Errorf("replica %s: zero LastFailure after failed logins", worst.Server)
 		}
 		raw, err := b.admin.RPC("user_status", []string{uid}, nil)
 		if err != nil {
@@ -75,9 +81,12 @@ func TestContractUserStatusAndUnlock(t *testing.T) {
 
 func TestContractUserStatus_NotFound(t *testing.T) {
 	forEachBackend(t, func(t *testing.T, b backend) {
-		_, err := b.admin.UserStatus(newUID(t, b))
-		if !errors.Is(err, ipa.ErrNotFound) {
-			t.Errorf("err = %v, want ErrNotFound", err)
+		uid := newUID(t, b)
+		for name, err := range map[string]error{"UserStatus": func() error { _, err := b.admin.UserStatus(uid); return err }(), "UserUnlock": b.admin.UserUnlock(uid)} {
+			var ie *ipa.IpaError
+			if !errors.Is(err, ipa.ErrNotFound) || !errors.As(err, &ie) || ie != err {
+				t.Errorf("%s: err = %v, want bare ErrNotFound", name, err)
+			}
 		}
 	})
 }
