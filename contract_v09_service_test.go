@@ -192,12 +192,20 @@ func TestContractServiceDisable(t *testing.T) {
 		if err != nil || len(svc.Certificates) != 1 || !bytes.Equal(svc.Certificates[0], der) {
 			t.Fatalf("show: %v, %d certificates", err, len(svc.Certificates))
 		}
-		// A certificate the IPA CA did not issue neither counts nor goes.
-		if err := b.admin.ServiceDisable(principal); !errors.As(err, &ie) || ie.Code != ipa.CodeAlreadyInactive {
+		// Before 4.13 a certificate the IPA CA did not issue neither counts
+		// nor goes; 4.13 removes it.
+		err = b.admin.ServiceDisable(principal)
+		left := 1
+		if serverAtLeast(b.admin.ServerVersion(), 4, 13) {
+			left = 0
+			if err != nil {
+				t.Fatalf("disable with a foreign certificate: %v", err)
+			}
+		} else if !errors.As(err, &ie) || ie.Code != ipa.CodeAlreadyInactive {
 			t.Fatalf("disable with a foreign certificate: %v, want 4010", err)
 		}
-		if svc, err = b.admin.ServiceShow(principal); err != nil || svc.HasKeytab || len(svc.Certificates) != 1 {
-			t.Fatalf("after disable: %v, %+v", err, svc)
+		if svc, err = b.admin.ServiceShow(principal); err != nil || svc.HasKeytab || len(svc.Certificates) != left {
+			t.Fatalf("after disable: %v, %d certificates, want %d", err, len(svc.Certificates), left)
 		}
 	})
 }

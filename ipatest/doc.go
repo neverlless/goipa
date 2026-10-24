@@ -351,11 +351,13 @@
 //   - Q64: service_disable drops the keys (has_keytab false); a service
 //     without keys is 4010 AlreadyInactive "This entry is already
 //     disabled". FreeIPA also revokes and removes the certificates its CA
-//     issued, but one it did not issue neither counts nor goes; every
-//     certificate here comes from service_add_cert (base64 DER, returned
-//     as {"__base64__": ...}) and is treated as foreign. FreeIPA 4.13.4
-//     answers 903 to service_disable and service_del of a service holding
-//     a certificate without subjectAltName; not modelled.
+//     issued. Every certificate here comes from service_add_cert (base64
+//     DER, returned as {"__base64__": ...}) and is treated as foreign:
+//     before 4.13 (SetVersion) such a certificate neither counts nor goes,
+//     from 4.13 (seen on 4.13.4, not on 4.12.2) disable removes it and
+//     succeeds. FreeIPA 4.13.4 answers 903 to service_disable and
+//     service_del of a service holding a certificate without
+//     subjectAltName; not modelled.
 //     TestService_SeededAndDisable, goipa.TestContractServiceDisable.
 //
 // A response's version is the server release, 4.13.4 unless SetVersion

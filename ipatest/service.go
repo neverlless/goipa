@@ -256,11 +256,17 @@ func serviceDisable(s *Server, c Call) (any, *ipa.IpaError) {
 		return nil, err
 	}
 	// Every certificate here came from service_add_cert, so none is the CA's
-	// to revoke and FreeIPA leaves them all.
-	if !r.HasKeytab {
+	// to revoke; before 4.13 FreeIPA leaves such certificates alone.
+	var ma, mi int
+	_, _ = fmt.Sscanf(s.version, "%d.%d", &ma, &mi)
+	dropCerts := len(r.certs) > 0 && (ma > 4 || ma == 4 && mi >= 13)
+	if !r.HasKeytab && !dropCerts {
 		return nil, &ipa.IpaError{Code: ipa.CodeAlreadyInactive, Message: "This entry is already disabled"}
 	}
 	r.HasKeytab = false
+	if dropCerts {
+		r.certs = nil
+	}
 	return map[string]any{"result": true, "value": p, "summary": fmt.Sprintf("Disabled service %q", p)}, nil
 }
 

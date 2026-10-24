@@ -226,8 +226,9 @@ func (c *Client) ServiceDisallowCreateKeytabContext(ctx context.Context, princip
 // ServiceDisable removes a service's keys, and revokes and removes the
 // certificates FreeIPA's CA issued it, with `service_disable`; it requires
 // the Service Administrators privilege (System: Manage Service Keytab).
-// Certificates from elsewhere stay. A service with neither keys nor
-// CA-issued certificates is the server's *IpaError 4010 (AlreadyInactive).
+// Before FreeIPA 4.13 certificates from elsewhere stay, and a service with
+// neither keys nor CA-issued certificates is the server's *IpaError 4010
+// (AlreadyInactive); 4.13 removes those certificates too.
 func (c *Client) ServiceDisable(principal string) error {
 	return c.ServiceDisableContext(context.Background(), principal)
 }

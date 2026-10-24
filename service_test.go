@@ -84,3 +84,19 @@ func TestService_FindAndDeleteMany(t *testing.T) {
 	}
 	wantIs(t, c.ServiceDelete("a/ipa.test.local"), ipa.ErrNotFound)
 }
+
+func TestService_DisableForeignCertBefore413(t *testing.T) {
+	s, c := newFake(t)
+	s.SetVersion("4.12.2")
+	s.AddService(testSvc, ipatest.Service{})
+	if _, err := c.RPC("service_add_cert", []string{testSvc}, ipa.Options{"usercertificate": "AQID"}); err != nil {
+		t.Fatal(err)
+	}
+	var ie *ipa.IpaError
+	if err := c.ServiceDisable(testSvc); !errors.As(err, &ie) || ie.Code != ipa.CodeAlreadyInactive {
+		t.Fatalf("disable: %v, want 4010", err)
+	}
+	if svc, err := c.ServiceShow(testSvc); err != nil || len(svc.Certificates) != 1 || svc.Certificates[0][2] != 3 {
+		t.Fatalf("show: %v, %+v", err, svc)
+	}
+}
