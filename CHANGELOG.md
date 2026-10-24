@@ -7,6 +7,14 @@ existing exported identifiers keep their signatures).
 
 ## [Unreleased]
 
+## [v0.7.0] - 2026-10-24
+
+Typed escape hatch and core API: any FreeIPA command can be called with
+typed decoding, truncated searches are reported, attributes can be changed
+one at a time, several commands can run in one round trip, and calls for
+features newer than the server fail early. Checked against real FreeIPA
+4.9, 4.12 and 4.13 by the contract tests.
+
 ### Added
 
 - `Call[T]`, a generic typed call for any FreeIPA command, and `Entry`, a
@@ -274,7 +282,8 @@ v0.0.1 – v0.0.7 were released by Andrew E. Bruno as
 [ubccr/goipa](https://github.com/ubccr/goipa/tags). This repository keeps
 that history.
 
-[Unreleased]: https://github.com/neverlless/goipa/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/neverlless/goipa/compare/v0.7.0...HEAD
+[v0.7.0]: https://github.com/neverlless/goipa/compare/v0.6.0...v0.7.0
 [v0.6.0]: https://github.com/neverlless/goipa/compare/v0.5.0...v0.6.0
 [v0.5.0]: https://github.com/neverlless/goipa/compare/v0.4.0...v0.5.0
 [v0.4.0]: https://github.com/neverlless/goipa/compare/v0.3.0...v0.4.0
