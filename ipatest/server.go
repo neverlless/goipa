@@ -364,6 +364,10 @@ func (s *Server) serveRPC(w http.ResponseWriter, r *http.Request, uid, sid strin
 	if ierr != nil {
 		result = nil
 	}
+	if c.Method == "session_logout" && h == nil && ierr == nil {
+		// Builtins return values only, so the logout cookie is attached here.
+		http.SetCookie(w, &http.Cookie{Name: "ipa_session", Path: "/ipa", MaxAge: -1, Secure: true, HttpOnly: true})
+	}
 	writeEnvelope(w, uid, result, ierr)
 }
 

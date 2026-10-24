@@ -134,3 +134,22 @@ func TestSPNEGO401NotRetried(t *testing.T) {
 		t.Errorf("SPNEGO attempts = %d, want 1", calls.Load())
 	}
 }
+
+func TestSetSessionID_DeletionCookieClearsSession(t *testing.T) {
+	for name, hdr := range map[string]string{
+		"empty value":  "ipa_session=; Path=/ipa; Secure; HttpOnly",
+		"max-age zero": "ipa_session=abc; Max-Age=0; Path=/ipa",
+		"past expires": "ipa_session=abc; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Path=/ipa",
+	} {
+		t.Run(name, func(t *testing.T) {
+			c := &Client{sticky: true, sessionID: "0123456789abcdef0123456789abcdef"}
+			res := &http.Response{Header: http.Header{"Set-Cookie": {hdr}}}
+			if err := c.setSessionID(res); err != nil {
+				t.Fatal(err)
+			}
+			if c.sessionID != "" {
+				t.Errorf("sessionID = %q, want cleared", c.sessionID)
+			}
+		})
+	}
+}

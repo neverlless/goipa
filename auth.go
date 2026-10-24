@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/jcmturner/gokrb5/v8/client"
 	"github.com/jcmturner/gokrb5/v8/config"
@@ -76,6 +77,11 @@ func (c *Client) setSessionID(res *http.Response) error {
 	// Other cookies (e.g. a load balancer's) may come first and are not ours to reject.
 	for _, cookie := range res.Cookies() {
 		if cookie.Name != "ipa_session" {
+			continue
+		}
+		// FreeIPA's logout cookie deletes ipa_session; its exact form was not captured.
+		if cookie.Value == "" || cookie.MaxAge < 0 || (!cookie.Expires.IsZero() && cookie.Expires.Before(time.Now())) {
+			c.sessionID = ""
 			continue
 		}
 		if len(cookie.Value) != 32 && !strings.HasPrefix(cookie.Value, "MagBearerToken") {

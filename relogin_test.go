@@ -203,6 +203,9 @@ func TestSessionLogout(t *testing.T) {
 	if string(res.Result.Data) != "null" {
 		t.Errorf("result = %s, want null", res.Result.Data)
 	}
+	if sid := c.SessionID(); sid != "" {
+		t.Errorf("SessionID = %q after logout, want cleared by the deletion cookie", sid)
+	}
 	if _, err := c.Ping(); !errors.Is(err, ipa.ErrUnauthorized) {
 		t.Fatalf("after logout: err = %v, want ErrUnauthorized", err)
 	}

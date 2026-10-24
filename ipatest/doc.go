@@ -270,10 +270,11 @@
 //     "arguments": [<caller uid>]} with no "result" key. TestWhoAmI,
 //     TestContractWhoAmI.
 //   - Q39: session_logout ends the caller's session, which then gets HTTP
-//     401 as after ExpireSession; its output is {"result": null}. The fake
-//     sends no logout cookie; FreeIPA is believed to answer with
-//     ipa_session=MagBearerToken= [unverified], which goipa takes as
-//     clearing its session.
+//     401 as after ExpireSession; its output is {"result": null}. The reply
+//     carries a cookie that deletes ipa_session (Max-Age=0), and goipa
+//     clears its session on it. The exact cookie FreeIPA sends was not
+//     captured but is a deletion (the real-server leg of
+//     TestContractSessionLogoutGives401).
 //     TestContractSessionLogoutGives401, TestSessionLogout.
 //
 // A response's version is the server release, 4.13.4, and its principal is
