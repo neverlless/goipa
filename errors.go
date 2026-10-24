@@ -72,6 +72,10 @@ var (
 	// ErrInvalidPassword is returned when a password is invalid
 	ErrInvalidPassword = errors.New("invalid current password")
 
+	// ErrInvalidCredentials is returned by SyncOTPToken when FreeIPA rejects
+	// the user, password or codes (X-IPA-TokenSync-Result: invalid-credentials).
+	ErrInvalidCredentials = errors.New("invalid user, password or OTP codes")
+
 	// ErrExpiredPassword is returned when a password is expired
 	ErrExpiredPassword = errors.New("password expired")
 

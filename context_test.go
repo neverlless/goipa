@@ -50,6 +50,9 @@ func twinCalls() []twinCall {
 		{"SetPasswordContext", func(ctx context.Context, c *ipa.Client) error {
 			return c.SetPasswordContext(ctx, "bob", "old", "new", "")
 		}},
+		{"SyncOTPTokenContext", func(ctx context.Context, c *ipa.Client) error {
+			return c.SyncOTPTokenContext(ctx, "bob", "pw", "123456", "654321", "")
+		}},
 		{"SetAuthTypesContext", func(ctx context.Context, c *ipa.Client) error {
 			return c.SetAuthTypesContext(ctx, "bob", []string{"otp"})
 		}},

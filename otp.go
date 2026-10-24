@@ -7,6 +7,10 @@ package ipa
 import (
 	"context"
 	"errors"
+	"fmt"
+	"net/http"
+	"net/url"
+	"strings"
 	"time"
 
 	"github.com/tidwall/gjson"
@@ -244,4 +248,52 @@ func (c *Client) DisableOTPTokenContext(ctx context.Context, tokenUUID string) e
 	_, err := c.rpc(ctx, "otptoken_mod", []string{tokenUUID}, options)
 
 	return err
+}
+
+// SyncOTPToken resynchronises an OTP token whose clock or counter drifted, from
+// two consecutive codes, through /ipa/session/sync_token. password is the
+// user's password without an OTP. tokenID selects the token (unique ID or DN);
+// "" lets the server try the user's tokens. No session or Kerberos ticket is
+// needed. Based on ubccr/goipa#2 by @farzandalaee.
+func (c *Client) SyncOTPToken(username, password, firstCode, secondCode, tokenID string) error {
+	return c.SyncOTPTokenContext(context.Background(), username, password, firstCode, secondCode, tokenID)
+}
+
+// SyncOTPTokenContext is like SyncOTPToken but bounds the request with ctx.
+func (c *Client) SyncOTPTokenContext(ctx context.Context, username, password, firstCode, secondCode, tokenID string) error {
+	form := url.Values{
+		"user":        {username},
+		"password":    {password},
+		"first_code":  {firstCode},
+		"second_code": {secondCode},
+	}
+	if tokenID != "" {
+		form.Set("token", tokenID)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "POST", fmt.Sprintf("https://%s/ipa/session/sync_token", c.host), strings.NewReader(form.Encode()))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("Referer", fmt.Sprintf("https://%s/ipa", c.host))
+
+	res, err := c.httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != 200 {
+		return fmt.Errorf("ipa: sync token failed with HTTP status code: %d", res.StatusCode)
+	}
+
+	switch status := res.Header.Get("X-IPA-TokenSync-Result"); strings.ToLower(status) {
+	case "ok":
+		return nil
+	case "invalid-credentials":
+		return ErrInvalidCredentials
+	default:
+		return fmt.Errorf("ipa: sync token failed. Unknown status: %q", status)
+	}
 }

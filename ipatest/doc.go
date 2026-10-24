@@ -184,6 +184,14 @@
 //     summary "Stage user <uid> activated". If the active uid exists it is
 //     4002 `active user with name "<uid>" already exists` and the stage entry
 //     stays. TestContractStageActivateSummary, TestStageUserDuplicateAndDelete.
+//   - Q37: /ipa/session/sync_token answers HTTP 400 with an HTML body when
+//     user, password, first_code or second_code is missing. Otherwise it is
+//     200 with X-IPA-TokenSync-Result invalid-credentials (unknown user, no
+//     password or a different one, no enabled token of the user, or none with
+//     the given token UUID, or a code that is not Digits digits) or ok. Codes
+//     are not checked against a secret. The Referer check of the form
+//     endpoints applies; SyncOTPToken sends one. TestContractSyncTokenResults,
+//     TestSyncOTPToken.
 //
 // A response's version is the server release, 4.13.4, and its principal is
 // <uid>@TEST.LOCAL. An error a HandlerFunc returns without a Name gets the
