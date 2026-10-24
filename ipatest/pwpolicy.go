@@ -44,6 +44,14 @@ func (s *Server) SetPwPolicy(cn string, p PwPolicy) {
 	s.pwpol[cn] = p
 }
 
+// PwPolicy returns password policy cn.
+func (s *Server) PwPolicy(cn string) (PwPolicy, bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	p, ok := s.pwpol[cn]
+	return p, ok
+}
+
 func (p PwPolicy) render(cn string, withPriority bool) map[string]any {
 	out := map[string]any{"cn": []string{cn}}
 	set := func(k string, v int, always bool) {
