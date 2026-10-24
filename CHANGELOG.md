@@ -7,6 +7,14 @@ existing exported identifiers keep their signatures).
 
 ## [Unreleased]
 
+## [v0.9.1] - 2026-10-24
+
+### Fixed
+
+- `ipatest`: host group names are matched case-insensitively in rules,
+  services, automember rules and nested groups, as in FreeIPA, and are
+  reported lower-cased
+
 ## [v0.9.0] - 2026-10-24
 
 Typed objects: host groups, services and keytab access, HBAC and sudo rule
@@ -378,7 +386,8 @@ v0.0.1 – v0.0.7 were released by Andrew E. Bruno as
 [ubccr/goipa](https://github.com/ubccr/goipa/tags). This repository keeps
 that history.
 
-[Unreleased]: https://github.com/neverlless/goipa/compare/v0.9.0...HEAD
+[Unreleased]: https://github.com/neverlless/goipa/compare/v0.9.1...HEAD
+[v0.9.1]: https://github.com/neverlless/goipa/compare/v0.9.0...v0.9.1
 [v0.9.0]: https://github.com/neverlless/goipa/compare/v0.8.0...v0.9.0
 [v0.8.0]: https://github.com/neverlless/goipa/compare/v0.7.0...v0.8.0
 [v0.7.0]: https://github.com/neverlless/goipa/compare/v0.6.0...v0.7.0
