@@ -193,6 +193,13 @@
 //     `Subordinate id with with name "<id>" or for user "<owner>" already
 //     exists.` (FreeIPA's typo). A non-preserving user_del drops the range.
 //     TestContractSubIDGenerate, TestSubID_FindAndUserDelete.
+//   - Q36: user_add_passkey and user_remove_passkey take one mapping,
+//     passkey:<id>,<key>[,<userid>]; id and key must be standard base64 and
+//     the key a PKIX public key, else 3009 `invalid 'passkey': …`. A duplicate
+//     is 4038 `'ipapasskey' already contains '<mapping>'`, an absent one on
+//     remove 4026 `'ipapasskey' does not contain '<mapping>'`. The answer
+//     holds uid and ipapasskey. Any caller may manage any user's mappings.
+//     TestPasskeyCommands, TestContractPasskeys.
 //
 // A response's version is the server release, 4.13.4, and its principal is
 // <uid>@TEST.LOCAL. An error a HandlerFunc returns without a Name gets the
@@ -200,8 +207,8 @@
 //
 // # Not modelled
 //
-// Lockout status and unlock, password policy,
-// HBAC and sudo rules, hbactest and passkey management (planned for v0.5).
+// Lockout status and unlock, password policy, HBAC and sudo rules
+// and hbactest (planned for v0.5).
 // Until then, Handle is the way to reach them. Kerberos, LDAP search
 // filters, size limits, replication and HTTP fault injection are left out;
 // wrap HTTPClient's transport for the latter.
