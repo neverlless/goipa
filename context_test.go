@@ -245,6 +245,8 @@ func twinCalls() []twinCall {
 		}},
 		{"HostGroupRemoveMemberManagerContext", func(ctx context.Context, c *ipa.Client) error {
 			_, err := c.HostGroupRemoveMemberManagerContext(ctx, "hg", []string{"bob"}, nil)
+			return err
+		}},
 		{"HBACRuleShowContext", func(ctx context.Context, c *ipa.Client) error {
 			_, err := c.HBACRuleShowContext(ctx, "r")
 			return err
