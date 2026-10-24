@@ -186,6 +186,15 @@ func TestContractSudoRuleOptions(t *testing.T) {
 		}
 		_, err = b.admin.SudoRuleRemoveOption(cn, "!authenticate")
 		wantCode(t, "remove unset option", err, ipa.CodeAttrValueNotFound)
+		two := []string{"!authenticate", "!requiretty"}
+		r, err = b.admin.SudoRuleAddOption(cn, two...)
+		if err != nil || !reflect.DeepEqual(r.Options, two) {
+			t.Fatalf("add two options = %+v, %v", r, err)
+		}
+		r, err = b.admin.SudoRuleRemoveOption(cn, two...)
+		if err != nil || r.Options != nil {
+			t.Fatalf("remove two options = %+v, %v", r, err)
+		}
 		t.Logf("remove unset option: %v", err)
 	})
 }

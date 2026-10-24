@@ -16,15 +16,19 @@ import (
 func TestSudoRule_NoRequest(t *testing.T) {
 	s, c := newFake(t)
 	for name, call := range map[string]func() error{
-		"delete none": func() error { return c.SudoRuleDelete() },
-		"show empty":  func() error { _, err := c.SudoRuleShow(""); return err },
-		"add nil":     func() error { _, err := c.SudoRuleAdd(nil); return err },
-		"add empty":   func() error { _, err := c.SudoRuleAdd(&ipa.SudoRule{}); return err },
-		"enable":      func() error { return c.SudoRuleEnable("") },
-		"disable":     func() error { return c.SudoRuleDisable("") },
-		"user empty":  func() error { _, err := c.SudoRuleAddUser("", []string{"u"}, nil); return err },
-		"user none":   func() error { _, err := c.SudoRuleAddUser("r", nil, nil); return err },
-		"option none": func() error { _, err := c.SudoRuleAddOption("r"); return err },
+		"delete none":      func() error { return c.SudoRuleDelete() },
+		"show empty":       func() error { _, err := c.SudoRuleShow(""); return err },
+		"add nil":          func() error { _, err := c.SudoRuleAdd(nil); return err },
+		"add empty":        func() error { _, err := c.SudoRuleAdd(&ipa.SudoRule{}); return err },
+		"enable":           func() error { return c.SudoRuleEnable("") },
+		"disable":          func() error { return c.SudoRuleDisable("") },
+		"user empty":       func() error { _, err := c.SudoRuleAddUser("", []string{"u"}, nil); return err },
+		"user none":        func() error { _, err := c.SudoRuleAddUser("r", nil, nil); return err },
+		"option none":      func() error { _, err := c.SudoRuleAddOption("r"); return err },
+		"delete empty":     func() error { return c.SudoRuleDelete("r", "") },
+		"option empty":     func() error { _, err := c.SudoRuleAddOption("r", ""); return err },
+		"remove opt none":  func() error { _, err := c.SudoRuleRemoveOption("r"); return err },
+		"remove opt empty": func() error { _, err := c.SudoRuleRemoveOption("r", "a", ""); return err },
 	} {
 		if err := call(); err == nil {
 			t.Errorf("%s: want error", name)
@@ -80,5 +84,10 @@ func TestSudoRuleAddOption_Several(t *testing.T) {
 	r, err := c.SudoRuleAddOption("r", "!authenticate", "!requiretty")
 	if err != nil || !reflect.DeepEqual(r.Options, []string{"!authenticate", "!requiretty"}) {
 		t.Fatalf("rule = %+v, %v", r, err)
+	}
+	for _, call := range s.Calls()[len(s.Calls())-2:] {
+		if _, ok := call.Options["ipasudoopt"].(string); !ok {
+			t.Errorf("ipasudoopt sent as %T", call.Options["ipasudoopt"])
+		}
 	}
 }

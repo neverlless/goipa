@@ -62,7 +62,7 @@ func TestSudoOption_ListAt49(t *testing.T) {
 	if !errors.As(err, &ie) || ie.Code != ipa.CodeConversion {
 		t.Fatalf("list at 4.9: err = %v", err)
 	}
-	if r, err := c.SudoRuleAddOption("r", "!authenticate"); err != nil || len(r.Options) != 1 {
-		t.Fatalf("scalar at 4.9: %+v, %v", r, err)
+	if r, err := c.SudoRuleAddOption("r", "!authenticate", "!requiretty"); err != nil || len(r.Options) != 2 {
+		t.Fatalf("two options at 4.9: %+v, %v", r, err)
 	}
 }

@@ -352,7 +352,9 @@
 //     reject any JSON list for ipasudoopt, even of one value, with 3008
 //     "invalid 'ipasudoopt': Only one value is allowed", although the schema
 //     marks it multivalued; 4.12.2 and later take a list. Releases between
-//     are not pinned and take a list. goipa.TestContractSudoRuleOptions,
+//     are not pinned and take a list. goipa's SudoRuleAddOption and
+//     SudoRuleRemoveOption send one scalar call per option.
+//     goipa.TestContractSudoRuleOptions,
 //     TestSudoOption_ListAt49.
 //
 // A response's version is the server release, 4.13.4 unless SetVersion
