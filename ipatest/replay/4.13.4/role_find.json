@@ -1,0 +1,139 @@
+{
+  "count": 7,
+  "result": [
+    {
+      "cn": [
+        "Enrollment Administrator"
+      ],
+      "description": [
+        "Enrollment Administrator responsible for client(host) enrollment"
+      ],
+      "dn": "cn=Enrollment Administrator,cn=roles,cn=accounts,dc=example,dc=test",
+      "memberof_privilege": [
+        "Host Enrollment"
+      ],
+      "objectclass": [
+        "groupofnames",
+        "nestedgroup",
+        "top"
+      ]
+    },
+    {
+      "cn": [
+        "helpdesk"
+      ],
+      "description": [
+        "Helpdesk"
+      ],
+      "dn": "cn=helpdesk,cn=roles,cn=accounts,dc=example,dc=test",
+      "memberof_privilege": [
+        "Modify Users and Reset passwords",
+        "Modify Group membership"
+      ],
+      "objectclass": [
+        "top",
+        "groupofnames",
+        "nestedgroup"
+      ]
+    },
+    {
+      "cn": [
+        "IT Security Specialist"
+      ],
+      "description": [
+        "IT Security Specialist"
+      ],
+      "dn": "cn=IT Security Specialist,cn=roles,cn=accounts,dc=example,dc=test",
+      "memberof_privilege": [
+        "Netgroups Administrators",
+        "HBAC Administrator",
+        "Sudo Administrator"
+      ],
+      "objectclass": [
+        "groupofnames",
+        "nestedgroup",
+        "top"
+      ]
+    },
+    {
+      "cn": [
+        "IT Specialist"
+      ],
+      "description": [
+        "IT Specialist"
+      ],
+      "dn": "cn=IT Specialist,cn=roles,cn=accounts,dc=example,dc=test",
+      "memberof_privilege": [
+        "Host Administrators",
+        "Host Group Administrators",
+        "Service Administrators",
+        "Automount Administrators"
+      ],
+      "objectclass": [
+        "groupofnames",
+        "nestedgroup",
+        "top"
+      ]
+    },
+    {
+      "cn": [
+        "Security Architect"
+      ],
+      "description": [
+        "Security Architect"
+      ],
+      "dn": "cn=Security Architect,cn=roles,cn=accounts,dc=example,dc=test",
+      "memberof_privilege": [
+        "Delegation Administrator",
+        "Replication Administrators",
+        "System Accounts Administrators",
+        "Write IPA Configuration",
+        "Password Policy Administrator"
+      ],
+      "objectclass": [
+        "groupofnames",
+        "nestedgroup",
+        "top"
+      ]
+    },
+    {
+      "cn": [
+        "Subordinate ID Selfservice User"
+      ],
+      "description": [
+        "User that can self-request subordinate ids"
+      ],
+      "dn": "cn=Subordinate ID Selfservice User,cn=roles,cn=accounts,dc=example,dc=test",
+      "memberof_privilege": [
+        "Subordinate ID Selfservice Users"
+      ],
+      "objectclass": [
+        "groupofnames",
+        "nestedgroup",
+        "top"
+      ]
+    },
+    {
+      "cn": [
+        "User Administrator"
+      ],
+      "description": [
+        "Responsible for creating Users and Groups"
+      ],
+      "dn": "cn=User Administrator,cn=roles,cn=accounts,dc=example,dc=test",
+      "memberof_privilege": [
+        "User Administrators",
+        "Group Administrators",
+        "Stage User Administrators",
+        "Subordinate ID Administrators"
+      ],
+      "objectclass": [
+        "groupofnames",
+        "nestedgroup",
+        "top"
+      ]
+    }
+  ],
+  "summary": "7 roles matched",
+  "truncated": false
+}

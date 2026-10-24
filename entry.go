@@ -63,7 +63,7 @@ func (e Entry) Has(attr string) bool {
 }
 
 // Str returns the attribute's first value, or "" when absent.
-func (e Entry) Str(attr string) string { return e.first(attr).String() }
+func (e Entry) Str(attr string) string { return dnsName(e.first(attr)) }
 
 // DN is Str, named for attributes that hold a DN.
 func (e Entry) DN(attr string) string { return e.Str(attr) }
@@ -72,7 +72,26 @@ func (e Entry) DN(attr string) string { return e.Str(attr) }
 // nil when the attribute is absent or null.
 func (e Entry) Strs(attr string) []string {
 	res, p := e.get(attr)
-	return strList(res, p)
+	v := res.Get(p)
+	if v.Type == gjson.Null {
+		return nil
+	}
+	var out []string
+	v.ForEach(func(_, v gjson.Result) bool {
+		out = append(out, dnsName(v))
+		return true
+	})
+	return out
+}
+
+// dnsName unwraps FreeIPA's {"__dns_name__": "x"} class hint.
+func dnsName(v gjson.Result) string {
+	if v.IsObject() {
+		if n := v.Get("__dns_name__"); n.Exists() {
+			return n.String()
+		}
+	}
+	return v.String()
 }
 
 // Bool reads true, [true], "TRUE" or ["TRUE"].

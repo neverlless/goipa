@@ -1,0 +1,22 @@
+{
+  "result": {
+    "aci": [
+      "(targetattr = \"associateddomain\")(targetfilter = \"(objectclass=domainrelatedobject)\")(version 3.0;acl \"permission:System: Modify Realm Domains\";allow (write) groupdn = \"ldap:///cn=System: Modify Realm Domains,cn=permissions,cn=pbac,dc=example,dc=test\";)",
+      "(targetattr = \"associateddomain || cn || createtimestamp || entryusn || modifytimestamp || objectclass\")(targetfilter = \"(objectclass=domainrelatedobject)\")(version 3.0;acl \"permission:System: Read Realm Domains\";allow (compare,read,search) userdn = \"ldap:///all\";)"
+    ],
+    "associateddomain": [
+      "example.test"
+    ],
+    "cn": [
+      "Realm Domains"
+    ],
+    "dn": "cn=Realm Domains,cn=ipa,cn=etc,dc=example,dc=test",
+    "objectclass": [
+      "domainRelatedObject",
+      "nsContainer",
+      "top"
+    ]
+  },
+  "summary": null,
+  "value": null
+}

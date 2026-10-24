@@ -1,0 +1,242 @@
+{
+  "count": 5,
+  "result": [
+    {
+      "dn": "krbprincipalname=DNS/ipa.example.test@EXAMPLE.TEST,cn=services,cn=accounts,dc=example,dc=test",
+      "has_keytab": true,
+      "ipakrbokasdelegate": false,
+      "ipakrboktoauthasdelegate": false,
+      "ipakrbrequirespreauth": true,
+      "ipauniqueid": [
+        "d704575a-cfe6-11f1-ba47-be1d3b1abf25"
+      ],
+      "krbcanonicalname": [
+        "DNS/ipa.example.test@EXAMPLE.TEST"
+      ],
+      "krbextradata": "REDACTED",
+      "krblastpwdchange": [
+        {
+          "__datetime__": "20261024200938Z"
+        }
+      ],
+      "krbloginfailedcount": [
+        "0"
+      ],
+      "krbprincipalname": [
+        "DNS/ipa.example.test@EXAMPLE.TEST"
+      ],
+      "krbpwdpolicyreference": [
+        "cn=Default Service Password Policy,cn=services,cn=accounts,dc=example,dc=test"
+      ],
+      "managedby_host": [
+        "ipa.example.test"
+      ],
+      "objectclass": [
+        "krbprincipalaux",
+        "pkiuser",
+        "ipaobject",
+        "ipaservice",
+        "top",
+        "krbTicketPolicyAux",
+        "krbprincipal"
+      ]
+    },
+    {
+      "dn": "krbprincipalname=HTTP/ipa.example.test@EXAMPLE.TEST,cn=services,cn=accounts,dc=example,dc=test",
+      "has_keytab": true,
+      "ipakrbokasdelegate": false,
+      "ipakrboktoauthasdelegate": false,
+      "ipakrbprincipalalias": [
+        "HTTP/ipa.example.test@EXAMPLE.TEST"
+      ],
+      "ipakrbrequirespreauth": true,
+      "ipauniqueid": [
+        "c92c2900-cfe6-11f1-b810-be1d3b1abf25"
+      ],
+      "issuer": "CN=Certificate Authority,O=EXAMPLE.TEST",
+      "krbcanonicalname": [
+        "HTTP/ipa.example.test@EXAMPLE.TEST"
+      ],
+      "krbextradata": "REDACTED",
+      "krblastpwdchange": [
+        {
+          "__datetime__": "20261024200915Z"
+        }
+      ],
+      "krbprincipalname": [
+        "HTTP/ipa.example.test@EXAMPLE.TEST"
+      ],
+      "krbpwdpolicyreference": [
+        "cn=Default Service Password Policy,cn=services,cn=accounts,dc=example,dc=test"
+      ],
+      "managedby_host": [
+        "ipa.example.test"
+      ],
+      "objectclass": [
+        "krbprincipal",
+        "krbprincipalaux",
+        "krbticketpolicyaux",
+        "ipaobject",
+        "ipaservice",
+        "pkiuser",
+        "ipakrbprincipal",
+        "top"
+      ],
+      "serial_number": "9",
+      "serial_number_hex": "0x9",
+      "sha1_fingerprint": "45:ad:2f:cb:39:f5:83:0a:08:c2:ce:71:34:23:9a:30:58:6f:8c:d1",
+      "sha256_fingerprint": "21:6e:a6:d1:54:2e:e3:a1:85:a4:09:d7:7f:c4:8e:03:a5:58:40:7a:0b:27:33:f2:8d:e0:4a:d7:5a:b5:98:3c",
+      "subject": "CN=ipa.example.test,O=EXAMPLE.TEST",
+      "usercertificate": [
+        {
+          "__base64__": "MIIFPjCCA6agAwIBAgIBCTANBgkqhkiG9w0BAQsFADA3MRUwEwYDVQQKDAxFWEFNUExFLlRFU1QxHjAcBgNVBAMMFUNlcnRpZmljYXRlIEF1dGhvcml0eTAeFw0yNjEwMjQyMDA5MTVaFw0yODEwMjQyMDA5MTVaMDIxFTATBgNVBAoMDEVYQU1QTEUuVEVTVDEZMBcGA1UEAwwQaXBhLmV4YW1wbGUudGVzdDCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAO+Q8hXUZ4QVYuGCpXOluUSotdfhoAnJ/KEdGJWVt8nvqJ1hf0fZbpxJhAbyfI3YeN+I028hnLTEW8Ze+r/lTEv49OZAdbW2VFo0n3gINQyu21AFGCIWU37fVpMzKko2bHpaR5TovNYiCRJsWdbGF5/Lqq1LNlpK7ufo3ghnM+M8hl91oK7540vrZQ4kjaSElCxg9SBBgIIXD9YamuoSHIOwVdxg0NP9kw3WVBdUTp3cJjGhnsWlaRd2kk9z5BXnMuzS7vnKtbCKv5unZiLdWAKmcZnpoidJGtQHfZ1/VqIHO9jQbkfbfkUxymLusNsRon7QMs1XPA/bK3mmnbiEt78CAwEAAaOCAdgwggHUMB8GA1UdIwQYMBaAFJSLgjIsr7NFc336Ny9UwL4yhuPnMD4GCCsGAQUFBwEBBDIwMDAuBggrBgEFBQcwAYYiaHR0cDovL2lwYS1jYS5leGFtcGxlLnRlc3QvY2Evb2NzcDAOBgNVHQ8BAf8EBAMCBPAwHQYDVR0lBBYwFAYIKwYBBQUHAwEGCCsGAQUFBwMCMHcGA1UdHwRwMG4wbKA0oDKGMGh0dHA6Ly9pcGEtY2EuZXhhbXBsZS50ZXN0L2lwYS9jcmwvTWFzdGVyQ1JMLmJpbqI0pDIwMDEOMAwGA1UECgwFaXBhY2ExHjAcBgNVBAMMFUNlcnRpZmljYXRlIEF1dGhvcml0eTAdBgNVHQ4EFgQUJdhjg/bsImAH2VoWs9oyGL0EWMcwgakGA1UdEQSBoTCBnoIQaXBhLmV4YW1wbGUudGVzdIITaXBhLWNhLmV4YW1wbGUudGVzdKAyBgorBgEEAYI3FAIDoCQMIkhUVFAvaXBhLmV4YW1wbGUudGVzdEBFWEFNUExFLlRFU1SgQQYGKwYBBQICoDcwNaAOGwxFWEFNUExFLlRFU1ShIzAhoAMCAQGhGjAYGwRIVFRQGxBpcGEuZXhhbXBsZS50ZXN0MA0GCSqGSIb3DQEBCwUAA4IBgQAs1CNIdnfIJ/l6e0BAkYfjZ57tyohUgvBljsMiisbnVjqLOPkL6pdkZCA4ZGTtYFb6uclIsCuUgQQX874ei1vzcT5i2KI9+jHuoDekQqoDhDW54b6glpK/vHN7twILEUl93HEL0O9Z3pEwLcF1TN51puAdVdsRklDbfei6b/D+vkP6azkSSYJnmvBa+rwFZTRUNhVIiIKA0DmRhfwG/Mu3TRqCzWnxegvoqxT28ZpWtfLk8c5ZU0iTLtlrraTqwHSRnwabn7aLMl90kkiSKeu24nwSr/N/EB6sH0NpVxBCjc+deKoFGApnaN9P/dXjSeSc5fAJJ8nWLt4/efPNwyIkucWNYfCf8EWong4pw1BFLFCEZGeMlZYTVvuui8ZMVeyumdw2dIAV8A6YgE55SUKpmgUf+1bE3KOXYgI/LlVkZxGiy50AiaMHDcI4Ms0jINQbzUIM5joxs4ycotqbwQYh3wB7epLjYCqEGErXMrN2FtYhn5vxaaTjggM7bY2/fKY="
+        }
+      ],
+      "valid_not_after": "Tue Oct 24 20:09:15 2028 UTC",
+      "valid_not_before": "Sat Oct 24 20:09:15 2026 UTC"
+    },
+    {
+      "dn": "krbprincipalname=dogtag/ipa.example.test@EXAMPLE.TEST,cn=services,cn=accounts,dc=example,dc=test",
+      "has_keytab": true,
+      "ipakrbokasdelegate": false,
+      "ipakrboktoauthasdelegate": false,
+      "ipakrbprincipalalias": [
+        "dogtag/ipa.example.test@EXAMPLE.TEST"
+      ],
+      "ipakrbrequirespreauth": true,
+      "ipauniqueid": [
+        "c1d4a664-cfe6-11f1-9837-be1d3b1abf25"
+      ],
+      "krbcanonicalname": [
+        "dogtag/ipa.example.test@EXAMPLE.TEST"
+      ],
+      "krbextradata": "REDACTED",
+      "krblastpwdchange": [
+        {
+          "__datetime__": "20261024200902Z"
+        }
+      ],
+      "krbloginfailedcount": [
+        "0"
+      ],
+      "krbprincipalname": [
+        "dogtag/ipa.example.test@EXAMPLE.TEST"
+      ],
+      "krbpwdpolicyreference": [
+        "cn=Default Service Password Policy,cn=services,cn=accounts,dc=example,dc=test"
+      ],
+      "managedby_host": [
+        "ipa.example.test"
+      ],
+      "objectclass": [
+        "krbprincipalaux",
+        "pkiuser",
+        "ipaobject",
+        "ipaservice",
+        "top",
+        "krbTicketPolicyAux",
+        "krbprincipal",
+        "ipakrbprincipal"
+      ]
+    },
+    {
+      "dn": "krbprincipalname=ipa-dnskeysyncd/ipa.example.test@EXAMPLE.TEST,cn=services,cn=accounts,dc=example,dc=test",
+      "has_keytab": true,
+      "ipakrbokasdelegate": false,
+      "ipakrboktoauthasdelegate": false,
+      "ipakrbrequirespreauth": true,
+      "ipauniqueid": [
+        "dff6ddb0-cfe6-11f1-87f8-be1d3b1abf25"
+      ],
+      "krbcanonicalname": [
+        "ipa-dnskeysyncd/ipa.example.test@EXAMPLE.TEST"
+      ],
+      "krbextradata": "REDACTED",
+      "krblastpwdchange": [
+        {
+          "__datetime__": "20261024200953Z"
+        }
+      ],
+      "krbloginfailedcount": [
+        "0"
+      ],
+      "krbprincipalname": [
+        "ipa-dnskeysyncd/ipa.example.test@EXAMPLE.TEST"
+      ],
+      "krbpwdpolicyreference": [
+        "cn=Default Service Password Policy,cn=services,cn=accounts,dc=example,dc=test"
+      ],
+      "managedby_host": [
+        "ipa.example.test"
+      ],
+      "objectclass": [
+        "krbprincipalaux",
+        "pkiuser",
+        "ipaobject",
+        "ipaservice",
+        "top",
+        "krbTicketPolicyAux",
+        "krbprincipal"
+      ]
+    },
+    {
+      "dn": "krbprincipalname=ldap/ipa.example.test@EXAMPLE.TEST,cn=services,cn=accounts,dc=example,dc=test",
+      "has_keytab": true,
+      "ipakrbokasdelegate": false,
+      "ipakrboktoauthasdelegate": false,
+      "ipakrbprincipalalias": [
+        "ldap/ipa.example.test@EXAMPLE.TEST"
+      ],
+      "ipakrbrequirespreauth": true,
+      "ipauniqueid": [
+        "57d3a1f2-cfe6-11f1-a7d0-be1d3b1abf25"
+      ],
+      "issuer": "CN=Certificate Authority,O=EXAMPLE.TEST",
+      "krbcanonicalname": [
+        "ldap/ipa.example.test@EXAMPLE.TEST"
+      ],
+      "krbextradata": "REDACTED",
+      "krblastpwdchange": [
+        {
+          "__datetime__": "20261024200605Z"
+        }
+      ],
+      "krbloginfailedcount": [
+        "0"
+      ],
+      "krbprincipalname": [
+        "ldap/ipa.example.test@EXAMPLE.TEST"
+      ],
+      "krbpwdpolicyreference": [
+        "cn=Default Service Password Policy,cn=services,cn=accounts,dc=example,dc=test"
+      ],
+      "managedby_host": [
+        "ipa.example.test"
+      ],
+      "objectclass": [
+        "krbprincipalaux",
+        "pkiuser",
+        "ipaobject",
+        "ipaservice",
+        "top",
+        "krbTicketPolicyAux",
+        "krbprincipal",
+        "ipakrbprincipal"
+      ],
+      "serial_number": "8",
+      "serial_number_hex": "0x8",
+      "sha1_fingerprint": "d1:c3:23:eb:58:ab:ee:68:bd:20:4e:0c:94:1d:41:64:fb:55:ec:5b",
+      "sha256_fingerprint": "c5:3b:f9:19:51:7d:50:a1:df:fd:61:2b:97:b9:e5:a2:17:50:4f:3b:86:2e:c8:f6:60:44:24:34:b8:be:ba:aa",
+      "subject": "CN=ipa.example.test,O=EXAMPLE.TEST",
+      "usercertificate": [
+        {
+          "__base64__": "MIIFKTCCA5GgAwIBAgIBCDANBgkqhkiG9w0BAQsFADA3MRUwEwYDVQQKDAxFWEFNUExFLlRFU1QxHjAcBgNVBAMMFUNlcnRpZmljYXRlIEF1dGhvcml0eTAeFw0yNjEwMjQyMDA4NTVaFw0yODEwMjQyMDA4NTVaMDIxFTATBgNVBAoMDEVYQU1QTEUuVEVTVDEZMBcGA1UEAwwQaXBhLmV4YW1wbGUudGVzdDCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAK1GLhTERm5Ote04KbN1XnXyKoP/+z/bLaxsy4rNLnI1gu2CaML17sDxpGsX+aq9erMibNnF2xNOk+szrofgKXdSZbRSnUSfc/efU/yG/8HOT1iwb9Mru3RGW5DH1hozuWP46YIbwTfBr4tC/SoLajMu2wKK33Izj0MV8HML5OciVq6TBt6wCFCLdWlRQDIzxeXZSXTNkOWODhptzmA+3zOnbOoa2BZEl8g6+VsXYxw1mpER88HLMXpz6QUPIkfh72sJPzMNENSH3WA/pzHEVQoP5SjF3LRSsouRJfmyZDhnn9e9TKNyLRQm3f/Z0jT36JM54/nntZpYKpOMA3BIXlECAwEAAaOCAcMwggG/MB8GA1UdIwQYMBaAFJSLgjIsr7NFc336Ny9UwL4yhuPnMD4GCCsGAQUFBwEBBDIwMDAuBggrBgEFBQcwAYYiaHR0cDovL2lwYS1jYS5leGFtcGxlLnRlc3QvY2Evb2NzcDAOBgNVHQ8BAf8EBAMCBPAwHQYDVR0lBBYwFAYIKwYBBQUHAwEGCCsGAQUFBwMCMHcGA1UdHwRwMG4wbKA0oDKGMGh0dHA6Ly9pcGEtY2EuZXhhbXBsZS50ZXN0L2lwYS9jcmwvTWFzdGVyQ1JMLmJpbqI0pDIwMDEOMAwGA1UECgwFaXBhY2ExHjAcBgNVBAMMFUNlcnRpZmljYXRlIEF1dGhvcml0eTAdBgNVHQ4EFgQUnoeJxK2ZFyRjzVrGfCk6wGh01i4wgZQGA1UdEQSBjDCBiYIQaXBhLmV4YW1wbGUudGVzdKAyBgorBgEEAYI3FAIDoCQMImxkYXAvaXBhLmV4YW1wbGUudGVzdEBFWEFNUExFLlRFU1SgQQYGKwYBBQICoDcwNaAOGwxFWEFNUExFLlRFU1ShIzAhoAMCAQGhGjAYGwRsZGFwGxBpcGEuZXhhbXBsZS50ZXN0MA0GCSqGSIb3DQEBCwUAA4IBgQAaOiOGW7hLAqimUU23BUKxZSCC+7I/TqshlBU41hlYJEtWEVY0vgDQQmM5AY2TXx11j/OlTveCx3lO+kopSLmhk1yuRH55KIzpVvPnDbwzN3Kbos9QJi1UMphhiG1a18vFrRzlsJ51f+euOWJDy9auZVS7HgHSGgkHkuTZ6stZrHZz3ovJMmaPHaT/42wuKqukldT2ZGIfX9y5+0OvIG0h7xoINWBFy5Znv0xRXD+iZ0wNlzjIySuKNcfWtt9EKtMkFcixMyGH9MiVGFHt+ZzD6Q1ij2aAIc3XTIptCbl4B9oGj7oYnOc2h31CukaCy2aL4CCegeKTpXCdW86qpCXqv5WEbxPKVJugldGMudYyGroYFVT2s7SqHg0tq6P0pyuP7Ijc42FfqyqkoRXuw5cU0zVPw5HbHCfKfk+d8GKaBAxovsEwz1nU5JG0TXSjDmshyxvnonh2maZiiTwnqznZsVZFB1EsUhVEQ3w2nV2OyS7WJlIQe0+nkJAlO3RRCE0="
+        }
+      ],
+      "valid_not_after": "Tue Oct 24 20:08:55 2028 UTC",
+      "valid_not_before": "Sat Oct 24 20:08:55 2026 UTC"
+    }
+  ],
+  "summary": "5 services matched",
+  "truncated": false
+}

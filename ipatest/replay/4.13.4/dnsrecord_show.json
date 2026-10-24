@@ -1,0 +1,24 @@
+{
+  "result": {
+    "aaaarecord": [
+      "2001:db8::1"
+    ],
+    "dn": "idnsname=www,idnsname=goipaebe170d5.test.,cn=dns,dc=example,dc=test",
+    "idnsname": [
+      {
+        "__dns_name__": "www"
+      }
+    ],
+    "objectclass": [
+      "top",
+      "idnsrecord"
+    ],
+    "txtrecord": [
+      "goipa-test"
+    ]
+  },
+  "summary": null,
+  "value": {
+    "__dns_name__": "www"
+  }
+}

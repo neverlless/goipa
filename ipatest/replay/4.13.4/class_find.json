@@ -1,0 +1,1759 @@
+{
+  "count": 108,
+  "result": [
+    {
+      "full_name": "aci/1",
+      "name": "aci",
+      "params_param": [
+        "aciname",
+        "permission",
+        "group",
+        "permissions",
+        "attrs",
+        "type",
+        "memberof",
+        "filter",
+        "subtree",
+        "targetgroup",
+        "selfaci",
+        "aciprefix",
+        "aci"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "automember/1",
+      "name": "automember",
+      "params_param": [
+        "cn",
+        "description",
+        "automemberdefaultgroup",
+        "automemberinclusiveregex",
+        "automemberexclusiveregex"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "automember_default_group/1",
+      "name": "automember_default_group",
+      "params_param": [
+        "automemberdefaultgroup",
+        "automemberinclusiveregex",
+        "automemberexclusiveregex"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "automember_task/1",
+      "name": "automember_task",
+      "params_param": [
+        "dn"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "automountkey/1",
+      "name": "automountkey",
+      "params_param": [
+        "automountkey",
+        "automountinformation",
+        "description"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "automountlocation/1",
+      "name": "automountlocation",
+      "params_param": [
+        "cn"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "automountmap/1",
+      "name": "automountmap",
+      "params_param": [
+        "automountmapname",
+        "description"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "ca/1",
+      "name": "ca",
+      "params_param": [
+        "cn",
+        "description",
+        "ipacaid",
+        "ipacasubjectdn",
+        "ipacaissuerdn",
+        "certificate",
+        "certificate_chain",
+        "ipacarandomserialnumberversion"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "caacl/1",
+      "name": "caacl",
+      "params_param": [
+        "cn",
+        "description",
+        "ipaenabledflag",
+        "ipacacategory",
+        "ipacertprofilecategory",
+        "usercategory",
+        "hostcategory",
+        "servicecategory",
+        "ipamemberca_ca",
+        "ipamembercertprofile_certprofile",
+        "memberuser_user",
+        "memberuser_group",
+        "memberhost_host",
+        "memberhost_hostgroup",
+        "memberservice_service"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "cert/1",
+      "name": "cert",
+      "params_param": [
+        "cacn",
+        "certificate",
+        "certificate_chain",
+        "subject",
+        "san_rfc822name",
+        "san_dnsname",
+        "san_x400address",
+        "san_directoryname",
+        "san_edipartyname",
+        "san_uri",
+        "san_ipaddress",
+        "san_oid",
+        "san_other_upn",
+        "san_other_kpn",
+        "san_other",
+        "issuer",
+        "valid_not_before",
+        "valid_not_after",
+        "sha1_fingerprint",
+        "sha256_fingerprint",
+        "serial_number",
+        "serial_number_hex",
+        "status",
+        "revoked",
+        "revocation_reason",
+        "owner_user",
+        "owner_host",
+        "owner_service"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "certmap/1",
+      "name": "certmap",
+      "params_param": [
+        "domain",
+        "uid"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "certmapconfig/1",
+      "name": "certmapconfig",
+      "params_param": [
+        "ipacertmappromptusername"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "certmaprule/1",
+      "name": "certmaprule",
+      "params_param": [
+        "cn",
+        "description",
+        "ipacertmapmaprule",
+        "ipacertmapmatchrule",
+        "associateddomain",
+        "ipacertmappriority",
+        "ipaenabledflag"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "certprofile/1",
+      "name": "certprofile",
+      "params_param": [
+        "cn",
+        "config",
+        "description",
+        "ipacertprofilestoreissued"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "certreq/1",
+      "name": "certreq",
+      "params_param": [
+        "cacn",
+        "certificate",
+        "certificate_chain",
+        "subject",
+        "san_rfc822name",
+        "san_dnsname",
+        "san_x400address",
+        "san_directoryname",
+        "san_edipartyname",
+        "san_uri",
+        "san_ipaddress",
+        "san_oid",
+        "san_other_upn",
+        "san_other_kpn",
+        "san_other",
+        "issuer",
+        "valid_not_before",
+        "valid_not_after",
+        "sha1_fingerprint",
+        "sha256_fingerprint",
+        "serial_number",
+        "serial_number_hex",
+        "request_type",
+        "profile_id",
+        "cert_request_status",
+        "request_id"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "class/1",
+      "name": "class",
+      "params_param": [
+        "name",
+        "version",
+        "full_name",
+        "doc",
+        "exclude",
+        "include",
+        "topic_topic",
+        "params_param"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "command/1",
+      "name": "command",
+      "params_param": [
+        "name",
+        "version",
+        "full_name",
+        "doc",
+        "exclude",
+        "include",
+        "topic_topic",
+        "params_param",
+        "obj_class",
+        "attr_name"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "config/1",
+      "name": "config",
+      "params_param": [
+        "ipamaxusernamelength",
+        "ipamaxhostnamelength",
+        "ipahomesrootdir",
+        "ipadefaultloginshell",
+        "ipadefaultprimarygroup",
+        "ipadefaultemaildomain",
+        "ipasearchtimelimit",
+        "ipasearchrecordslimit",
+        "ipausersearchfields",
+        "ipagroupsearchfields",
+        "ipamigrationenabled",
+        "ipacertificatesubjectbase",
+        "ipagroupobjectclasses",
+        "ipauserobjectclasses",
+        "ipapwdexpadvnotify",
+        "ipaconfigstring",
+        "ipaselinuxusermaporder",
+        "ipaselinuxusermapdefault",
+        "ipakrbauthzdata",
+        "ipauserauthtype",
+        "ipauserdefaultsubordinateid",
+        "ipa_master_server",
+        "ipa_master_hidden_server",
+        "pkinit_server_server",
+        "ca_server_server",
+        "ca_server_hidden_server",
+        "ca_renewal_master_server",
+        "kra_server_server",
+        "kra_server_hidden_server",
+        "ipadomainresolutionorder",
+        "dns_server_server",
+        "dns_server_hidden_server",
+        "dnssec_key_master_server",
+        "enable_sid",
+        "add_sids",
+        "netbios_name",
+        "hsm_token_name",
+        "ipaservicekeytypesize"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "cosentry/1",
+      "name": "cosentry",
+      "params_param": [
+        "cn",
+        "krbpwdpolicyreference",
+        "cospriority"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "delegation/1",
+      "name": "delegation",
+      "params_param": [
+        "aciname",
+        "permissions",
+        "attrs",
+        "memberof",
+        "group",
+        "aci"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "dns_system_records/1",
+      "name": "dns_system_records",
+      "params_param": [
+        "ipa_records",
+        "location_records"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "dnsa6record/1",
+      "name": "dnsa6record",
+      "params_param": [
+        "data"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "dnsaaaarecord/1",
+      "name": "dnsaaaarecord",
+      "params_param": [
+        "ip_address"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "dnsafsdbrecord/1",
+      "name": "dnsafsdbrecord",
+      "params_param": [
+        "subtype",
+        "hostname"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "dnsaplrecord/1",
+      "name": "dnsaplrecord",
+      "version": "1"
+    },
+    {
+      "full_name": "dnsarecord/1",
+      "name": "dnsarecord",
+      "params_param": [
+        "ip_address"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "dnscertrecord/1",
+      "name": "dnscertrecord",
+      "params_param": [
+        "type",
+        "key_tag",
+        "algorithm",
+        "certificate_or_crl"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "dnscnamerecord/1",
+      "name": "dnscnamerecord",
+      "params_param": [
+        "hostname"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "dnsconfig/1",
+      "name": "dnsconfig",
+      "params_param": [
+        "idnsforwarders",
+        "idnsforwardpolicy",
+        "idnsallowsyncptr",
+        "idnszonerefresh",
+        "ipadnsversion",
+        "dns_server_server",
+        "dnssec_key_master_server"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "dnsdhcidrecord/1",
+      "name": "dnsdhcidrecord",
+      "version": "1"
+    },
+    {
+      "full_name": "dnsdlvrecord/1",
+      "name": "dnsdlvrecord",
+      "params_param": [
+        "key_tag",
+        "algorithm",
+        "digest_type",
+        "digest"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "dnsdnamerecord/1",
+      "name": "dnsdnamerecord",
+      "params_param": [
+        "target"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "dnsdsrecord/1",
+      "name": "dnsdsrecord",
+      "params_param": [
+        "key_tag",
+        "algorithm",
+        "digest_type",
+        "digest"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "dnsforwardzone/1",
+      "name": "dnsforwardzone",
+      "params_param": [
+        "idnsname",
+        "name_from_ip",
+        "idnszoneactive",
+        "idnsforwarders",
+        "idnsforwardpolicy",
+        "managedby"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "dnshiprecord/1",
+      "name": "dnshiprecord",
+      "version": "1"
+    },
+    {
+      "full_name": "dnsipseckeyrecord/1",
+      "name": "dnsipseckeyrecord",
+      "version": "1"
+    },
+    {
+      "full_name": "dnskeyrecord/1",
+      "name": "dnskeyrecord",
+      "version": "1"
+    },
+    {
+      "full_name": "dnskxrecord/1",
+      "name": "dnskxrecord",
+      "params_param": [
+        "preference",
+        "exchanger"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "dnslocrecord/1",
+      "name": "dnslocrecord",
+      "params_param": [
+        "lat_deg",
+        "lat_min",
+        "lat_sec",
+        "lat_dir",
+        "lon_deg",
+        "lon_min",
+        "lon_sec",
+        "lon_dir",
+        "altitude",
+        "size",
+        "h_precision",
+        "v_precision"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "dnsmxrecord/1",
+      "name": "dnsmxrecord",
+      "params_param": [
+        "preference",
+        "exchanger"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "dnsnaptrrecord/1",
+      "name": "dnsnaptrrecord",
+      "params_param": [
+        "order",
+        "preference",
+        "flags",
+        "service",
+        "regexp",
+        "replacement"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "dnsnsecrecord/1",
+      "name": "dnsnsecrecord",
+      "version": "1"
+    },
+    {
+      "full_name": "dnsnsrecord/1",
+      "name": "dnsnsrecord",
+      "params_param": [
+        "hostname"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "dnsptrrecord/1",
+      "name": "dnsptrrecord",
+      "params_param": [
+        "hostname"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "dnsrecord/1",
+      "name": "dnsrecord",
+      "params_param": [
+        "idnsname",
+        "dnsttl",
+        "dnsclass",
+        "dnsrecords",
+        "dnstype",
+        "dnsdata",
+        "arecord",
+        "a_part_ip_address",
+        "a_extra_create_reverse",
+        "aaaarecord",
+        "aaaa_part_ip_address",
+        "aaaa_extra_create_reverse",
+        "a6record",
+        "a6_part_data",
+        "afsdbrecord",
+        "afsdb_part_subtype",
+        "afsdb_part_hostname",
+        "aplrecord",
+        "certrecord",
+        "cert_part_type",
+        "cert_part_key_tag",
+        "cert_part_algorithm",
+        "cert_part_certificate_or_crl",
+        "cnamerecord",
+        "cname_part_hostname",
+        "dhcidrecord",
+        "dlvrecord",
+        "dlv_part_key_tag",
+        "dlv_part_algorithm",
+        "dlv_part_digest_type",
+        "dlv_part_digest",
+        "dnamerecord",
+        "dname_part_target",
+        "dsrecord",
+        "ds_part_key_tag",
+        "ds_part_algorithm",
+        "ds_part_digest_type",
+        "ds_part_digest",
+        "hiprecord",
+        "ipseckeyrecord",
+        "keyrecord",
+        "kxrecord",
+        "kx_part_preference",
+        "kx_part_exchanger",
+        "locrecord",
+        "loc_part_lat_deg",
+        "loc_part_lat_min",
+        "loc_part_lat_sec",
+        "loc_part_lat_dir",
+        "loc_part_lon_deg",
+        "loc_part_lon_min",
+        "loc_part_lon_sec",
+        "loc_part_lon_dir",
+        "loc_part_altitude",
+        "loc_part_size",
+        "loc_part_h_precision",
+        "loc_part_v_precision",
+        "mxrecord",
+        "mx_part_preference",
+        "mx_part_exchanger",
+        "naptrrecord",
+        "naptr_part_order",
+        "naptr_part_preference",
+        "naptr_part_flags",
+        "naptr_part_service",
+        "naptr_part_regexp",
+        "naptr_part_replacement",
+        "nsrecord",
+        "ns_part_hostname",
+        "nsecrecord",
+        "ptrrecord",
+        "ptr_part_hostname",
+        "rrsigrecord",
+        "rprecord",
+        "sigrecord",
+        "spfrecord",
+        "srvrecord",
+        "srv_part_priority",
+        "srv_part_weight",
+        "srv_part_port",
+        "srv_part_target",
+        "sshfprecord",
+        "sshfp_part_algorithm",
+        "sshfp_part_fp_type",
+        "sshfp_part_fingerprint",
+        "tlsarecord",
+        "tlsa_part_cert_usage",
+        "tlsa_part_selector",
+        "tlsa_part_matching_type",
+        "tlsa_part_cert_association_data",
+        "txtrecord",
+        "txt_part_data",
+        "urirecord",
+        "uri_part_priority",
+        "uri_part_weight",
+        "uri_part_target"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "dnsrprecord/1",
+      "name": "dnsrprecord",
+      "version": "1"
+    },
+    {
+      "full_name": "dnsrrsigrecord/1",
+      "name": "dnsrrsigrecord",
+      "version": "1"
+    },
+    {
+      "full_name": "dnsserver/1",
+      "name": "dnsserver",
+      "params_param": [
+        "idnsserverid",
+        "idnssoamname",
+        "idnsforwarders",
+        "idnsforwardpolicy"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "dnssigrecord/1",
+      "name": "dnssigrecord",
+      "version": "1"
+    },
+    {
+      "full_name": "dnsspfrecord/1",
+      "name": "dnsspfrecord",
+      "version": "1"
+    },
+    {
+      "full_name": "dnssrvrecord/1",
+      "name": "dnssrvrecord",
+      "params_param": [
+        "priority",
+        "weight",
+        "port",
+        "target"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "dnssshfprecord/1",
+      "name": "dnssshfprecord",
+      "params_param": [
+        "algorithm",
+        "fp_type",
+        "fingerprint"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "dnstlsarecord/1",
+      "name": "dnstlsarecord",
+      "params_param": [
+        "cert_usage",
+        "selector",
+        "matching_type",
+        "cert_association_data"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "dnstxtrecord/1",
+      "name": "dnstxtrecord",
+      "params_param": [
+        "data"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "dnsurirecord/1",
+      "name": "dnsurirecord",
+      "params_param": [
+        "priority",
+        "weight",
+        "target"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "dnszone/1",
+      "name": "dnszone",
+      "params_param": [
+        "idnsname",
+        "name_from_ip",
+        "idnszoneactive",
+        "idnsforwarders",
+        "idnsforwardpolicy",
+        "managedby",
+        "idnssoamname",
+        "idnssoarname",
+        "idnssoaserial",
+        "idnssoarefresh",
+        "idnssoaretry",
+        "idnssoaexpire",
+        "idnssoaminimum",
+        "dnsttl",
+        "dnsdefaultttl",
+        "dnsclass",
+        "idnsupdatepolicy",
+        "idnsallowdynupdate",
+        "idnsallowquery",
+        "idnsallowtransfer",
+        "idnsallowsyncptr",
+        "idnssecinlinesigning",
+        "nsec3paramrecord"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "group/1",
+      "name": "group",
+      "params_param": [
+        "cn",
+        "description",
+        "gidnumber",
+        "ipaexternalmember",
+        "member_user",
+        "member_group",
+        "memberof_group",
+        "memberof_role",
+        "memberof_netgroup",
+        "member_service",
+        "memberof_sudorule",
+        "memberof_hbacrule",
+        "member_idoverrideuser",
+        "memberindirect_idoverrideuser",
+        "memberindirect_user",
+        "memberindirect_group",
+        "memberofindirect_group",
+        "memberofindirect_netgroup",
+        "memberofindirect_role",
+        "memberofindirect_sudorule",
+        "memberofindirect_hbacrule",
+        "membermanager_group",
+        "membermanager_user"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "hbacrule/1",
+      "name": "hbacrule",
+      "params_param": [
+        "cn",
+        "accessruletype",
+        "usercategory",
+        "hostcategory",
+        "sourcehostcategory",
+        "servicecategory",
+        "description",
+        "ipaenabledflag",
+        "memberuser_user",
+        "memberuser_group",
+        "memberhost_host",
+        "memberhost_hostgroup",
+        "sourcehost_host",
+        "sourcehost_hostgroup",
+        "memberservice_hbacsvc",
+        "memberservice_hbacsvcgroup",
+        "externalhost"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "hbacsvc/1",
+      "name": "hbacsvc",
+      "params_param": [
+        "cn",
+        "description",
+        "memberof_hbacsvcgroup"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "hbacsvcgroup/1",
+      "name": "hbacsvcgroup",
+      "params_param": [
+        "cn",
+        "description",
+        "member_hbacsvc"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "host/1",
+      "name": "host",
+      "params_param": [
+        "fqdn",
+        "description",
+        "l",
+        "nshostlocation",
+        "nshardwareplatform",
+        "nsosversion",
+        "userpassword",
+        "random",
+        "randompassword",
+        "usercertificate",
+        "subject",
+        "serial_number",
+        "serial_number_hex",
+        "issuer",
+        "valid_not_before",
+        "valid_not_after",
+        "sha1_fingerprint",
+        "sha256_fingerprint",
+        "revocation_reason",
+        "krbcanonicalname",
+        "krbprincipalname",
+        "memberprincipal",
+        "macaddress",
+        "ipasshpubkey",
+        "sshpubkeyfp",
+        "userclass",
+        "ipaassignedidview",
+        "krbprincipalauthind",
+        "ipakrbrequirespreauth",
+        "ipakrbokasdelegate",
+        "ipakrboktoauthasdelegate",
+        "has_password",
+        "memberof_hostgroup",
+        "memberof_role",
+        "memberof_netgroup",
+        "memberof_sudorule",
+        "memberof_hbacrule",
+        "memberofindirect_netgroup",
+        "memberofindirect_hostgroup",
+        "memberofindirect_role",
+        "memberofindirect_sudorule",
+        "memberofindirect_hbacrule",
+        "has_keytab",
+        "managedby_host",
+        "managing_host",
+        "ipaallowedtoperform_read_keys_user",
+        "ipaallowedtoperform_read_keys_group",
+        "ipaallowedtoperform_read_keys_host",
+        "ipaallowedtoperform_read_keys_hostgroup",
+        "ipaallowedtoperform_write_keys_user",
+        "ipaallowedtoperform_write_keys_group",
+        "ipaallowedtoperform_write_keys_host",
+        "ipaallowedtoperform_write_keys_hostgroup",
+        "ipaallowedtoperform_write_delegation_user",
+        "ipaallowedtoperform_write_delegation_group",
+        "ipaallowedtoperform_write_delegation_host",
+        "ipaallowedtoperform_write_delegation_hostgroup"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "hostgroup/1",
+      "name": "hostgroup",
+      "params_param": [
+        "cn",
+        "description",
+        "member_host",
+        "member_hostgroup",
+        "memberof_hostgroup",
+        "memberof_netgroup",
+        "memberof_sudorule",
+        "memberof_hbacrule",
+        "memberindirect_host",
+        "memberindirect_hostgroup",
+        "memberofindirect_hostgroup",
+        "memberofindirect_sudorule",
+        "memberofindirect_hbacrule",
+        "membermanager_group",
+        "membermanager_user"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "idoverridegroup/1",
+      "name": "idoverridegroup",
+      "params_param": [
+        "ipaanchoruuid",
+        "description",
+        "cn",
+        "gidnumber"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "idoverrideuser/1",
+      "name": "idoverrideuser",
+      "params_param": [
+        "ipaanchoruuid",
+        "description",
+        "uid",
+        "uidnumber",
+        "gecos",
+        "gidnumber",
+        "homedirectory",
+        "loginshell",
+        "ipaoriginaluid",
+        "ipasshpubkey",
+        "usercertificate",
+        "memberof_group",
+        "memberof_role",
+        "memberofindirect_group",
+        "memberofindirect_role"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "idp/1",
+      "name": "idp",
+      "params_param": [
+        "cn",
+        "ipaidpauthendpoint",
+        "ipaidpdevauthendpoint",
+        "ipaidptokenendpoint",
+        "ipaidpuserinfoendpoint",
+        "ipaidpkeysendpoint",
+        "ipaidpissuerurl",
+        "ipaidpclientid",
+        "ipaidpclientsecret",
+        "ipaidpscope",
+        "ipaidpsub"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "idrange/1",
+      "name": "idrange",
+      "params_param": [
+        "cn",
+        "ipabaseid",
+        "ipaidrangesize",
+        "ipabaserid",
+        "ipasecondarybaserid",
+        "ipanttrusteddomainsid",
+        "ipanttrusteddomainname",
+        "iparangetype",
+        "ipaautoprivategroups"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "idview/1",
+      "name": "idview",
+      "params_param": [
+        "cn",
+        "description",
+        "useroverrides",
+        "groupoverrides",
+        "appliedtohosts",
+        "ipadomainresolutionorder"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "krbtpolicy/1",
+      "name": "krbtpolicy",
+      "params_param": [
+        "uid",
+        "krbmaxticketlife",
+        "krbmaxrenewableage",
+        "krbauthindmaxticketlife_otp",
+        "krbauthindmaxrenewableage_otp",
+        "krbauthindmaxticketlife_radius",
+        "krbauthindmaxrenewableage_radius",
+        "krbauthindmaxticketlife_pkinit",
+        "krbauthindmaxrenewableage_pkinit",
+        "krbauthindmaxticketlife_hardened",
+        "krbauthindmaxrenewableage_hardened",
+        "krbauthindmaxticketlife_idp",
+        "krbauthindmaxrenewableage_idp",
+        "krbauthindmaxticketlife_passkey",
+        "krbauthindmaxrenewableage_passkey"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "location/1",
+      "name": "location",
+      "params_param": [
+        "idnsname",
+        "description",
+        "servers_server",
+        "dns_server"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "metaobject/1",
+      "name": "metaobject",
+      "params_param": [
+        "name",
+        "version",
+        "full_name",
+        "doc",
+        "exclude",
+        "include",
+        "topic_topic",
+        "params_param"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "netgroup/1",
+      "name": "netgroup",
+      "params_param": [
+        "cn",
+        "description",
+        "nisdomainname",
+        "ipauniqueid",
+        "usercategory",
+        "hostcategory",
+        "externalhost",
+        "member_netgroup",
+        "memberof_netgroup",
+        "memberindirect_netgroup",
+        "memberuser_user",
+        "memberuser_group",
+        "memberhost_host",
+        "memberhost_hostgroup"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "otpconfig/1",
+      "name": "otpconfig",
+      "params_param": [
+        "ipatokentotpauthwindow",
+        "ipatokentotpsyncwindow",
+        "ipatokenhotpauthwindow",
+        "ipatokenhotpsyncwindow"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "otptoken/1",
+      "name": "otptoken",
+      "params_param": [
+        "ipatokenuniqueid",
+        "type",
+        "description",
+        "ipatokenowner",
+        "managedby_user",
+        "ipatokendisabled",
+        "ipatokennotbefore",
+        "ipatokennotafter",
+        "ipatokenvendor",
+        "ipatokenmodel",
+        "ipatokenserial",
+        "ipatokenotpkey",
+        "ipatokenotpalgorithm",
+        "ipatokenotpdigits",
+        "ipatokentotpclockoffset",
+        "ipatokentotptimestep",
+        "ipatokenhotpcounter",
+        "uri"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "output/1",
+      "name": "output",
+      "params_param": [
+        "name",
+        "doc",
+        "exclude",
+        "include",
+        "type",
+        "required",
+        "multivalue"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "param/1",
+      "name": "param",
+      "params_param": [
+        "name",
+        "doc",
+        "exclude",
+        "include",
+        "type",
+        "required",
+        "multivalue",
+        "alwaysask",
+        "cli_metavar",
+        "cli_name",
+        "confirm",
+        "default",
+        "default_from_param",
+        "label",
+        "no_convert",
+        "option_group",
+        "sensitive",
+        "positional"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "passkeyconfig/1",
+      "name": "passkeyconfig",
+      "params_param": [
+        "iparequireuserverification"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "permission/1",
+      "name": "permission",
+      "params_param": [
+        "cn",
+        "ipapermright",
+        "attrs",
+        "ipapermincludedattr",
+        "ipapermexcludedattr",
+        "ipapermdefaultattr",
+        "ipapermbindruletype",
+        "ipapermlocation",
+        "extratargetfilter",
+        "ipapermtargetfilter",
+        "ipapermtarget",
+        "ipapermtargetto",
+        "ipapermtargetfrom",
+        "memberof",
+        "targetgroup",
+        "type",
+        "permissions",
+        "filter",
+        "subtree",
+        "ipapermissiontype",
+        "aci",
+        "member_privilege",
+        "memberindirect_role"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "pkinit/1",
+      "name": "pkinit",
+      "params_param": [
+        "server_server",
+        "status"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "privilege/1",
+      "name": "privilege",
+      "params_param": [
+        "cn",
+        "description",
+        "memberof_permission",
+        "member_role"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "pwpolicy/1",
+      "name": "pwpolicy",
+      "params_param": [
+        "cn",
+        "krbmaxpwdlife",
+        "krbminpwdlife",
+        "krbpwdhistorylength",
+        "krbpwdmindiffchars",
+        "krbpwdminlength",
+        "cospriority",
+        "krbpwdmaxfailure",
+        "krbpwdfailurecountinterval",
+        "krbpwdlockoutduration",
+        "ipapwdmaxrepeat",
+        "ipapwdmaxsequence",
+        "ipapwddictcheck",
+        "ipapwdusercheck",
+        "ipapwddcredit",
+        "ipapwducredit",
+        "ipapwdlcredit",
+        "ipapwdocredit",
+        "passwordgracelimit"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "radiusproxy/1",
+      "name": "radiusproxy",
+      "params_param": [
+        "cn",
+        "description",
+        "ipatokenradiusserver",
+        "ipatokenradiussecret",
+        "ipatokenradiustimeout",
+        "ipatokenradiusretries",
+        "ipatokenusermapattribute"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "realmdomains/1",
+      "name": "realmdomains",
+      "params_param": [
+        "associateddomain",
+        "add_domain",
+        "del_domain"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "role/1",
+      "name": "role",
+      "params_param": [
+        "cn",
+        "description",
+        "member_user",
+        "member_group",
+        "member_host",
+        "member_hostgroup",
+        "memberof_privilege",
+        "member_service",
+        "member_idoverrideuser",
+        "member_sysaccount"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "selfservice/1",
+      "name": "selfservice",
+      "params_param": [
+        "aciname",
+        "permissions",
+        "attrs",
+        "aci"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "selinuxusermap/1",
+      "name": "selinuxusermap",
+      "params_param": [
+        "cn",
+        "ipaselinuxuser",
+        "seealso",
+        "usercategory",
+        "hostcategory",
+        "description",
+        "ipaenabledflag",
+        "memberuser_user",
+        "memberuser_group",
+        "memberhost_host",
+        "memberhost_hostgroup"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "server/1",
+      "name": "server",
+      "params_param": [
+        "cn",
+        "iparepltopomanagedsuffix",
+        "iparepltopomanagedsuffix_topologysuffix",
+        "ipamindomainlevel",
+        "ipamaxdomainlevel",
+        "ipalocation_location",
+        "ipaserviceweight",
+        "service_relative_weight",
+        "enabled_role_servrole"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "server_role/1",
+      "name": "server_role",
+      "params_param": [
+        "server_server",
+        "role_servrole",
+        "status"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "service/1",
+      "name": "service",
+      "params_param": [
+        "krbcanonicalname",
+        "krbprincipalname",
+        "memberprincipal",
+        "usercertificate",
+        "subject",
+        "serial_number",
+        "serial_number_hex",
+        "issuer",
+        "valid_not_before",
+        "valid_not_after",
+        "sha1_fingerprint",
+        "sha256_fingerprint",
+        "revocation_reason",
+        "ipakrbauthzdata",
+        "krbprincipalauthind",
+        "ipakrbrequirespreauth",
+        "ipakrbokasdelegate",
+        "ipakrboktoauthasdelegate",
+        "memberof_role",
+        "has_keytab",
+        "managedby_host",
+        "ipaallowedtoperform_read_keys_user",
+        "ipaallowedtoperform_read_keys_group",
+        "ipaallowedtoperform_read_keys_host",
+        "ipaallowedtoperform_read_keys_hostgroup",
+        "ipaallowedtoperform_write_keys_user",
+        "ipaallowedtoperform_write_keys_group",
+        "ipaallowedtoperform_write_keys_host",
+        "ipaallowedtoperform_write_keys_hostgroup",
+        "ipaallowedtoperform_write_delegation_user",
+        "ipaallowedtoperform_write_delegation_group",
+        "ipaallowedtoperform_write_delegation_host",
+        "ipaallowedtoperform_write_delegation_hostgroup"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "servicedelegationrule/1",
+      "name": "servicedelegationrule",
+      "params_param": [
+        "cn",
+        "ipaallowedtarget_servicedelegationtarget",
+        "ipaallowedtoimpersonate",
+        "memberprincipal"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "servicedelegationtarget/1",
+      "name": "servicedelegationtarget",
+      "params_param": [
+        "cn",
+        "ipaallowedtarget_servicedelegationtarget",
+        "ipaallowedtoimpersonate",
+        "memberprincipal"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "servrole/1",
+      "name": "servrole",
+      "params_param": [
+        "name"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "stageuser/1",
+      "name": "stageuser",
+      "params_param": [
+        "uid",
+        "givenname",
+        "sn",
+        "cn",
+        "displayname",
+        "initials",
+        "homedirectory",
+        "gecos",
+        "loginshell",
+        "krbcanonicalname",
+        "krbprincipalname",
+        "krbprincipalexpiration",
+        "krbpasswordexpiration",
+        "mail",
+        "userpassword",
+        "random",
+        "randompassword",
+        "uidnumber",
+        "gidnumber",
+        "street",
+        "l",
+        "st",
+        "postalcode",
+        "telephonenumber",
+        "mobile",
+        "pager",
+        "facsimiletelephonenumber",
+        "ou",
+        "title",
+        "manager",
+        "carlicense",
+        "ipasshpubkey",
+        "sshpubkeyfp",
+        "ipauserauthtype",
+        "userclass",
+        "ipatokenradiusconfiglink",
+        "ipatokenradiususername",
+        "ipaidpconfiglink",
+        "ipaidpsub",
+        "departmentnumber",
+        "employeenumber",
+        "employeetype",
+        "preferredlanguage",
+        "usercertificate",
+        "ipacertmapdata",
+        "ipantlogonscript",
+        "ipantprofilepath",
+        "ipanthomedirectory",
+        "ipanthomedirectorydrive",
+        "ipapasskey",
+        "has_password",
+        "memberof_group",
+        "memberof_role",
+        "memberof_netgroup",
+        "memberof_sudorule",
+        "memberof_hbacrule",
+        "memberof_subid",
+        "memberofindirect_group",
+        "memberofindirect_netgroup",
+        "memberofindirect_role",
+        "memberofindirect_sudorule",
+        "memberofindirect_hbacrule",
+        "has_keytab"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "subid/1",
+      "name": "subid",
+      "params_param": [
+        "ipauniqueid",
+        "description",
+        "ipaowner",
+        "ipasubuidnumber",
+        "ipasubuidcount",
+        "ipasubgidnumber",
+        "ipasubgidcount"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "sudocmd/1",
+      "name": "sudocmd",
+      "params_param": [
+        "sudocmd",
+        "description",
+        "memberof_sudocmdgroup"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "sudocmdgroup/1",
+      "name": "sudocmdgroup",
+      "params_param": [
+        "cn",
+        "description",
+        "membercmd_sudocmd",
+        "membercmd_sudocmdgroup",
+        "member_sudocmd"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "sudorule/1",
+      "name": "sudorule",
+      "params_param": [
+        "cn",
+        "description",
+        "ipaenabledflag",
+        "usercategory",
+        "hostcategory",
+        "cmdcategory",
+        "ipasudorunasusercategory",
+        "ipasudorunasgroupcategory",
+        "sudoorder",
+        "memberuser_user",
+        "memberuser_group",
+        "externaluser",
+        "memberhost_host",
+        "memberhost_hostgroup",
+        "hostmask",
+        "externalhost",
+        "memberallowcmd_sudocmd",
+        "memberdenycmd_sudocmd",
+        "memberallowcmd_sudocmdgroup",
+        "memberdenycmd_sudocmdgroup",
+        "ipasudorunas_user",
+        "ipasudorunas_group",
+        "ipasudorunasextuser",
+        "ipasudorunasextusergroup",
+        "ipasudorunasgroup_group",
+        "ipasudorunasextgroup",
+        "ipasudoopt"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "sysaccount/1",
+      "name": "sysaccount",
+      "params_param": [
+        "uid",
+        "description",
+        "userpassword",
+        "random",
+        "randompassword",
+        "nsaccountlock",
+        "has_password",
+        "memberof_role"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "topic/1",
+      "name": "topic",
+      "params_param": [
+        "name",
+        "version",
+        "full_name",
+        "doc",
+        "exclude",
+        "include",
+        "topic_topic"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "topologysegment/1",
+      "name": "topologysegment",
+      "params_param": [
+        "cn",
+        "iparepltoposegmentleftnode",
+        "iparepltoposegmentrightnode",
+        "iparepltoposegmentdirection",
+        "nsds5replicastripattrs",
+        "nsds5replicatedattributelist",
+        "nsds5replicatedattributelisttotal",
+        "nsds5replicatimeout",
+        "nsds5replicaenabled"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "topologysuffix/1",
+      "name": "topologysuffix",
+      "params_param": [
+        "cn",
+        "iparepltopoconfroot"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "trust/1",
+      "name": "trust",
+      "params_param": [
+        "cn",
+        "ipantflatname",
+        "ipanttrusteddomainsid",
+        "ipantsidblacklistincoming",
+        "ipantsidblacklistoutgoing",
+        "trustdirection",
+        "trusttype",
+        "truststatus",
+        "ipantadditionalsuffixes"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "trustconfig/1",
+      "name": "trustconfig",
+      "params_param": [
+        "cn",
+        "ipantsecurityidentifier",
+        "ipantflatname",
+        "ipantdomainguid",
+        "ipantfallbackprimarygroup",
+        "ad_trust_agent_server",
+        "ad_trust_controller_server"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "trustdomain/1",
+      "name": "trustdomain",
+      "params_param": [
+        "cn",
+        "ipantflatname",
+        "ipanttrusteddomainsid",
+        "domain_enabled"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "user/1",
+      "name": "user",
+      "params_param": [
+        "uid",
+        "givenname",
+        "sn",
+        "cn",
+        "displayname",
+        "initials",
+        "homedirectory",
+        "gecos",
+        "loginshell",
+        "krbcanonicalname",
+        "krbprincipalname",
+        "krbprincipalexpiration",
+        "krbpasswordexpiration",
+        "mail",
+        "userpassword",
+        "random",
+        "randompassword",
+        "uidnumber",
+        "gidnumber",
+        "street",
+        "l",
+        "st",
+        "postalcode",
+        "telephonenumber",
+        "mobile",
+        "pager",
+        "facsimiletelephonenumber",
+        "ou",
+        "title",
+        "manager",
+        "carlicense",
+        "ipasshpubkey",
+        "sshpubkeyfp",
+        "ipauserauthtype",
+        "userclass",
+        "ipatokenradiusconfiglink",
+        "ipatokenradiususername",
+        "ipaidpconfiglink",
+        "ipaidpsub",
+        "departmentnumber",
+        "employeenumber",
+        "employeetype",
+        "preferredlanguage",
+        "usercertificate",
+        "ipacertmapdata",
+        "ipantlogonscript",
+        "ipantprofilepath",
+        "ipanthomedirectory",
+        "ipanthomedirectorydrive",
+        "ipapasskey",
+        "nsaccountlock",
+        "preserved",
+        "has_password",
+        "memberof_group",
+        "memberof_role",
+        "memberof_netgroup",
+        "memberof_sudorule",
+        "memberof_hbacrule",
+        "memberof_subid",
+        "memberofindirect_group",
+        "memberofindirect_netgroup",
+        "memberofindirect_role",
+        "memberofindirect_sudorule",
+        "memberofindirect_hbacrule",
+        "has_keytab"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "userstatus/1",
+      "name": "userstatus",
+      "params_param": [
+        "preserved",
+        "server",
+        "krbloginfailedcount",
+        "krblastsuccessfulauth",
+        "krblastfailedauth",
+        "now",
+        "passwordgraceusertime"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "vault/1",
+      "name": "vault",
+      "params_param": [
+        "cn",
+        "description",
+        "ipavaulttype",
+        "ipavaultsalt",
+        "ipavaultpublickey",
+        "owner_user",
+        "owner_group",
+        "owner_service",
+        "owner",
+        "service",
+        "shared",
+        "username",
+        "member_user",
+        "member_group",
+        "member_service"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "vaultconfig/1",
+      "name": "vaultconfig",
+      "params_param": [
+        "transport_cert",
+        "kra_server_server"
+      ],
+      "version": "1"
+    },
+    {
+      "full_name": "vaultcontainer/1",
+      "name": "vaultcontainer",
+      "params_param": [
+        "owner_user",
+        "owner_group",
+        "owner_service",
+        "owner",
+        "service",
+        "shared",
+        "username"
+      ],
+      "version": "1"
+    }
+  ],
+  "summary": null,
+  "truncated": false
+}

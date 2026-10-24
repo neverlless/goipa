@@ -221,3 +221,20 @@ func ExampleWithValidation() {
 		fmt.Println("rejected before sending:", err)
 	}
 }
+
+// Member calls return the updated group and a *MemberError for members the
+// server refused. The example is compiled but not run.
+func ExampleClient_HostGroupAddMember() {
+	c := ipa.NewClient("ipa.example.com", "EXAMPLE.COM")
+	g, err := c.HostGroupAddMember("web", []string{"web1.example.com", "typo.example.com"}, nil)
+
+	var me *ipa.MemberError
+	if errors.As(err, &me) {
+		for _, f := range me.Failures {
+			fmt.Println("not added:", f.Name, f.Message)
+		}
+	} else if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(g.Name, g.Hosts)
+}

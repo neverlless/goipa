@@ -1,0 +1,27 @@
+{
+  "result": {
+    "cn": [
+      "example.test"
+    ],
+    "dn": "cn=example.test,cn=ad,cn=etc,dc=example,dc=test",
+    "ipantdomainguid": [
+      "b6976f08-cfb8-4865-b7ed-16e1735d1363"
+    ],
+    "ipantfallbackprimarygroup": [
+      "Default SMB Group"
+    ],
+    "ipantflatname": [
+      "EXAMPLE"
+    ],
+    "ipantsecurityidentifier": [
+      "S-1-5-21-1736123157-1274287883-620928345"
+    ],
+    "objectclass": [
+      "ipaNTDomainAttrs",
+      "nsContainer",
+      "top"
+    ]
+  },
+  "summary": null,
+  "value": "ad"
+}

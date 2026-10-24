@@ -1,0 +1,56 @@
+{
+  "count": 2,
+  "result": [
+    {
+      "cn": [
+        "ftp"
+      ],
+      "description": [
+        "Default group of ftp related services"
+      ],
+      "dn": "cn=ftp,cn=hbacservicegroups,cn=hbac,dc=example,dc=test",
+      "ipauniqueid": [
+        "cdca7f2a-cfe6-11f1-bfa8-d28f5ba35ce1"
+      ],
+      "member_hbacsvc": [
+        "ftp",
+        "proftpd",
+        "pure-ftpd",
+        "vsftpd",
+        "gssftp"
+      ],
+      "objectclass": [
+        "ipaobject",
+        "ipahbacservicegroup",
+        "nestedGroup",
+        "groupOfNames",
+        "top"
+      ]
+    },
+    {
+      "cn": [
+        "Sudo"
+      ],
+      "description": [
+        "Default group of Sudo related services"
+      ],
+      "dn": "cn=Sudo,cn=hbacservicegroups,cn=hbac,dc=example,dc=test",
+      "ipauniqueid": [
+        "56e0c39c-cfe6-11f1-a146-d28f5ba35ce1"
+      ],
+      "member_hbacsvc": [
+        "sudo",
+        "sudo-i"
+      ],
+      "objectclass": [
+        "ipaobject",
+        "ipahbacservicegroup",
+        "nestedGroup",
+        "groupOfNames",
+        "top"
+      ]
+    }
+  ],
+  "summary": "2 HBAC service groups matched",
+  "truncated": false
+}

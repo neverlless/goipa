@@ -1,0 +1,13 @@
+{
+  "result": {
+    "cn": [
+      "gs64e1d9c8"
+    ],
+    "dn": "ipaUniqueID=14d254ec-cfe7-11f1-8aa5-d28f5ba35ce1,cn=sudorules,cn=sudo,dc=example,dc=test",
+    "ipaenabledflag": [
+      true
+    ]
+  },
+  "summary": null,
+  "value": "gs64e1d9c8"
+}

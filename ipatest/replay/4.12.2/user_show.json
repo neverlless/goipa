@@ -1,0 +1,83 @@
+{
+  "result": {
+    "cn": [
+      "Go Test"
+    ],
+    "displayname": [
+      "Go Test"
+    ],
+    "dn": "uid=gte0046ba3,cn=users,cn=accounts,dc=example,dc=test",
+    "gecos": [
+      "Go Test"
+    ],
+    "gidnumber": [
+      "1864600059"
+    ],
+    "givenname": [
+      "Go"
+    ],
+    "has_keytab": false,
+    "has_password": false,
+    "homedirectory": [
+      "/home/gte0046ba3"
+    ],
+    "initials": [
+      "GT"
+    ],
+    "ipantsecurityidentifier": [
+      "S-1-5-21-1456365794-3900130754-40555027-1059"
+    ],
+    "ipauniqueid": [
+      "1583d744-cfe7-11f1-8992-be1d3b1abf25"
+    ],
+    "krbcanonicalname": [
+      "gte0046ba3@EXAMPLE.TEST"
+    ],
+    "krbprincipalname": [
+      "gte0046ba3@EXAMPLE.TEST"
+    ],
+    "loginshell": [
+      "/bin/sh"
+    ],
+    "mail": [
+      "gte0046ba3@example.test"
+    ],
+    "memberof_group": [
+      "ipausers"
+    ],
+    "mepmanagedentry": [
+      "cn=gte0046ba3,cn=groups,cn=accounts,dc=example,dc=test"
+    ],
+    "nsaccountlock": false,
+    "objectclass": [
+      "top",
+      "person",
+      "organizationalperson",
+      "inetorgperson",
+      "inetuser",
+      "posixaccount",
+      "krbprincipalaux",
+      "krbticketpolicyaux",
+      "ipaobject",
+      "ipasshuser",
+      "ipaSshGroupOfPubKeys",
+      "mepOriginEntry",
+      "ipantuserattrs"
+    ],
+    "preserved": false,
+    "sn": [
+      "Test"
+    ],
+    "title": [
+      "T"
+    ],
+    "uid": [
+      "gte0046ba3"
+    ],
+    "uidnumber": [
+      "1864600059"
+    ]
+  },
+  "summary": null,
+  "value": "gte0046ba3"
+}

@@ -1,0 +1,22 @@
+{
+  "result": {
+    "aci": [
+      "(targetattr = \"iparequireuserverification\")(targetfilter = \"(objectclass=ipapasskeyconfigobject)\")(version 3.0;acl \"permission:System: Modify Passkey Configuration\";allow (write) groupdn = \"ldap:///cn=System: Modify Passkey Configuration,cn=permissions,cn=pbac,dc=example,dc=test\";)",
+      "(targetattr = \"cn || iparequireuserverification\")(targetfilter = \"(objectclass=ipapasskeyconfigobject)\")(version 3.0;acl \"permission:System: Read Passkey Configuration\";allow (compare,read,search) userdn = \"ldap:///all\";)"
+    ],
+    "cn": [
+      "passkeyconfig"
+    ],
+    "dn": "cn=passkeyconfig,cn=etc,dc=example,dc=test",
+    "iparequireuserverification": [
+      true
+    ],
+    "objectclass": [
+      "top",
+      "nscontainer",
+      "ipaPasskeyConfigObject"
+    ]
+  },
+  "summary": null,
+  "value": null
+}

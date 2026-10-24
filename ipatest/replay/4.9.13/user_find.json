@@ -1,0 +1,254 @@
+{
+  "count": 3,
+  "result": [
+    {
+      "cn": [
+        "Administrator"
+      ],
+      "dn": "uid=admin,cn=users,cn=accounts,dc=example,dc=test",
+      "gecos": [
+        "Administrator"
+      ],
+      "gidnumber": [
+        "1246800000"
+      ],
+      "homedirectory": [
+        "/home/admin"
+      ],
+      "ipantsecurityidentifier": [
+        "S-1-5-21-1736123157-1274287883-620928345-500"
+      ],
+      "ipauniqueid": [
+        "4bca7a0c-cfe6-11f1-8e9a-4ad5c53010b5"
+      ],
+      "krbcanonicalname": [
+        "admin@EXAMPLE.TEST"
+      ],
+      "krbextradata": "REDACTED",
+      "krblastadminunlock": [
+        {
+          "__datetime__": "20261024200822Z"
+        }
+      ],
+      "krblastpwdchange": [
+        {
+          "__datetime__": "20261024200822Z"
+        }
+      ],
+      "krbpasswordexpiration": [
+        {
+          "__datetime__": "20270122200822Z"
+        }
+      ],
+      "krbprincipalname": [
+        "admin@EXAMPLE.TEST",
+        "root@EXAMPLE.TEST"
+      ],
+      "loginshell": [
+        "/bin/bash"
+      ],
+      "memberof_group": [
+        "admins",
+        "trust admins"
+      ],
+      "nsaccountlock": false,
+      "objectclass": [
+        "top",
+        "person",
+        "posixaccount",
+        "krbprincipalaux",
+        "krbticketpolicyaux",
+        "inetuser",
+        "ipaobject",
+        "ipasshuser",
+        "ipaSshGroupOfPubKeys",
+        "ipaNTUserAttrs"
+      ],
+      "preserved": false,
+      "sn": [
+        "Administrator"
+      ],
+      "uid": [
+        "admin"
+      ],
+      "uidnumber": [
+        "1246800000"
+      ]
+    },
+    {
+      "cn": [
+        "Conor Lang"
+      ],
+      "displayname": [
+        "Conor Lang"
+      ],
+      "dn": "uid=bode4535,cn=users,cn=accounts,dc=example,dc=test",
+      "gecos": [
+        "Conor Lang"
+      ],
+      "gidnumber": [
+        "1246800086"
+      ],
+      "givenname": [
+        "Conor"
+      ],
+      "homedirectory": [
+        "/home/bode4535"
+      ],
+      "initials": [
+        "CL"
+      ],
+      "ipantsecurityidentifier": [
+        "S-1-5-21-1736123157-1274287883-620928345-1086"
+      ],
+      "ipauniqueid": [
+        "d1fbc5ae-cfe6-11f1-a5e9-4ad5c53010b5"
+      ],
+      "krbcanonicalname": [
+        "bode4535@EXAMPLE.TEST"
+      ],
+      "krbextradata": "REDACTED",
+      "krblastfailedauth": [
+        {
+          "__datetime__": "20261024200930Z"
+        }
+      ],
+      "krblastpwdchange": [
+        {
+          "__datetime__": "20261024200929Z"
+        }
+      ],
+      "krbloginfailedcount": [
+        "1"
+      ],
+      "krbpasswordexpiration": [
+        {
+          "__datetime__": "20270122200929Z"
+        }
+      ],
+      "krbprincipalname": [
+        "bode4535@EXAMPLE.TEST"
+      ],
+      "loginshell": [
+        "/bin/sh"
+      ],
+      "mail": [
+        "bode4535@example.test"
+      ],
+      "memberof_group": [
+        "ipausers"
+      ],
+      "mepmanagedentry": [
+        "cn=bode4535,cn=groups,cn=accounts,dc=example,dc=test"
+      ],
+      "nsaccountlock": false,
+      "objectclass": [
+        "top",
+        "person",
+        "organizationalperson",
+        "inetorgperson",
+        "inetuser",
+        "posixaccount",
+        "krbprincipalaux",
+        "krbticketpolicyaux",
+        "ipaobject",
+        "ipasshuser",
+        "ipaSshGroupOfPubKeys",
+        "mepOriginEntry",
+        "ipantuserattrs"
+      ],
+      "preserved": false,
+      "sn": [
+        "Lang"
+      ],
+      "uid": [
+        "bode4535"
+      ],
+      "uidnumber": [
+        "1246800086"
+      ]
+    },
+    {
+      "cn": [
+        "Go Svc"
+      ],
+      "displayname": [
+        "Go Svc"
+      ],
+      "dn": "uid=goipa-svc,cn=users,cn=accounts,dc=example,dc=test",
+      "gecos": [
+        "Go Svc"
+      ],
+      "gidnumber": [
+        "1246800003"
+      ],
+      "givenname": [
+        "Go"
+      ],
+      "homedirectory": [
+        "/home/goipa-svc"
+      ],
+      "initials": [
+        "GS"
+      ],
+      "ipantsecurityidentifier": [
+        "S-1-5-21-1736123157-1274287883-620928345-1003"
+      ],
+      "ipauniqueid": [
+        "afa5e9c6-cfe6-11f1-9086-4ad5c53010b5"
+      ],
+      "krbcanonicalname": [
+        "goipa-svc@EXAMPLE.TEST"
+      ],
+      "krbextradata": "REDACTED",
+      "krblastpwdchange": [
+        {
+          "__datetime__": "20261024200832Z"
+        }
+      ],
+      "krbprincipalname": [
+        "goipa-svc@EXAMPLE.TEST"
+      ],
+      "loginshell": [
+        "/bin/sh"
+      ],
+      "mail": [
+        "goipa-svc@example.test"
+      ],
+      "memberof_group": [
+        "ipausers"
+      ],
+      "mepmanagedentry": [
+        "cn=goipa-svc,cn=groups,cn=accounts,dc=example,dc=test"
+      ],
+      "nsaccountlock": false,
+      "objectclass": [
+        "top",
+        "person",
+        "organizationalperson",
+        "inetorgperson",
+        "inetuser",
+        "posixaccount",
+        "krbprincipalaux",
+        "krbticketpolicyaux",
+        "ipaobject",
+        "ipasshuser",
+        "ipaSshGroupOfPubKeys",
+        "mepOriginEntry",
+        "ipantuserattrs"
+      ],
+      "preserved": false,
+      "sn": [
+        "Svc"
+      ],
+      "uid": [
+        "goipa-svc"
+      ],
+      "uidnumber": [
+        "1246800003"
+      ]
+    }
+  ],
+  "summary": "3 users matched",
+  "truncated": false
+}

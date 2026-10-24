@@ -11,6 +11,7 @@ import (
 	"encoding/pem"
 	"fmt"
 	"io"
+	"io/fs"
 	"maps"
 	"net/http"
 	"net/http/httptest"
@@ -97,24 +98,36 @@ type HandlerFunc func(c Call) (result any, err *ipa.IpaError)
 type Server struct {
 	srv *httptest.Server
 
-	mu        sync.Mutex
-	sessions  map[string]string // session id -> uid
-	expired   map[string]bool   // session ids from ExpireSession
-	negotiate string
-	version   string // release reported in every envelope
-	calls     []Call
-	handlers  map[string]HandlerFunc
-	users     map[string]*userRec
-	stage     map[string]*userRec
-	groups    map[string]*groupRec
-	hosts     map[string]Host
-	subids    map[string]SubID // by owner uid
-	hbac      map[string]*hbacRec
-	sudo      map[string]*sudoRec
-	pwpol     map[string]PwPolicy
-	tokens    []*OTPToken
-	nextID    int // last uidnumber handed out
-	nextGID   int // last gidnumber handed out
+	mu         sync.Mutex
+	sessions   map[string]string // session id -> uid
+	expired    map[string]bool   // session ids from ExpireSession
+	negotiate  string
+	version    string // release reported in every envelope
+	calls      []Call
+	handlers   map[string]HandlerFunc
+	users      map[string]*userRec
+	stage      map[string]*userRec
+	groups     map[string]*groupRec
+	hosts      map[string]Host
+	subids     map[string]SubID // by owner uid
+	hbac       map[string]*hbacRec
+	sudo       map[string]*sudoRec
+	pwpol      map[string]PwPolicy
+	tokens     []*OTPToken
+	nextID     int                 // last uidnumber handed out
+	nextGID    int                 // last gidnumber handed out
+	ca         *fakeCA             // created by the first cert_request
+	certs      map[string]*certRec // by decimal serial
+	hostgroups map[string]*HostGroup
+	dnsZones   map[string]*dnsZone // by absolute name
+	roles      map[string]*ipa.Role
+	privs      map[string]*ipa.Privilege
+	perms      map[string]*ipa.Permission
+	replay     fs.FS
+	services   map[string]*serviceRec
+	amRules    map[string]map[string]*amRule
+	amDefs     map[string]string // default group cn by type
+	sudocmds   map[string]string
 }
 
 // NewServer starts a server and closes it with tb.Cleanup.
@@ -129,20 +142,31 @@ func NewServer(tb testing.TB) *Server {
 // Call Close when done.
 func New() *Server {
 	s := &Server{
-		sessions: map[string]string{},
-		expired:  map[string]bool{},
-		handlers: map[string]HandlerFunc{},
-		users:    map[string]*userRec{},
-		stage:    map[string]*userRec{},
-		groups:   map[string]*groupRec{},
-		hosts:    map[string]Host{serverFQDN: {HasKeytab: true}},
-		subids:   map[string]SubID{},
-		hbac:     seedAllowAll(),
-		sudo:     map[string]*sudoRec{},
-		pwpol:    seedPwPolicies(),
-		version:  defaultVersion,
-		nextID:   firstID - 1,
-		nextGID:  firstID - 1,
+		sessions:   map[string]string{},
+		expired:    map[string]bool{},
+		handlers:   map[string]HandlerFunc{},
+		users:      map[string]*userRec{},
+		stage:      map[string]*userRec{},
+		groups:     map[string]*groupRec{},
+		hosts:      map[string]Host{serverFQDN: {HasKeytab: true}},
+		subids:     map[string]SubID{},
+		hbac:       seedAllowAll(),
+		sudo:       map[string]*sudoRec{},
+		pwpol:      seedPwPolicies(),
+		version:    defaultVersion,
+		nextID:     firstID - 1,
+		nextGID:    firstID - 1,
+		certs:      map[string]*certRec{},
+		hostgroups: map[string]*HostGroup{},
+		dnsZones:   seedDNS(),
+		roles:      seedRoles(),
+		privs:      seedPrivileges(),
+		perms:      seedPermissions(),
+		replay:     shippedReplay(),
+		services:   map[string]*serviceRec{},
+		amRules:    map[string]map[string]*amRule{"group": {}, "hostgroup": {}},
+		amDefs:     map[string]string{},
+		sudocmds:   map[string]string{},
 	}
 	mux := http.NewServeMux()
 	mux.HandleFunc("/ipa/session/json", s.serveSessionJSON)
@@ -390,13 +414,15 @@ func decodeParams(c *Call, params []json.RawMessage) error {
 }
 
 // dispatch records c and runs it: a handler without the lock, else batch,
-// else a builtin under s.mu (both after catalogueCheck), else 905. args is
-// the raw params[0], which batch needs; custom reports that a handler ran.
+// else a builtin under s.mu, else a recording (Q130), else 905; all but a
+// handler after catalogueCheck. args is the raw params[0], which batch
+// needs; custom reports that a handler ran.
 func (s *Server) dispatch(c Call, args json.RawMessage) (result any, ierr *ipa.IpaError, custom bool) {
 	s.mu.Lock()
 	s.calls = append(s.calls, c.clone())
 	h := s.handlers[c.Method]
 	version := s.version
+	replay := s.replay
 	s.mu.Unlock()
 
 	switch b := builtins[c.Method]; {
@@ -414,6 +440,13 @@ func (s *Server) dispatch(c Call, args json.RawMessage) (result any, ierr *ipa.I
 		result, ierr = b(s, c)
 		s.mu.Unlock()
 	default:
+		if ierr = catalogueCheck(c, version); ierr != nil {
+			break
+		}
+		if rec := replayed(replay, c.Method, version); rec != nil {
+			result = rec
+			break
+		}
 		ierr = &ipa.IpaError{Code: ipa.CodeCommand, Message: fmt.Sprintf("unknown command '%s'", c.Method)}
 	}
 	return result, ierr, h != nil

@@ -26,10 +26,11 @@
 // # Auth model
 //
 // Every authenticated caller may run every command; ACIs are not evaluated
-// except the group member checks of Q24 and the pwpolicy_show check of Q32,
-// so where FreeIPA answers 2100
-// ACIError ipatest runs the command: an ordinary user deleting a missing OTP
-// token gets 4001 NotFound here and "2100 Insufficient access" from FreeIPA.
+// except the group member checks of Q24, the pwpolicy_show check of Q32, the
+// cert_show check of Q95 and the RBAC reads of Q122, so where FreeIPA
+// answers 2100 ACIError ipatest runs the command: an ordinary user deleting a
+// missing OTP token gets 4001 NotFound here and "2100 Insufficient access"
+// from FreeIPA.
 // OTP codes are not checked. A caller is authenticated by a session from
 // Session, ClientAs or a login, or, on /ipa/json, by SetNegotiateUser.
 //
@@ -247,9 +248,9 @@
 //     false, summary "Unresolved rules in --rules", error the unknown names,
 //     matched and notmatched null. A rule matches when its user, host and
 //     service parts all do: category all, the name listed, or a group of the
-//     user (nested ones included) or a direct hostgroup of the host listed;
-//     host groups are not expanded through nesting, service groups not at
-//     all. An unknown user or host just has no groups.
+//     user or a host group of the host (nested ones included) listed;
+//     service groups are not expanded. An unknown user or host just has no
+//     groups.
 //     TestContractHBACTest, TestHBACTest_*.
 //   - Q36: user_add_passkey and user_remove_passkey take one mapping,
 //     passkey:<id>,<key>[,<userid>]; id and key must be standard base64 and
@@ -328,6 +329,245 @@
 //     command '<name>'", as Q14. Q44 and Q45 follow the ipa command
 //     catalogue and skip Handle overrides. TestServer_CommandNewerThanVersion,
 //     TestServer_HandleBypassesCatalogue.
+//   - Q50: hostgroup_show, _find, _add, _del and the member and member
+//     manager calls. A host's membership is the union of Host.HostGroups and
+//     HostGroup.Hosts, as R2 for users; host_show's memberof_hostgroup lists
+//     it and removing the host clears both. hbactest sees the union too. A
+//     missing host group is 4001 "<cn>: host group not found"; hostgroup_del
+//     drops the group from other host groups, hosts, HBAC and sudo rules and
+//     service keytab access, and host_del (case-insensitive) drops the host
+//     from host groups, HBAC and sudo rules and service managedby and
+//     keytab access. Member problems (no such entry, already a member, not
+//     a member, the group itself, Insufficient access for callers that are
+//     neither admins nor member managers) come back in failed under
+//     member.{host,hostgroup} or membermanager.{user,group}, as U3.
+//     TestContractHostGroupLifecycle, TestContractHostGroupMemberMissing,
+//     TestContractHostGroupManagers, TestHostGroupMembers_Fake,
+//     TestHostGroupDelete_DropsReferences,
+//     goipa.TestHostDelete_DropsReferences,
+//     goipa.TestHostGroupDelete_DropsRuleAndKeytabReferences.
+//   - Q51: a host in a nested host group is in the parent's
+//     memberindirect_host, not member_host, and host_show lists the parent
+//     in memberofindirect_hostgroup; a nested group's own nested groups are
+//     memberindirect_hostgroup. hostgroup_* lower-case the host group
+//     name (AddHostGroup and HostGroup too); hostgroup_find's criteria
+//     match case-insensitively. Host group names given to other commands
+//     are taken as they are.
+//     TestContractHostGroupMembers, TestHostGroupShow,
+//     goipa.TestContractHostGroupMixedCase.
+//   - Q90: cert_request signs the CSR with an in-memory CA (ECDSA P-256,
+//     "CN=Certificate Authority,O=TEST.LOCAL", created on first use) for an
+//     existing host principal host/<fqdn>[@REALM] only; the subject is
+//     "CN=<fqdn>,O=TEST.LOCAL", validity two years, serials sequential from
+//     2. cert_request and cert_show answer certificate as base64 DER,
+//     serial_number as a JSON number, valid_not_before/valid_not_after in
+//     ipalib's "Mon Jan 02 15:04:05 2006 UTC" layout, and revoked.
+//     goipa.TestContractCert.
+//   - Q91: cert_revoke marks the certificate revoked; cert_show then answers
+//     revoked true and revocation_reason, the code given (default 0).
+//     goipa.TestContractCert.
+//   - Q92: cert_show and cert_revoke of an unknown serial are 4001 NotFound
+//     "Certificate ID 0x<hex> not found"; before 4.12 (verified on 4.9.13,
+//     4.10 and 4.11 not checked) Dogtag's 404 surfaces as 4301
+//     CertificateOperationError. goipa.TestContractCertShowMissing.
+//   - Q93: a CSR whose CN is not the principal's host is 3009
+//     ValidationError on csr. goipa.TestContractCertRequestWrongCN.
+//   - Q94: the default profile, caIPAserviceCert, takes RSA keys only; any
+//     other key is 4301 CertificateOperationError "Certificate operation
+//     cannot be completed: Key Type RSA Not Matched".
+//     goipa.TestContractCertRequestECDSA.
+//   - Q95: cert_show by a caller who is neither uid admin nor in admins is
+//     2100 ACIError: FreeIPA needs Retrieve Certificates from the CA or a
+//     host principal named in the subject, and no plain user is either.
+//     goipa.TestContractCertShowPlainUser.
+//   - Q70: hbacrule_add stores description and the user, host and service
+//     categories; hbacrule_show of a missing rule is 4001 "<cn>: HBAC rule
+//     not found" and shows members unless no_members is true.
+//     goipa.TestContractHBACRuleLifecycle, goipa.TestHBACRuleShow_FakeRule.
+//   - Q71: hbacrule_enable and hbacrule_disable answer result true even
+//     when the rule is already in that state, unlike user_enable (Q17);
+//     verified on FreeIPA 4.9.13, 4.12.2 and 4.13.4.
+//     goipa.TestContractHBACRuleEnableDisable.
+//   - Q72: hbacrule_{add,remove}_{user,host,service} take user/group,
+//     host/hostgroup and hbacsvc/hbacsvcgroup and answer as group_add_member
+//     with failed.memberuser, failed.memberhost and failed.memberservice:
+//     adding a missing name is "no such entry", adding a member "This entry
+//     is already a member"; removing any name that is not a member, missing
+//     or not, is "This entry is not a member" (unlike group_remove_member).
+//     goipa.TestContractHBACRuleMemberMissing,
+//     goipa.TestContractHBACRuleMembers.
+//   - Q73: adding users, hosts or services to a rule whose matching category
+//     is all is 4303 MutuallyExclusiveError "users cannot be added when user
+//     category='all'" (hosts/host, services/service); removing is not
+//     checked. goipa.TestContractHBACRuleCategoryConflict.
+//   - Q74: the HBAC services and service groups are FreeIPA's defaults
+//     (sshd, login, sudo, ... and Sudo, ftp) and cannot be changed; a host
+//     group exists when the host group store has it (AddHostGroup,
+//     hostgroup_add). goipa.TestContractHBACRuleMembers,
+//     goipa.TestContractHBACRuleWithTest.
+//   - Q100: dnszone_add makes the name absolute and answers FreeIPA's
+//     defaults: active, dynamic update off, idnssoamname the server
+//     (ipa.test.local.), idnssoarname the relative "hostmaster", SOA refresh
+//     3600, retry 900, expire 1209600, minimum 3600, a serial from the clock,
+//     an apex "@" with the server as NS and a "_kerberos" TXT record with the
+//     realm. DNS names (idnsname, idnssoamname, idnssoarname) come back as
+//     {"__dns_name__": name}. A second add is 4002 DuplicateEntry. New
+//     servers hold the zone test.local. with "ipa" A 127.0.0.1.
+//     goipa.TestContractDNSZoneLifecycle, goipa.TestContractDNSRecords.
+//   - Q101: dnszone_disable and dnszone_enable of a zone already in that
+//     state succeed. goipa.TestContractDNSZoneLifecycle.
+//   - Q102: dnsrecord_add merges the values into the name, creating it;
+//     values all present already are 4202 EmptyModlist, no *record option is
+//     3005 OptionError. A name in the zone given absolute is made relative,
+//     the zone itself is "@", and the "@" entry of dnsrecord_show/find is the
+//     zone entry with its SOA attributes. TestDNS_Errors, TestDNS_FindAndApex,
+//     goipa.TestContractDNSRecords.
+//   - Q103: dnsrecord_del removes the given values and the name with its
+//     last value; a value the name lacks is 4026 AttrValueNotFound (nothing
+//     is removed), del_all removes the name, neither is 3005 OptionError.
+//     TestDNS_Errors, goipa.TestContractDNSRecords.
+//   - Q104: dnsrecord_* in a missing zone, and dnszone_* of one, are 4001
+//     NotFound "<zone>: DNS zone not found"; a missing name is 4001 "<name>:
+//     DNS resource record not found". goipa.TestContractDNSRecordMissingZone,
+//     goipa.TestContractDNSRecords.
+//   - Q120: role_show, privilege_show and permission_show (and their _find
+//     twins) answer the attributes the ipa types read; a missing object is
+//     4001 "<cn>: role not found" (privilege, permission). New servers hold
+//     the "User Administrator" role, "User Administrators" privilege and
+//     "System: Add Users" permission with FreeIPA 4.13.4's values (4.9.13
+//     and 4.12.2 match); attributes outside the ipa types, such as
+//     ipapermissiontype and memberindirect_role, are left out. Roles and
+//     privileges are not linked: AddRole and AddPrivilege each take their
+//     own side. The finds match the criteria against cn and description,
+//     and the cn, description and type options exactly.
+//     goipa.TestContractRBACBuiltins, goipa.TestContractRBACFind,
+//     goipa.TestContractRBACNotFound.
+//   - Q121: role_add, role_del and role_add_member are modelled; the latter
+//     reports per-member failures with completed and
+//     failed.member.{user,group,host,hostgroup,service,idoverrideuser,
+//     sysaccount}, sysaccount only from 4.13 on in FreeIPA but always here.
+//     Only users, groups and hosts can be added; other kinds fail as "no
+//     such entry". goipa.TestContractRoleMembers.
+//   - Q122: System: Read Roles, Read Privileges and Read Permissions are
+//     bound to the RBAC Readers privilege, so to a caller who is neither uid
+//     admin nor in admins role_show, privilege_show and permission_show are
+//     4001 and the finds match nothing (roles are not evaluated).
+//     goipa.TestContractRBACPlainUser.
+//   - Q130: a *_show or *_find command that is neither modelled nor
+//     overridden with Handle answers, as its result, the response recorded
+//     from a real FreeIPA (ipatest/replay, see SetReplay and NewRecorder)
+//     for the greatest recorded release not newer than the SetVersion one,
+//     else for the oldest; only without a recording is it 905. The catalogue
+//     check runs first, so a command newer than the SetVersion release is
+//     905 and an unknown option 3005; beyond that options and arguments are
+//     not looked at, so the answer is the same for every call; batch entries
+//     are answered the same way. Other commands are never replayed, so an
+//     unmodelled write stays 905 instead of faking a change. The shipped
+//     recordings come from the integration servers, realm EXAMPLE.TEST and
+//     base dc=example,dc=test, while the model answers TEST.LOCAL and
+//     dc=test,dc=local, so names and DNs in a replayed answer do not match
+//     modelled ones.
+//     TestReplay_Precedence, TestReplay_PicksRelease, TestReplay_Disabled,
+//     TestReplay_InBatch, TestReplay_IgnoresWrites,
+//     TestReplay_CatalogueChecked, TestRecorder_SkipsWrites.
+//   - Q60: service principals are stored and reported with the realm
+//     (krbcanonicalname and krbprincipalname "svc/host@TEST.LOCAL") and
+//     accepted without it. service_add needs the host to exist unless
+//     skip_host_check (4001 "The host '<h>' does not exist to add a service
+//     to.") and makes it managedby_host; a second add is 4002. With all,
+//     ipakrbokasdelegate and ipakrboktoauthasdelegate are false and
+//     ipakrbrequirespreauth true. goipa.TestContractServiceLifecycle.
+//   - Q61: service_{allow,disallow}_{retrieve,create}_keytab take user,
+//     group, host and hostgroup; the grants show as
+//     ipaallowedtoperform_{read,write}_keys_<type> unless no_members.
+//     goipa.TestContractServiceKeytabAccess.
+//   - Q62: a service member call naming a missing member returns the
+//     service, completed 0 and failed.<attr>.<type> [[name, "no such
+//     entry"]], attr managedby for service_{add,remove}_host and
+//     ipaallowedtoperform_{read,write}_keys for the keytab calls.
+//     goipa.TestContractServiceMemberMissing,
+//     goipa.TestService_KeytabEmptyHostGroup.
+//   - Q63: service_add_host of a host already managing the service fails
+//     that member ("This entry is already a member"); the host may be
+//     removed and added back. goipa.TestContractServiceManagedBy.
+//   - Q64: service_disable drops the keys (has_keytab false); a service
+//     without keys is 4010 AlreadyInactive "This entry is already
+//     disabled". FreeIPA also revokes and removes the certificates its CA
+//     issued. Every certificate here comes from service_add_cert (base64
+//     DER, returned as {"__base64__": ...}) and is treated as foreign:
+//     before 4.13 (SetVersion) such a certificate neither counts nor goes,
+//     from 4.13 (seen on 4.13.4, not on 4.12.2) disable removes it and
+//     succeeds. FreeIPA 4.13.4 answers 903 to service_disable and
+//     service_del of a service holding a certificate without
+//     subjectAltName; not modelled.
+//     TestService_SeededAndDisable, goipa.TestContractServiceDisable.
+//   - Q110: automember rules (automember_add, _show, _find, _del) are kept
+//     per type, group or hostgroup; another type is 3009 ValidationError
+//     "invalid 'type': must be one of 'group', 'hostgroup'". show and del of
+//     a missing rule are 4001 "<cn>: Automember rule not found", a second
+//     add is 4002, and add needs the target group or host group (4001
+//     `<type> "<cn>" not found`). A hostgroup rule is never applied. show
+//     and find print dn without all; find's summary is "<n> rules matched".
+//     goipa.TestContractAutomemberRule, goipa.TestContractAutomemberMissing,
+//     goipa.TestContractAutomemberHostGroup.
+//   - Q111: automember_add_condition and _remove_condition on a missing rule
+//     are 4001 "Auto member rule: <cn> not found!". They answer completed
+//     and failed {"failed": {"automemberinclusiveregex": [...],
+//     "automemberexclusiveregex": [...]}}; add skips conditions the rule has
+//     without listing them, remove lists the missing ones as "key=regex".
+//     With nothing changed the result holds only the regex attributes sent.
+//     key is not checked against the schema (FreeIPA answers 4001 "<key> is
+//     not a valid attribute."). goipa.TestContractAutomemberRule,
+//     goipa.TestContractAutomemberRemoveCondition,
+//     goipa.TestContractAutomemberMissing.
+//   - Q112: user_add, stageuser_activate (not stageuser_add) and
+//     automember_rebuild of type group put a user into every group whose
+//     rule has an inclusive condition that matches and no exclusive one
+//     that does, or into the default group when no rule matches.
+//     Conditions match uid and the attributes User stores under their LDAP
+//     names (givenname, sn, title, mail, ...); others never match. Regexes
+//     are Go RE2, not the PCRE of 389-ds. Rebuild only adds.
+//     goipa.TestContractAutomemberRule, goipa.TestContractAutomemberRebuild,
+//     goipa.TestContractAutomemberDefaultGroup,
+//     goipa.TestAutomember_StageUserActivate.
+//   - Q113: automember_default_group_show answers automemberdefaultgroup as
+//     the group's DN in a list, or the string "No default (fallback) group
+//     set". _set of a missing group or host group is 4001 `<type> "<cn>"
+//     not found`, of the current one 4202 EmptyModlist; _remove with none
+//     set is 4001 "No default (fallback) group set".
+//     goipa.TestContractAutomemberDefaultGroup,
+//     goipa.TestContractAutomemberHostGroup.
+//   - Q114: automember_del deletes the rules named before the first missing
+//     one, then fails with 4001. goipa.TestContractAutomemberMissing.
+//   - Q80: sudorule_enable and sudorule_disable succeed with {"result":
+//     true} whatever the rule's state, so a second call is no error (FreeIPA
+//     swallows EmptyModlist). goipa.TestContractSudoRuleEnableTwice.
+//   - Q81: the sudo rule member calls keep names FreeIPA does not know as
+//     external members, lower-cased and counted in completed: users and
+//     groups in externaluser, hosts in externalhost, run-as users and
+//     groups in ipasudorunasextuser and ipasudorunasextusergroup, run-as
+//     groups in ipasudorunasextgroup. Only missing host groups, commands
+//     and command groups fail with "no such entry"; command groups are not
+//     modelled, so each one fails. Removing a name that is
+//     neither a member nor external, existing or not, is "This entry is not
+//     a member".
+//     goipa.TestContractSudoRuleExternalMembers,
+//     goipa.TestContractSudoRuleMemberMissing, TestSudoMember_External,
+//     TestSudoMember_HostGroup.
+//   - Q82: sudorule_add_option of an option the rule has is 4002
+//     "This entry already exists" and changes nothing; sudorule_remove_option
+//     of one it lacks is 4026 "ipasudoopt does not contain '<option>'".
+//     sudocmd_add and sudocmd_del keep only the command and its description;
+//     FreeIPA's refusal to delete a command a rule uses is not modelled.
+//     goipa.TestContractSudoRuleOptions, TestSudoCmd_AddDel.
+//   - Q83: at a 4.9 release sudorule_add_option and sudorule_remove_option
+//     reject any JSON list for ipasudoopt, even of one value, with 3008
+//     "invalid 'ipasudoopt': Only one value is allowed", although the schema
+//     marks it multivalued; 4.12.2 and later take a list. Releases between
+//     are not pinned and take a list. goipa's SudoRuleAddOption and
+//     SudoRuleRemoveOption send one scalar call per option.
+//     goipa.TestContractSudoRuleOptions,
+//     TestSudoOption_ListAt49.
 //
 // A response's version is the server release, 4.13.4 unless SetVersion
 // changes it, and its principal is
@@ -336,11 +576,23 @@
 //
 // # Not modelled
 //
-// Of HBAC and sudo rule management, only find, add, del and the member and
-// option calls the tests need; Handle is the way to reach the rest, as for
-// config_*, subid_show, stageuser_add_passkey and stageuser_remove_passkey.
+// Certificates are issued (cert_request, cert_show, cert_revoke) for service
+// principals only, with the default profile; user and host certificates,
+// other profiles, sub-CAs, cert_find and the other cert commands are left
+// out, as is host_add's DNS check (every fqdn is accepted, as with force).
+// The *_mod commands of the families modelled since v0.9 (host groups,
+// services, HBAC and sudo rules, DNS, automember, RBAC) are not modelled,
+// nor are role, privilege and permission changes other than role_add,
+// role_del and role_add_member, HBAC services and service groups, or sudo
+// command groups; Handle is the way to reach the rest, as for config_*,
+// subid_show, stageuser_add_passkey and stageuser_remove_passkey.
+// Of DNS, only master zones and the record commands above: dnszone_add
+// ignores its SOA, TTL and policy options and the name server and overlap
+// checks, serials do not move, record values are neither validated nor
+// normalised, a CNAME may share a name with other records, and dnsrecord_find
+// filters by criteria and idnsname only.
 // Stage user passwords are not modelled: userpassword is ignored and random
 // behaves as for active users. Kerberos, LDAP search filters, size limits on
-// other commands, replication and HTTP fault injection are left out; wrap HTTPClient's
-// transport for the latter.
+// other commands, replication and HTTP fault injection are left out; wrap
+// HTTPClient's transport for the latter.
 package ipatest

@@ -1,0 +1,11 @@
+{
+  "result": {
+    "automemberdefaultgroup": "No default (fallback) group set",
+    "cn": [
+      "Hostgroup"
+    ],
+    "dn": "cn=Hostgroup,cn=automember,cn=etc,dc=example,dc=test"
+  },
+  "summary": null,
+  "value": "hostgroup"
+}

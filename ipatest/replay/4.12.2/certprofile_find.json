@@ -1,0 +1,71 @@
+{
+  "count": 4,
+  "result": [
+    {
+      "cn": [
+        "acmeIPAServerCert"
+      ],
+      "description": [
+        "ACME IPA service certificate profile"
+      ],
+      "dn": "cn=acmeIPAServerCert,cn=certprofiles,cn=ca,dc=example,dc=test",
+      "ipacertprofilestoreissued": [
+        false
+      ],
+      "objectclass": [
+        "ipacertprofile",
+        "top"
+      ]
+    },
+    {
+      "cn": [
+        "caIPAserviceCert"
+      ],
+      "description": [
+        "Standard profile for network services"
+      ],
+      "dn": "cn=caIPAserviceCert,cn=certprofiles,cn=ca,dc=example,dc=test",
+      "ipacertprofilestoreissued": [
+        true
+      ],
+      "objectclass": [
+        "ipacertprofile",
+        "top"
+      ]
+    },
+    {
+      "cn": [
+        "IECUserRoles"
+      ],
+      "description": [
+        "User profile that includes IECUserRoles extension from request"
+      ],
+      "dn": "cn=IECUserRoles,cn=certprofiles,cn=ca,dc=example,dc=test",
+      "ipacertprofilestoreissued": [
+        true
+      ],
+      "objectclass": [
+        "ipacertprofile",
+        "top"
+      ]
+    },
+    {
+      "cn": [
+        "KDCs_PKINIT_Certs"
+      ],
+      "description": [
+        "Profile for PKINIT support by KDCs"
+      ],
+      "dn": "cn=KDCs_PKINIT_Certs,cn=certprofiles,cn=ca,dc=example,dc=test",
+      "ipacertprofilestoreissued": [
+        false
+      ],
+      "objectclass": [
+        "ipacertprofile",
+        "top"
+      ]
+    }
+  ],
+  "summary": "4 profiles matched",
+  "truncated": false
+}

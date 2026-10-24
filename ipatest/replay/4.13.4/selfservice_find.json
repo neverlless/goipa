@@ -1,0 +1,97 @@
+{
+  "count": 6,
+  "result": [
+    {
+      "aciname": "Self can write own password",
+      "attrs": [
+        "userpassword",
+        "krbprincipalkey",
+        "sambalmpassword",
+        "sambantpassword"
+      ],
+      "permissions": [
+        "write"
+      ],
+      "selfaci": true
+    },
+    {
+      "aciname": "User Self service",
+      "attrs": [
+        "givenname",
+        "sn",
+        "cn",
+        "displayname",
+        "title",
+        "initials",
+        "loginshell",
+        "gecos",
+        "homephone",
+        "mobile",
+        "pager",
+        "facsimiletelephonenumber",
+        "telephonenumber",
+        "street",
+        "roomnumber",
+        "l",
+        "st",
+        "postalcode",
+        "manager",
+        "secretary",
+        "description",
+        "carlicense",
+        "labeleduri",
+        "inetuserhttpurl",
+        "seealso",
+        "employeetype",
+        "businesscategory",
+        "ou"
+      ],
+      "permissions": [
+        "write"
+      ],
+      "selfaci": true
+    },
+    {
+      "aciname": "Users can manage their own SSH public keys",
+      "attrs": [
+        "ipasshpubkey"
+      ],
+      "permissions": [
+        "write"
+      ],
+      "selfaci": true
+    },
+    {
+      "aciname": "Users can manage their own X.509 certificates",
+      "attrs": [
+        "usercertificate"
+      ],
+      "permissions": [
+        "write"
+      ],
+      "selfaci": true
+    },
+    {
+      "aciname": "Users can manage their own X.509 certificate identity mappings",
+      "attrs": [
+        "ipacertmapdata"
+      ],
+      "permissions": [
+        "write"
+      ],
+      "selfaci": true
+    },
+    {
+      "aciname": "Users can manage their own passkey mappings",
+      "attrs": [
+        "ipapasskey"
+      ],
+      "permissions": [
+        "write"
+      ],
+      "selfaci": true
+    }
+  ],
+  "summary": "6 selfservices matched",
+  "truncated": false
+}

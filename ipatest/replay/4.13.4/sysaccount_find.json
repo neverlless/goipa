@@ -1,0 +1,21 @@
+{
+  "count": 1,
+  "result": [
+    {
+      "dn": "uid=sudo,cn=sysaccounts,cn=etc,dc=example,dc=test",
+      "has_password": true,
+      "nsaccountlock": false,
+      "objectclass": [
+        "account",
+        "simplesecurityobject",
+        "top"
+      ],
+      "privileged": false,
+      "uid": [
+        "sudo"
+      ]
+    }
+  ],
+  "summary": "1 system account matched",
+  "truncated": false
+}

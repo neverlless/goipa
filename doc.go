@@ -56,6 +56,15 @@
 // cut a search short; Modify changes single attributes; Batch sends several
 // commands in one round trip.
 //
+// # Typed objects
+//
+// Host groups, services (with keytab access), HBAC and sudo rules,
+// certificates, DNS zones and records, automember rules, and roles,
+// privileges and permissions (read only) have typed calls such as
+// HostGroupShow and SudoRuleAddOption. Member calls return the updated object
+// and a *MemberError for members the server refused; attribute changes go
+// through Modify.
+//
 // # Command catalogue
 //
 // Commands and LookupCommand describe every FreeIPA command from 4.9.0 on:

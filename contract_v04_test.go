@@ -310,13 +310,8 @@ func TestContractHostShape(t *testing.T) {
 				t.Errorf("%s = %s, want a JSON bool", k, v.Raw)
 			}
 		}
-		// ipatest does not model hostgroup commands; on a real server this
-		// pins memberof_hostgroup with all.
 		hg := "hg" + randHex(t, 4)
-		if _, err := b.admin.RPC("hostgroup_add", []string{hg}, nil); err != nil {
-			t.Logf("memberof_hostgroup not checked: hostgroup_add: %v", err)
-			return
-		}
+		mustRPC(t, b.admin, "hostgroup_add", []string{hg}, nil)
 		t.Cleanup(func() { _, _ = b.admin.RPC("hostgroup_del", []string{hg}, nil) })
 		mustRPC(t, b.admin, "hostgroup_add_member", []string{hg}, ipa.Options{"host": []string{fqdn}})
 		rec = gjson.GetBytes(mustRPC(t, b.admin, "host_show", []string{fqdn}, ipa.Options{"all": true}).Result.Data, "@this")

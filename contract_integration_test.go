@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/neverlless/goipa"
+	"github.com/neverlless/goipa/ipatest"
 )
 
 func init() { extraBackends = realBackends }
@@ -59,6 +60,9 @@ func connectReal() (backend, string) {
 	hc := &http.Client{
 		Timeout:   30 * time.Second,
 		Transport: &http.Transport{TLSClientConfig: &tls.Config{RootCAs: pool}},
+	}
+	if dir := os.Getenv("IPATEST_RECORD"); dir != "" {
+		hc.Transport = ipatest.NewRecorder(hc.Transport, dir)
 	}
 	b := backend{name: "freeipa", host: def.Host(), realm: def.Realm(), http: hc}
 	b.admin = b.client()

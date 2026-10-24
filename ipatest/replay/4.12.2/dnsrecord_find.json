@@ -1,0 +1,114 @@
+{
+  "count": 4,
+  "result": [
+    {
+      "dn": "idnsname=goipa3957e10e.test.,cn=dns,dc=example,dc=test",
+      "idnsallowdynupdate": [
+        false
+      ],
+      "idnsallowquery": [
+        "any;"
+      ],
+      "idnsallowtransfer": [
+        "none;"
+      ],
+      "idnsname": [
+        {
+          "__dns_name__": "@"
+        }
+      ],
+      "idnssoaexpire": [
+        "1209600"
+      ],
+      "idnssoaminimum": [
+        "3600"
+      ],
+      "idnssoamname": [
+        {
+          "__dns_name__": "ipa.example.test."
+        }
+      ],
+      "idnssoarefresh": [
+        "3600"
+      ],
+      "idnssoaretry": [
+        "900"
+      ],
+      "idnssoarname": [
+        {
+          "__dns_name__": "hostmaster"
+        }
+      ],
+      "idnssoaserial": [
+        "1792872728"
+      ],
+      "idnsupdatepolicy": [
+        "grant EXAMPLE.TEST krb5-self * A; grant EXAMPLE.TEST krb5-self * AAAA; grant EXAMPLE.TEST krb5-self * SSHFP;"
+      ],
+      "idnszoneactive": [
+        true
+      ],
+      "nsrecord": [
+        "ipa.example.test."
+      ],
+      "objectclass": [
+        "top",
+        "idnsrecord",
+        "idnszone"
+      ]
+    },
+    {
+      "dn": "idnsname=_kerberos,idnsname=goipa3957e10e.test.,cn=dns,dc=example,dc=test",
+      "idnsname": [
+        {
+          "__dns_name__": "_kerberos"
+        }
+      ],
+      "objectclass": [
+        "top",
+        "idnsrecord"
+      ],
+      "txtrecord": [
+        "EXAMPLE.TEST"
+      ]
+    },
+    {
+      "cnamerecord": [
+        "www.goipa3957e10e.test."
+      ],
+      "dn": "idnsname=alias,idnsname=goipa3957e10e.test.,cn=dns,dc=example,dc=test",
+      "idnsname": [
+        {
+          "__dns_name__": "alias"
+        }
+      ],
+      "objectclass": [
+        "top",
+        "idnsrecord"
+      ]
+    },
+    {
+      "aaaarecord": [
+        "2001:db8::1"
+      ],
+      "arecord": [
+        "192.0.2.1"
+      ],
+      "dn": "idnsname=www,idnsname=goipa3957e10e.test.,cn=dns,dc=example,dc=test",
+      "idnsname": [
+        {
+          "__dns_name__": "www"
+        }
+      ],
+      "objectclass": [
+        "top",
+        "idnsrecord"
+      ],
+      "txtrecord": [
+        "goipa-test"
+      ]
+    }
+  ],
+  "summary": null,
+  "truncated": false
+}

@@ -1,0 +1,31 @@
+{
+  "result": {
+    "cn": [
+      "gg91402581"
+    ],
+    "dn": "cn=gg91402581,cn=groups,cn=accounts,dc=example,dc=test",
+    "gidnumber": [
+      "1864600067"
+    ],
+    "ipantsecurityidentifier": [
+      "S-1-5-21-1456365794-3900130754-40555027-1067"
+    ],
+    "ipauniqueid": [
+      "1f2d23f4-cfe7-11f1-b9d0-be1d3b1abf25"
+    ],
+    "member_user": [
+      "goipa68f465"
+    ],
+    "objectclass": [
+      "top",
+      "groupofnames",
+      "nestedgroup",
+      "ipausergroup",
+      "ipaobject",
+      "posixgroup",
+      "ipantgroupattrs"
+    ]
+  },
+  "summary": null,
+  "value": "gg91402581"
+}

@@ -1,0 +1,30 @@
+{
+  "count": 2,
+  "result": [
+    {
+      "cn": [
+        "ipa-cifs-delegation-targets"
+      ],
+      "dn": "cn=ipa-cifs-delegation-targets,cn=s4u2proxy,cn=etc,dc=example,dc=test",
+      "objectclass": [
+        "groupOfPrincipals",
+        "top"
+      ]
+    },
+    {
+      "cn": [
+        "ipa-ldap-delegation-targets"
+      ],
+      "dn": "cn=ipa-ldap-delegation-targets,cn=s4u2proxy,cn=etc,dc=example,dc=test",
+      "memberprincipal": [
+        "ldap/ipa.example.test@EXAMPLE.TEST"
+      ],
+      "objectclass": [
+        "groupOfPrincipals",
+        "top"
+      ]
+    }
+  ],
+  "summary": "2 service delegation targets matched",
+  "truncated": false
+}

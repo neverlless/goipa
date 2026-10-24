@@ -1,0 +1,311 @@
+{
+  "count": 24,
+  "result": [
+    {
+      "cn": [
+        "acmeIPAServerCert"
+      ],
+      "description": [
+        "ACME IPA service certificate profile"
+      ],
+      "dn": "cn=acmeIPAServerCert,cn=certprofiles,cn=ca,dc=example,dc=test",
+      "ipacertprofilestoreissued": [
+        false
+      ],
+      "objectclass": [
+        "ipacertprofile",
+        "top"
+      ]
+    },
+    {
+      "cn": [
+        "caIPAserviceCert"
+      ],
+      "description": [
+        "Standard profile for network services"
+      ],
+      "dn": "cn=caIPAserviceCert,cn=certprofiles,cn=ca,dc=example,dc=test",
+      "ipacertprofilestoreissued": [
+        true
+      ],
+      "objectclass": [
+        "ipacertprofile",
+        "top"
+      ]
+    },
+    {
+      "cn": [
+        "IECUserRoles"
+      ],
+      "description": [
+        "User profile that includes IECUserRoles extension from request"
+      ],
+      "dn": "cn=IECUserRoles,cn=certprofiles,cn=ca,dc=example,dc=test",
+      "ipacertprofilestoreissued": [
+        true
+      ],
+      "objectclass": [
+        "ipacertprofile",
+        "top"
+      ]
+    },
+    {
+      "cn": [
+        "KDCs_PKINIT_Certs"
+      ],
+      "description": [
+        "Profile for PKINIT support by KDCs"
+      ],
+      "dn": "cn=KDCs_PKINIT_Certs,cn=certprofiles,cn=ca,dc=example,dc=test",
+      "ipacertprofilestoreissued": [
+        false
+      ],
+      "objectclass": [
+        "ipacertprofile",
+        "top"
+      ]
+    },
+    {
+      "cn": [
+        "acmeServerCert"
+      ],
+      "description": [
+        "ACME Server Certificate Enrollment"
+      ],
+      "dn": "cn=acmeServerCert",
+      "ipacertprofilestoreissued": [
+        false
+      ]
+    },
+    {
+      "cn": [
+        "caCMCserverCert"
+      ],
+      "description": [
+        "Server Certificate Enrollment using CMC"
+      ],
+      "dn": "cn=caCMCserverCert",
+      "ipacertprofilestoreissued": [
+        false
+      ]
+    },
+    {
+      "cn": [
+        "caCMCECserverCert"
+      ],
+      "description": [
+        "Server Certificate wth ECC keys Enrollment using CMC"
+      ],
+      "dn": "cn=caCMCECserverCert",
+      "ipacertprofilestoreissued": [
+        false
+      ]
+    },
+    {
+      "cn": [
+        "caCMCECsubsystemCert"
+      ],
+      "description": [
+        "Subsystem Certificate Enrollment with ECC keys using CMC"
+      ],
+      "dn": "cn=caCMCECsubsystemCert",
+      "ipacertprofilestoreissued": [
+        false
+      ]
+    },
+    {
+      "cn": [
+        "caCMCsubsystemCert"
+      ],
+      "description": [
+        "Subsystem Certificate Enrollment using CMC"
+      ],
+      "dn": "cn=caCMCsubsystemCert",
+      "ipacertprofilestoreissued": [
+        false
+      ]
+    },
+    {
+      "cn": [
+        "caCMCauditSigningCert"
+      ],
+      "description": [
+        "Audit Signing Certificate Enrollment using CMC"
+      ],
+      "dn": "cn=caCMCauditSigningCert",
+      "ipacertprofilestoreissued": [
+        false
+      ]
+    },
+    {
+      "cn": [
+        "caCMCcaCert"
+      ],
+      "description": [
+        "Certificate Manager Signing Certificate Enrollment using CMC"
+      ],
+      "dn": "cn=caCMCcaCert",
+      "ipacertprofilestoreissued": [
+        false
+      ]
+    },
+    {
+      "cn": [
+        "caCMCocspCert"
+      ],
+      "description": [
+        "OCSP Responder Signing Certificate Enrollment using CMC"
+      ],
+      "dn": "cn=caCMCocspCert",
+      "ipacertprofilestoreissued": [
+        false
+      ]
+    },
+    {
+      "cn": [
+        "caCMCkraTransportCert"
+      ],
+      "description": [
+        "Key Archival Authority Transport Certificate Enrollment using CMC"
+      ],
+      "dn": "cn=caCMCkraTransportCert",
+      "ipacertprofilestoreissued": [
+        false
+      ]
+    },
+    {
+      "cn": [
+        "caCMCkraStorageCert"
+      ],
+      "description": [
+        "KRA storage Certificate Enrollment using CMC"
+      ],
+      "dn": "cn=caCMCkraStorageCert",
+      "ipacertprofilestoreissued": [
+        false
+      ]
+    },
+    {
+      "cn": [
+        "caServerKeygen_UserCert"
+      ],
+      "description": [
+        "Manual User Dual-Use Certificate Enrollment using server-side Key generation"
+      ],
+      "dn": "cn=caServerKeygen_UserCert",
+      "ipacertprofilestoreissued": [
+        false
+      ]
+    },
+    {
+      "cn": [
+        "caServerKeygen_DirUserCert"
+      ],
+      "description": [
+        "Directory-authenticated User Dual-Use Certificate Enrollment using server-side Key generation"
+      ],
+      "dn": "cn=caServerKeygen_DirUserCert",
+      "ipacertprofilestoreissued": [
+        false
+      ]
+    },
+    {
+      "cn": [
+        "caUserCert"
+      ],
+      "description": [
+        "Manual User Dual-Use Certificate Enrollment"
+      ],
+      "dn": "cn=caUserCert",
+      "ipacertprofilestoreissued": [
+        false
+      ]
+    },
+    {
+      "cn": [
+        "caECUserCert"
+      ],
+      "description": [
+        "Manual User Dual-Use ECC Certificate Enrollment"
+      ],
+      "dn": "cn=caECUserCert",
+      "ipacertprofilestoreissued": [
+        false
+      ]
+    },
+    {
+      "cn": [
+        "caUserSMIMEcapCert"
+      ],
+      "description": [
+        "Manual User Dual-Use S/MIME capabilities Certificate Enrollment"
+      ],
+      "dn": "cn=caUserSMIMEcapCert",
+      "ipacertprofilestoreissued": [
+        false
+      ]
+    },
+    {
+      "cn": [
+        "caDualCert"
+      ],
+      "description": [
+        "Manual User Signing \u0026 Encryption Certificates Enrollment"
+      ],
+      "dn": "cn=caDualCert",
+      "ipacertprofilestoreissued": [
+        false
+      ]
+    },
+    {
+      "cn": [
+        "caDirBasedDualCert"
+      ],
+      "description": [
+        "Directory-authenticated User Signing \u0026 Encryption Certificates Enrollment"
+      ],
+      "dn": "cn=caDirBasedDualCert",
+      "ipacertprofilestoreissued": [
+        false
+      ]
+    },
+    {
+      "cn": [
+        "AdminCert"
+      ],
+      "description": [
+        "Manual Administrator Certificate Enrollment"
+      ],
+      "dn": "cn=AdminCert",
+      "ipacertprofilestoreissued": [
+        false
+      ]
+    },
+    {
+      "cn": [
+        "ECAdminCert"
+      ],
+      "description": [
+        "Manual Administrator Certificate Enrollment with ECC keys"
+      ],
+      "dn": "cn=ECAdminCert",
+      "ipacertprofilestoreissued": [
+        false
+      ]
+    },
+    {
+      "cn": [
+        "caSignedLogCert"
+      ],
+      "description": [
+        "(deprecated; use caAuditSigningCert) Manual Log Signing Certificate Enrollment"
+      ],
+      "dn": "cn=caSignedLogCert",
+      "ipacertprofilestoreissued": [
+        false
+      ]
+    }
+  ],
+  "summary": "24 profiles matched",
+  "truncated": false
+}

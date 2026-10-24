@@ -1,0 +1,32 @@
+{
+  "count": 1,
+  "result": [
+    {
+      "cn": [
+        "hosts_services_caIPAserviceCert"
+      ],
+      "dn": "ipaUniqueID=bd365706-cfe6-11f1-b588-d28f5ba35ce1,cn=caacls,cn=ca,dc=example,dc=test",
+      "hostcategory": [
+        "all"
+      ],
+      "ipaenabledflag": [
+        true
+      ],
+      "ipamembercertprofile_certprofile": [
+        "caIPAserviceCert"
+      ],
+      "ipauniqueid": [
+        "bd365706-cfe6-11f1-b588-d28f5ba35ce1"
+      ],
+      "objectclass": [
+        "ipaassociation",
+        "ipacaacl"
+      ],
+      "servicecategory": [
+        "all"
+      ]
+    }
+  ],
+  "summary": "1 CA ACL matched",
+  "truncated": false
+}

@@ -204,13 +204,13 @@ hand-written JSON parsing.
 
 ## v0.9.0 — Typed objects
 
-- [ ] Typed APIs for the objects users ask for most, each with a `Context`
+- [x] Typed APIs for the objects users ask for most, each with a `Context`
       twin, an `ipatest` model and contract tests on real FreeIPA, in this
       order: host groups; services and keytab metadata; HBAC and sudo rule
       management (create, members, enable/disable); certificates
       (`cert_request`, `cert_show`, `cert_revoke`); DNS zones and records;
       automember rules; roles, privileges and permissions (read)
-- [ ] `ipatest` record/replay: record raw responses from a real server in
+- [x] `ipatest` record/replay: record raw responses from a real server in
       the nightly run (`IPATEST_RECORD=dir`) and replay them for commands
       it doesn't model, so tests of unwrapped commands use real shapes
 

@@ -1,0 +1,63 @@
+{
+  "count": 1,
+  "result": [
+    {
+      "dn": "idnsname=example.test.,cn=dns,dc=example,dc=test",
+      "idnsallowdynupdate": [
+        true
+      ],
+      "idnsallowquery": [
+        "any;"
+      ],
+      "idnsallowtransfer": [
+        "none;"
+      ],
+      "idnsname": [
+        {
+          "__dns_name__": "example.test."
+        }
+      ],
+      "idnssoaexpire": [
+        "1209600"
+      ],
+      "idnssoaminimum": [
+        "3600"
+      ],
+      "idnssoamname": [
+        {
+          "__dns_name__": "ipa.example.test."
+        }
+      ],
+      "idnssoarefresh": [
+        "3600"
+      ],
+      "idnssoaretry": [
+        "900"
+      ],
+      "idnssoarname": [
+        {
+          "__dns_name__": "hostmaster.example.test."
+        }
+      ],
+      "idnssoaserial": [
+        "1792872667"
+      ],
+      "idnsupdatepolicy": [
+        "grant EXAMPLE.TEST krb5-self * A; grant EXAMPLE.TEST krb5-self * AAAA; grant EXAMPLE.TEST krb5-self * SSHFP;"
+      ],
+      "idnszoneactive": [
+        true
+      ],
+      "nsrecord": [
+        "ipa.example.test."
+      ],
+      "objectclass": [
+        "top",
+        "idnsrecord",
+        "idnszone"
+      ]
+    }
+  ],
+  "summary": null,
+  "truncated": false
+}

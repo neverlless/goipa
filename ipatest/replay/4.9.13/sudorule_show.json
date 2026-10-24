@@ -1,0 +1,13 @@
+{
+  "result": {
+    "cn": [
+      "gs3bb6abb6"
+    ],
+    "dn": "ipaUniqueID=cf2de0fa-cfe6-11f1-8b74-4ad5c53010b5,cn=sudorules,cn=sudo,dc=example,dc=test",
+    "ipaenabledflag": [
+      true
+    ]
+  },
+  "summary": null,
+  "value": "gs3bb6abb6"
+}

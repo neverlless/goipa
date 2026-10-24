@@ -22,7 +22,7 @@ const (
 type Host struct {
 	Description, Locality, Location, Platform, OSVersion string
 	MACAddresses, UserClass                              []string
-	HostGroups                                           []string // memberof_hostgroup
+	HostGroups                                           []string // memberof_hostgroup, with the host groups listing the host (Q50)
 	ManagedBy                                            []string // managedby_host
 	HasKeytab                                            bool
 }
@@ -64,7 +64,9 @@ func (s *Server) renderHost(fqdn string, h Host, members, all bool) map[string]a
 	set("macaddress", h.MACAddresses)
 	set("userclass", h.UserClass)
 	if members {
-		set("memberof_hostgroup", h.HostGroups)
+		mine := s.hostGroupsOf(fqdn)
+		set("memberof_hostgroup", mine)
+		set("memberofindirect_hostgroup", s.hostGroupAncestors(mine))
 		set("managedby_host", h.ManagedBy)
 	}
 	if all {
@@ -118,4 +120,57 @@ func hostFind(s *Server, c Call) (any, *ipa.IpaError) {
 func init() {
 	builtins["host_show"] = hostShow
 	builtins["host_find"] = hostFind
+}
+
+// hostAdd is host_add without DNS: every fqdn is accepted, as with force.
+func hostAdd(s *Server, c Call) (any, *ipa.IpaError) {
+	if len(c.Args) == 0 || c.Args[0] == "" {
+		return nil, required("fqdn")
+	}
+	fqdn := strings.ToLower(c.Args[0])
+	if _, ok := s.hosts[fqdn]; ok {
+		return nil, &ipa.IpaError{Code: ipa.CodeDuplicateEntry, Message: `host with name "` + fqdn + `" already exists`}
+	}
+	h := Host{}
+	h.Description, _ = c.Options["description"].(string)
+	s.hosts[fqdn] = h
+	all := flag(c, "all")
+	return entry(fqdn, s.renderHost(fqdn, h, all || !flag(c, "no_members"), all), `Added host "`+fqdn+`"`), nil
+}
+
+func hostDel(s *Server, c Call) (any, *ipa.IpaError) {
+	deleted := make([]string, len(c.Args))
+	for i, fqdn := range c.Args {
+		deleted[i] = strings.ToLower(fqdn)
+		if _, ok := s.hosts[deleted[i]]; !ok {
+			return nil, notFound(fqdn, "host")
+		}
+	}
+	for _, fqdn := range deleted {
+		delete(s.hosts, fqdn)
+		for _, g := range s.hostgroups {
+			g.Hosts = dropName(g.Hosts, fqdn)
+		}
+		for _, r := range s.hbac {
+			r.Hosts = dropName(r.Hosts, fqdn)
+		}
+		for _, r := range s.sudo {
+			r.Hosts = dropName(r.Hosts, fqdn)
+		}
+		for _, v := range s.services {
+			v.ManagedBy = dropName(v.ManagedBy, fqdn)
+			v.KeytabRetrieve.Hosts = dropName(v.KeytabRetrieve.Hosts, fqdn)
+			v.KeytabCreate.Hosts = dropName(v.KeytabCreate.Hosts, fqdn)
+		}
+	}
+	return map[string]any{
+		"result":  map[string]any{"failed": []string{}},
+		"value":   deleted,
+		"summary": `Deleted host "` + strings.Join(deleted, ",") + `"`,
+	}, nil
+}
+
+func init() {
+	builtins["host_add"] = hostAdd
+	builtins["host_del"] = hostDel
 }

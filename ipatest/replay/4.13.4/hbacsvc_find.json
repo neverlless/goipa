@@ -1,0 +1,284 @@
+{
+  "count": 16,
+  "result": [
+    {
+      "cn": [
+        "crond"
+      ],
+      "description": [
+        "crond"
+      ],
+      "dn": "cn=crond,cn=hbacservices,cn=hbac,dc=example,dc=test",
+      "ipauniqueid": [
+        "cdc8e1f6-cfe6-11f1-b45a-d28f5ba35ce1"
+      ],
+      "objectclass": [
+        "ipahbacservice",
+        "ipaobject"
+      ]
+    },
+    {
+      "cn": [
+        "ftp"
+      ],
+      "description": [
+        "ftp"
+      ],
+      "dn": "cn=ftp,cn=hbacservices,cn=hbac,dc=example,dc=test",
+      "ipauniqueid": [
+        "56df1af6-cfe6-11f1-9e4c-d28f5ba35ce1"
+      ],
+      "memberof_hbacsvcgroup": [
+        "ftp"
+      ],
+      "objectclass": [
+        "ipahbacservice",
+        "ipaobject"
+      ]
+    },
+    {
+      "cn": [
+        "gdm"
+      ],
+      "description": [
+        "gdm"
+      ],
+      "dn": "cn=gdm,cn=hbacservices,cn=hbac,dc=example,dc=test",
+      "ipauniqueid": [
+        "56e04d9a-cfe6-11f1-aa80-d28f5ba35ce1"
+      ],
+      "objectclass": [
+        "ipahbacservice",
+        "ipaobject"
+      ]
+    },
+    {
+      "cn": [
+        "gdm-password"
+      ],
+      "description": [
+        "gdm-password"
+      ],
+      "dn": "cn=gdm-password,cn=hbacservices,cn=hbac,dc=example,dc=test",
+      "ipauniqueid": [
+        "56e073d8-cfe6-11f1-a0dc-d28f5ba35ce1"
+      ],
+      "objectclass": [
+        "ipahbacservice",
+        "ipaobject"
+      ]
+    },
+    {
+      "cn": [
+        "gssftp"
+      ],
+      "description": [
+        "gssftp"
+      ],
+      "dn": "cn=gssftp,cn=hbacservices,cn=hbac,dc=example,dc=test",
+      "ipauniqueid": [
+        "cdca2926-cfe6-11f1-8510-d28f5ba35ce1"
+      ],
+      "memberof_hbacsvcgroup": [
+        "ftp"
+      ],
+      "objectclass": [
+        "ipahbacservice",
+        "ipaobject"
+      ]
+    },
+    {
+      "cn": [
+        "kdm"
+      ],
+      "description": [
+        "kdm"
+      ],
+      "dn": "cn=kdm,cn=hbacservices,cn=hbac,dc=example,dc=test",
+      "ipauniqueid": [
+        "56e09b24-cfe6-11f1-9b27-d28f5ba35ce1"
+      ],
+      "objectclass": [
+        "ipahbacservice",
+        "ipaobject"
+      ]
+    },
+    {
+      "cn": [
+        "login"
+      ],
+      "description": [
+        "login"
+      ],
+      "dn": "cn=login,cn=hbacservices,cn=hbac,dc=example,dc=test",
+      "ipauniqueid": [
+        "56df6d26-cfe6-11f1-921b-d28f5ba35ce1"
+      ],
+      "objectclass": [
+        "ipahbacservice",
+        "ipaobject"
+      ]
+    },
+    {
+      "cn": [
+        "proftpd"
+      ],
+      "description": [
+        "proftpd"
+      ],
+      "dn": "cn=proftpd,cn=hbacservices,cn=hbac,dc=example,dc=test",
+      "ipauniqueid": [
+        "cdc99344-cfe6-11f1-88a2-d28f5ba35ce1"
+      ],
+      "memberof_hbacsvcgroup": [
+        "ftp"
+      ],
+      "objectclass": [
+        "ipahbacservice",
+        "ipaobject"
+      ]
+    },
+    {
+      "cn": [
+        "pure-ftpd"
+      ],
+      "description": [
+        "pure-ftpd"
+      ],
+      "dn": "cn=pure-ftpd,cn=hbacservices,cn=hbac,dc=example,dc=test",
+      "ipauniqueid": [
+        "cdc9df2a-cfe6-11f1-b30b-d28f5ba35ce1"
+      ],
+      "memberof_hbacsvcgroup": [
+        "ftp"
+      ],
+      "objectclass": [
+        "ipahbacservice",
+        "ipaobject"
+      ]
+    },
+    {
+      "cn": [
+        "sshd"
+      ],
+      "description": [
+        "sshd"
+      ],
+      "dn": "cn=sshd,cn=hbacservices,cn=hbac,dc=example,dc=test",
+      "ipauniqueid": [
+        "56def31e-cfe6-11f1-baf2-d28f5ba35ce1"
+      ],
+      "objectclass": [
+        "ipahbacservice",
+        "ipaobject"
+      ]
+    },
+    {
+      "cn": [
+        "su"
+      ],
+      "description": [
+        "su"
+      ],
+      "dn": "cn=su,cn=hbacservices,cn=hbac,dc=example,dc=test",
+      "ipauniqueid": [
+        "56df45b2-cfe6-11f1-873c-d28f5ba35ce1"
+      ],
+      "objectclass": [
+        "ipahbacservice",
+        "ipaobject"
+      ]
+    },
+    {
+      "cn": [
+        "su-l"
+      ],
+      "description": [
+        "su with login shell"
+      ],
+      "dn": "cn=su-l,cn=hbacservices,cn=hbac,dc=example,dc=test",
+      "ipauniqueid": [
+        "56df96de-cfe6-11f1-b698-d28f5ba35ce1"
+      ],
+      "objectclass": [
+        "ipahbacservice",
+        "ipaobject"
+      ]
+    },
+    {
+      "cn": [
+        "sudo"
+      ],
+      "description": [
+        "sudo"
+      ],
+      "dn": "cn=sudo,cn=hbacservices,cn=hbac,dc=example,dc=test",
+      "ipauniqueid": [
+        "56dfc474-cfe6-11f1-8e4a-d28f5ba35ce1"
+      ],
+      "memberof_hbacsvcgroup": [
+        "Sudo"
+      ],
+      "objectclass": [
+        "ipahbacservice",
+        "ipaobject"
+      ]
+    },
+    {
+      "cn": [
+        "sudo-i"
+      ],
+      "description": [
+        "sudo-i"
+      ],
+      "dn": "cn=sudo-i,cn=hbacservices,cn=hbac,dc=example,dc=test",
+      "ipauniqueid": [
+        "56dfeb0c-cfe6-11f1-b4cc-d28f5ba35ce1"
+      ],
+      "memberof_hbacsvcgroup": [
+        "Sudo"
+      ],
+      "objectclass": [
+        "ipahbacservice",
+        "ipaobject"
+      ]
+    },
+    {
+      "cn": [
+        "systemd-user"
+      ],
+      "description": [
+        "pam_systemd and systemd user@.service"
+      ],
+      "dn": "cn=systemd-user,cn=hbacservices,cn=hbac,dc=example,dc=test",
+      "ipauniqueid": [
+        "56e01f0a-cfe6-11f1-a093-d28f5ba35ce1"
+      ],
+      "objectclass": [
+        "ipahbacservice",
+        "ipaobject"
+      ]
+    },
+    {
+      "cn": [
+        "vsftpd"
+      ],
+      "description": [
+        "vsftpd"
+      ],
+      "dn": "cn=vsftpd,cn=hbacservices,cn=hbac,dc=example,dc=test",
+      "ipauniqueid": [
+        "cdc93dae-cfe6-11f1-8bb5-d28f5ba35ce1"
+      ],
+      "memberof_hbacsvcgroup": [
+        "ftp"
+      ],
+      "objectclass": [
+        "ipahbacservice",
+        "ipaobject"
+      ]
+    }
+  ],
+  "summary": "16 HBAC services matched",
+  "truncated": false
+}

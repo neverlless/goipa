@@ -1,0 +1,22 @@
+{
+  "result": {
+    "aci": [
+      "(targetattr = \"ipacertmappromptusername\")(targetfilter = \"(objectclass=ipacertmapconfigobject)\")(version 3.0;acl \"permission:System: Modify Certmap Configuration\";allow (write) groupdn = \"ldap:///cn=System: Modify Certmap Configuration,cn=permissions,cn=pbac,dc=example,dc=test\";)",
+      "(targetattr = \"cn || ipacertmappromptusername\")(targetfilter = \"(objectclass=ipacertmapconfigobject)\")(version 3.0;acl \"permission:System: Read Certmap Configuration\";allow (compare,read,search) userdn = \"ldap:///all\";)"
+    ],
+    "cn": [
+      "certmap"
+    ],
+    "dn": "cn=certmap,dc=example,dc=test",
+    "ipacertmappromptusername": [
+      false
+    ],
+    "objectclass": [
+      "top",
+      "nsContainer",
+      "ipaCertMapConfigObject"
+    ]
+  },
+  "summary": null,
+  "value": null
+}

@@ -1,0 +1,254 @@
+{
+  "count": 3,
+  "result": [
+    {
+      "cn": [
+        "Administrator"
+      ],
+      "dn": "uid=admin,cn=users,cn=accounts,dc=example,dc=test",
+      "gecos": [
+        "Administrator"
+      ],
+      "gidnumber": [
+        "1864600000"
+      ],
+      "homedirectory": [
+        "/home/admin"
+      ],
+      "ipantsecurityidentifier": [
+        "S-1-5-21-1456365794-3900130754-40555027-500"
+      ],
+      "ipauniqueid": [
+        "50e9a512-cfe6-11f1-8ef3-be1d3b1abf25"
+      ],
+      "krbcanonicalname": [
+        "admin@EXAMPLE.TEST"
+      ],
+      "krbextradata": "REDACTED",
+      "krblastadminunlock": [
+        {
+          "__datetime__": "20261024201000Z"
+        }
+      ],
+      "krblastpwdchange": [
+        {
+          "__datetime__": "20261024201000Z"
+        }
+      ],
+      "krbpasswordexpiration": [
+        {
+          "__datetime__": "20270122201000Z"
+        }
+      ],
+      "krbprincipalname": [
+        "admin@EXAMPLE.TEST",
+        "root@EXAMPLE.TEST"
+      ],
+      "loginshell": [
+        "/bin/bash"
+      ],
+      "memberof_group": [
+        "admins",
+        "trust admins"
+      ],
+      "nsaccountlock": false,
+      "objectclass": [
+        "top",
+        "person",
+        "posixaccount",
+        "krbprincipalaux",
+        "krbticketpolicyaux",
+        "inetuser",
+        "ipaobject",
+        "ipasshuser",
+        "ipaSshGroupOfPubKeys",
+        "ipaNTUserAttrs"
+      ],
+      "preserved": false,
+      "sn": [
+        "Administrator"
+      ],
+      "uid": [
+        "admin"
+      ],
+      "uidnumber": [
+        "1864600000"
+      ]
+    },
+    {
+      "cn": [
+        "Go Svc"
+      ],
+      "displayname": [
+        "Go Svc"
+      ],
+      "dn": "uid=goipa-svc,cn=users,cn=accounts,dc=example,dc=test",
+      "gecos": [
+        "Go Svc"
+      ],
+      "gidnumber": [
+        "1864600003"
+      ],
+      "givenname": [
+        "Go"
+      ],
+      "homedirectory": [
+        "/home/goipa-svc"
+      ],
+      "initials": [
+        "GS"
+      ],
+      "ipantsecurityidentifier": [
+        "S-1-5-21-1456365794-3900130754-40555027-1003"
+      ],
+      "ipauniqueid": [
+        "e98d2a8c-cfe6-11f1-a049-be1d3b1abf25"
+      ],
+      "krbcanonicalname": [
+        "goipa-svc@EXAMPLE.TEST"
+      ],
+      "krbextradata": "REDACTED",
+      "krblastpwdchange": [
+        {
+          "__datetime__": "20261024201009Z"
+        }
+      ],
+      "krbprincipalname": [
+        "goipa-svc@EXAMPLE.TEST"
+      ],
+      "loginshell": [
+        "/bin/sh"
+      ],
+      "mail": [
+        "goipa-svc@example.test"
+      ],
+      "memberof_group": [
+        "ipausers"
+      ],
+      "mepmanagedentry": [
+        "cn=goipa-svc,cn=groups,cn=accounts,dc=example,dc=test"
+      ],
+      "nsaccountlock": false,
+      "objectclass": [
+        "top",
+        "person",
+        "organizationalperson",
+        "inetorgperson",
+        "inetuser",
+        "posixaccount",
+        "krbprincipalaux",
+        "krbticketpolicyaux",
+        "ipaobject",
+        "ipasshuser",
+        "ipaSshGroupOfPubKeys",
+        "mepOriginEntry",
+        "ipantuserattrs"
+      ],
+      "preserved": false,
+      "sn": [
+        "Svc"
+      ],
+      "uid": [
+        "goipa-svc"
+      ],
+      "uidnumber": [
+        "1864600003"
+      ]
+    },
+    {
+      "cn": [
+        "Melvina Luettgen"
+      ],
+      "displayname": [
+        "Melvina Luettgen"
+      ],
+      "dn": "uid=heidenreich8997,cn=users,cn=accounts,dc=example,dc=test",
+      "gecos": [
+        "Melvina Luettgen"
+      ],
+      "gidnumber": [
+        "1864600087"
+      ],
+      "givenname": [
+        "Melvina"
+      ],
+      "homedirectory": [
+        "/home/heidenreich8997"
+      ],
+      "initials": [
+        "ML"
+      ],
+      "ipantsecurityidentifier": [
+        "S-1-5-21-1456365794-3900130754-40555027-1087"
+      ],
+      "ipauniqueid": [
+        "566dbb76-cfe7-11f1-a049-be1d3b1abf25"
+      ],
+      "krbcanonicalname": [
+        "heidenreich8997@EXAMPLE.TEST"
+      ],
+      "krbextradata": "REDACTED",
+      "krblastfailedauth": [
+        {
+          "__datetime__": "20261024201312Z"
+        }
+      ],
+      "krblastpwdchange": [
+        {
+          "__datetime__": "20261024201312Z"
+        }
+      ],
+      "krbloginfailedcount": [
+        "1"
+      ],
+      "krbpasswordexpiration": [
+        {
+          "__datetime__": "20270122201312Z"
+        }
+      ],
+      "krbprincipalname": [
+        "heidenreich8997@EXAMPLE.TEST"
+      ],
+      "loginshell": [
+        "/bin/sh"
+      ],
+      "mail": [
+        "heidenreich8997@example.test"
+      ],
+      "memberof_group": [
+        "ipausers"
+      ],
+      "mepmanagedentry": [
+        "cn=heidenreich8997,cn=groups,cn=accounts,dc=example,dc=test"
+      ],
+      "nsaccountlock": false,
+      "objectclass": [
+        "top",
+        "person",
+        "organizationalperson",
+        "inetorgperson",
+        "inetuser",
+        "posixaccount",
+        "krbprincipalaux",
+        "krbticketpolicyaux",
+        "ipaobject",
+        "ipasshuser",
+        "ipaSshGroupOfPubKeys",
+        "mepOriginEntry",
+        "ipantuserattrs"
+      ],
+      "preserved": false,
+      "sn": [
+        "Luettgen"
+      ],
+      "uid": [
+        "heidenreich8997"
+      ],
+      "uidnumber": [
+        "1864600087"
+      ]
+    }
+  ],
+  "summary": "3 users matched",
+  "truncated": false
+}

@@ -66,6 +66,22 @@ FreeIPA 4.9, 4.12 and 4.13; a maintainer can also start it by hand
 merge. Every `ipatest` behaviour that mirrors a FreeIPA quirk is a numbered
 `Qn` entry in `ipatest/doc.go` naming the test that pins it.
 
+## Refreshing recorded responses
+
+`ipatest/replay/<version>/` holds responses recorded on real FreeIPA. To
+refresh them, run the integration workflow (it records with `IPATEST_RECORD`
+and uploads a `replay-<image>` artifact per FreeIPA version), then:
+
+```sh
+gh run download <run-id> -R neverlless/goipa -D /tmp/replay
+```
+
+Each `replay-<image>` folder of the download holds one `<version>/` folder
+(e.g. `/tmp/replay/replay-almalinux-9-4.13.4/4.13.4/`); replace each
+`ipatest/replay/<version>/` with the matching one, scan the
+files for secrets (passwords, keys, tokens, real host names) the recorder's
+redaction missed, run `go test ./ipatest/...`, and commit.
+
 ## Compatibility
 
 goipa is on v0.x but is used in production. Every exported identifier from

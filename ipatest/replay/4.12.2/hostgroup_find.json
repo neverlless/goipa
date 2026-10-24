@@ -1,0 +1,29 @@
+{
+  "count": 1,
+  "result": [
+    {
+      "cn": [
+        "ipaservers"
+      ],
+      "description": [
+        "IPA server hosts"
+      ],
+      "dn": "cn=ipaservers,cn=hostgroups,cn=accounts,dc=example,dc=test",
+      "ipauniqueid": [
+        "50ec5762-cfe6-11f1-8e83-be1d3b1abf25"
+      ],
+      "member_host": [
+        "ipa.example.test"
+      ],
+      "objectclass": [
+        "top",
+        "groupOfNames",
+        "nestedGroup",
+        "ipaobject",
+        "ipahostgroup"
+      ]
+    }
+  ],
+  "summary": "1 hostgroup matched",
+  "truncated": false
+}

@@ -1,0 +1,109 @@
+{
+  "count": 4,
+  "result": [
+    {
+      "cn": [
+        "admins"
+      ],
+      "description": [
+        "Account administrators group"
+      ],
+      "dn": "cn=admins,cn=groups,cn=accounts,dc=example,dc=test",
+      "gidnumber": [
+        "975800000"
+      ],
+      "ipantsecurityidentifier": [
+        "S-1-5-21-1709458961-2960347720-945749174-512"
+      ],
+      "ipauniqueid": [
+        "56dd415e-cfe6-11f1-89be-d28f5ba35ce1"
+      ],
+      "member_user": [
+        "admin"
+      ],
+      "objectclass": [
+        "top",
+        "groupofnames",
+        "posixgroup",
+        "ipausergroup",
+        "ipaobject",
+        "nestedGroup",
+        "ipaNTGroupAttrs"
+      ]
+    },
+    {
+      "cn": [
+        "editors"
+      ],
+      "description": [
+        "Limited admins who can edit other users"
+      ],
+      "dn": "cn=editors,cn=groups,cn=accounts,dc=example,dc=test",
+      "gidnumber": [
+        "975800002"
+      ],
+      "ipantsecurityidentifier": [
+        "S-1-5-21-1709458961-2960347720-945749174-1002"
+      ],
+      "ipauniqueid": [
+        "56de9b30-cfe6-11f1-b545-d28f5ba35ce1"
+      ],
+      "objectclass": [
+        "top",
+        "groupofnames",
+        "posixgroup",
+        "ipausergroup",
+        "ipaobject",
+        "nestedGroup",
+        "ipantgroupattrs"
+      ]
+    },
+    {
+      "cn": [
+        "ipausers"
+      ],
+      "description": [
+        "Default group for all users"
+      ],
+      "dn": "cn=ipausers,cn=groups,cn=accounts,dc=example,dc=test",
+      "ipauniqueid": [
+        "56de6b60-cfe6-11f1-8745-d28f5ba35ce1"
+      ],
+      "member_user": [
+        "goipa-svc",
+        "mayert1974"
+      ],
+      "objectclass": [
+        "top",
+        "groupofnames",
+        "nestedgroup",
+        "ipausergroup",
+        "ipaobject"
+      ]
+    },
+    {
+      "cn": [
+        "trust admins"
+      ],
+      "description": [
+        "Trusts administrators group"
+      ],
+      "dn": "cn=trust admins,cn=groups,cn=accounts,dc=example,dc=test",
+      "ipauniqueid": [
+        "cdd4aaf4-cfe6-11f1-b91f-d28f5ba35ce1"
+      ],
+      "member_user": [
+        "admin"
+      ],
+      "objectclass": [
+        "top",
+        "groupofnames",
+        "ipausergroup",
+        "nestedgroup",
+        "ipaobject"
+      ]
+    }
+  ],
+  "summary": "4 groups matched",
+  "truncated": false
+}

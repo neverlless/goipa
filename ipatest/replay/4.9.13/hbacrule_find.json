@@ -1,0 +1,69 @@
+{
+  "count": 2,
+  "result": [
+    {
+      "accessruletype": [
+        "allow"
+      ],
+      "cn": [
+        "allow_all"
+      ],
+      "description": [
+        "Allow all users to access any host from any host"
+      ],
+      "dn": "ipaUniqueID=4e012834-cfe6-11f1-92f0-4ad5c53010b5,cn=hbac,dc=example,dc=test",
+      "hostcategory": [
+        "all"
+      ],
+      "ipaenabledflag": [
+        true
+      ],
+      "ipauniqueid": [
+        "4e012834-cfe6-11f1-92f0-4ad5c53010b5"
+      ],
+      "objectclass": [
+        "ipaassociation",
+        "ipahbacrule"
+      ],
+      "servicecategory": [
+        "all"
+      ],
+      "usercategory": [
+        "all"
+      ]
+    },
+    {
+      "accessruletype": [
+        "allow"
+      ],
+      "cn": [
+        "allow_systemd-user"
+      ],
+      "description": [
+        "Allow pam_systemd to run user@.service to create a system user session"
+      ],
+      "dn": "ipaUniqueID=4e01f5a2-cfe6-11f1-b1ce-4ad5c53010b5,cn=hbac,dc=example,dc=test",
+      "hostcategory": [
+        "all"
+      ],
+      "ipaenabledflag": [
+        true
+      ],
+      "ipauniqueid": [
+        "4e01f5a2-cfe6-11f1-b1ce-4ad5c53010b5"
+      ],
+      "memberservice_hbacsvc": [
+        "systemd-user"
+      ],
+      "objectclass": [
+        "ipaassociation",
+        "ipahbacrule"
+      ],
+      "usercategory": [
+        "all"
+      ]
+    }
+  ],
+  "summary": "2 HBAC rules matched",
+  "truncated": false
+}
