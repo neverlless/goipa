@@ -54,6 +54,7 @@ type User struct {
 	Title             string
 	OrgUnit           string
 	FailedLogins      int
+	LastFailedLogin   time.Time // krblastfailedauth, set by a wrong password
 	PasswdExpire      time.Time // krbpasswordexpiration; non-zero and not after now = expired
 }
 
@@ -593,6 +594,7 @@ func loginPassword(s *Server, w http.ResponseWriter, r *http.Request) {
 		reject("user-locked")
 	case u.Password != pw:
 		u.FailedLogins++
+		u.LastFailedLogin = time.Now()
 		reject("invalid-password")
 	case !u.PasswdExpire.IsZero() && !u.PasswdExpire.After(time.Now()): // Q5
 		reject("password-expired")

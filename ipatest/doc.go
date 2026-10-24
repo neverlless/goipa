@@ -184,6 +184,12 @@
 //     summary "Stage user <uid> activated". If the active uid exists it is
 //     4002 `active user with name "<uid>" already exists` and the stage entry
 //     stays. TestContractStageActivateSummary, TestStageUserDuplicateAndDelete.
+//   - Q31: user_status answers one entry for ipa.test.local: server and now
+//     are scalars, krblastfailedauth is ["N/A"] or the time of the last wrong
+//     password (User.LastFailedLogin), krbloginfailedcount is the scalar "0"
+//     until a login fails and ["n"] afterwards, as on a real IPA. The summary
+//     is "Account disabled: True|False"; a missing user is 4001. user_unlock
+//     zeroes the counter. TestContractUserStatusAndUnlock, TestUserStatus_*.
 //
 // A response's version is the server release, 4.13.4, and its principal is
 // <uid>@TEST.LOCAL. An error a HandlerFunc returns without a Name gets the
@@ -191,7 +197,7 @@
 //
 // # Not modelled
 //
-// Lockout status and unlock, password policy, subordinate IDs,
+// Password policy, subordinate IDs,
 // HBAC and sudo rules, hbactest and passkey management (planned for v0.5).
 // Until then, Handle is the way to reach them. Kerberos, LDAP search
 // filters, size limits, replication and HTTP fault injection are left out;
