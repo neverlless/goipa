@@ -5,8 +5,8 @@
 package ipa
 
 import (
-	"fmt"
 	"encoding/pem"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
