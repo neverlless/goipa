@@ -22,7 +22,12 @@ var ErrInvalidCall = errors.New("ipa: call does not match the FreeIPA command ca
 // the server version from the last response fails with ErrNotSupported.
 // Before the version is known nothing fails with ErrNotSupported, and a
 // server newer than the newest catalogued release is not checked at all.
-// Argument values and types are not checked. Off by default.
+// Argument values and types are not checked. An option key that names a
+// positional argument is accepted. The version gate follows the replica that
+// answered last (see ErrNotSupported), so in a mixed 4.9/4.13 fleet behind a
+// load balancer a call valid on 4.13 can get ErrNotSupported. Since values are
+// upstream releases; distro backports are not known. Opt-in through New only:
+// the old constructors never validate.
 func WithValidation() Option {
 	return func(s *settings) error {
 		s.validate = true

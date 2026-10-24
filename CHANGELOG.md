@@ -17,7 +17,15 @@ existing exported identifiers keep their signatures).
   the catalogue before it is sent, including each call inside `Batch`;
   commands and options newer than the server give `ErrNotSupported`
 - `ipatest`: built-in commands reject options the command lacks at the
-  reported release (`OptionError`) and commands added after it; `passkeyconfig_show`
+  reported release (`OptionError`) and commands added after it;
+  `passkeyconfig_show` is modelled
+
+### Changed
+
+- `ipatest`: built-in commands now reject options they lack and commands
+  newer than the `SetVersion` release (3005 / 905), so consumer tests that
+  sent such options may fail on upgrade; `SetVersion` now affects behaviour,
+  not only the reported string. `Handle` overrides are not checked
 
 ## [v0.7.0] - 2026-10-24
 
