@@ -298,8 +298,11 @@
 //     command's output plus "error": null, or {error, error_code,
 //     error_name, error_kw} for a failure, without stopping the rest. An
 //     entry without method or params is 3007 RequirementError; params that
-//     are not [list, dict] are also 3007 here (FreeIPA: ConversionError).
-//     Calls records the batch call, then each nested call. TestBatch,
+//     are not [list, dict] are 3008 ConversionError "invalid 'params': must
+//     contain a tuple (list, dict)", as batch.py's _validate_request.
+//     Calls records the batch call, then each nested call. A nested batch
+//     is dispatched recursively, and a nested session_logout sends no
+//     deletion cookie (neither verified against FreeIPA). TestBatch,
 //     TestBatch_MiddleFails, TestBatchMalformedEntries, goipa.TestContractBatch.
 //
 // A response's version is the server release, 4.13.4 unless SetVersion

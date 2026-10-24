@@ -284,10 +284,13 @@ func TestBatchMalformedEntries(t *testing.T) {
 	if env.Result.Count != 5 || len(env.Result.Results) != 5 {
 		t.Fatalf("%+v", env.Result)
 	}
-	for i, code := range []float64{ipa.CodeRequirement, ipa.CodeRequirement, ipa.CodeRequirement, ipa.CodeCommand} {
+	for i, code := range []float64{ipa.CodeRequirement, ipa.CodeRequirement, ipa.CodeConversion, ipa.CodeCommand} {
 		if r := env.Result.Results[i]; r["error_code"] != code || r["error"] == nil || r["error_name"] == "" || r["error_kw"] == nil {
 			t.Errorf("result %d: %v", i, r)
 		}
+	}
+	if r := env.Result.Results[2]; r["error"] != "invalid 'params': must contain a tuple (list, dict)" || r["error_name"] != "ConversionError" {
+		t.Errorf("conversion: %v", r)
 	}
 	if r := env.Result.Results[4]; r["error"] != nil || r["summary"] == nil {
 		t.Errorf("ping: %v", r)

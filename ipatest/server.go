@@ -35,6 +35,7 @@ var errorNames = map[int]string{
 	ipa.CodeACI:                  "ACIError",
 	ipa.CodeOption:               "OptionError",
 	ipa.CodeRequirement:          "RequirementError",
+	ipa.CodeConversion:           "ConversionError",
 	ipa.CodeValidation:           "ValidationError",
 	ipa.CodeNotFound:             "NotFound",
 	ipa.CodeDuplicateEntry:       "DuplicateEntry",
@@ -46,6 +47,7 @@ var errorNames = map[int]string{
 	ipa.CodeAlreadyContainsValue: "AlreadyContainsValueError",
 	ipa.CodeEmptyModlist:         "EmptyModlist",
 	ipa.CodeDatabase:             "DatabaseError",
+	ipa.CodeOnlyOneValueAllowed:  "OnlyOneValueAllowed",
 }
 
 // builtin is a modelled command. It runs with s.mu held.

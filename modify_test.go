@@ -147,7 +147,7 @@ func TestModify_SingleValued(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			_, err := m.Run(context.Background())
 			var ie *ipa.IpaError
-			if !errors.As(err, &ie) || ie.Code != 4207 || ie.Message != "title: Only one value allowed." {
+			if !errors.As(err, &ie) || ie.Code != ipa.CodeOnlyOneValueAllowed || ie.Message != "title: Only one value allowed." {
 				t.Fatalf("err = %v", err)
 			}
 		})

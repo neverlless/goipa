@@ -34,7 +34,8 @@ func (s *Server) batchOne(outer Call, req map[string]json.RawMessage) map[string
 	case req["params"] == nil:
 		ierr = requirement("params")
 	case json.Unmarshal(req["method"], &n.Method) != nil || json.Unmarshal(req["params"], &params) != nil || len(params) != 2 || decodeParams(&n, params) != nil:
-		ierr = requirement("params")
+		ierr = &ipa.IpaError{Code: ipa.CodeConversion, Message: "invalid 'params': must contain a tuple (list, dict)",
+			Data: `{"name":"params","error":"must contain a tuple (list, dict)"}`}
 	}
 	var result any
 	if ierr == nil {

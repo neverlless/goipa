@@ -71,6 +71,6 @@ func TestContractModify(t *testing.T) {
 		}
 		record("absent del", run(b.admin.Modify("user_mod", uid).Del("mail", extra)), ipa.CodeAttrValueNotFound)
 		record("unknown attr", run(b.admin.Modify("user_mod", uid).Set("nosuchattr", "v")), ipa.CodeValidation)
-		record("two title values", run(b.admin.Modify("user_mod", uid).Set("title", "A").Set("title", "B")), 4207)
+		record("two title values", run(b.admin.Modify("user_mod", uid).Set("title", "A").Set("title", "B")), ipa.CodeOnlyOneValueAllowed)
 	})
 }
