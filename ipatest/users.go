@@ -402,6 +402,9 @@ func (u *User) applyAttrOpts(opts map[string]any) *ipa.IpaError {
 	}
 	merged := map[string]any{}
 	for a, v := range vals {
+		if len(v) > 1 && a != "mail" && a != "ipasshpubkey" && a != "ipauserauthtype" {
+			return &ipa.IpaError{Code: 4207, Name: "OnlyOneValueAllowed", Message: a + ": Only one value allowed."}
+		}
 		l := make([]any, len(v))
 		for i := range v {
 			l[i] = v[i]

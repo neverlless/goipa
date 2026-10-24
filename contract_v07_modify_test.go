@@ -46,31 +46,31 @@ func TestContractModify(t *testing.T) {
 		if n := len(show().Get("mail").Array()); n != 2 {
 			t.Errorf("mail count = %d, want 2", n)
 		}
-		err := run(b.admin.Modify("user_mod", uid).Add("mail", extra))
-		var ie *ipa.IpaError
-		if !errors.As(err, &ie) {
-			t.Fatalf("duplicate add err = %v", err)
+		// On the real server these only record the code; ipatest must match the brief.
+		record := func(what string, err error, code int) {
+			t.Helper()
+			var ie *ipa.IpaError
+			if !errors.As(err, &ie) {
+				if b.name == "ipatest" {
+					t.Fatalf("%s err = %v", what, err)
+				}
+				t.Logf("%s: err = %v", what, err)
+				return
+			}
+			t.Logf("%s: %d %s %q", what, ie.Code, ie.Name, ie.Message)
+			if b.name == "ipatest" && ie.Code != code {
+				t.Errorf("%s code = %d, want %d", what, ie.Code, code)
+			}
 		}
-		t.Logf("duplicate add: %d %s %q", ie.Code, ie.Name, ie.Message)
+		record("duplicate add", run(b.admin.Modify("user_mod", uid).Add("mail", extra)), ipa.CodeAlreadyContainsValue)
 		if err := run(b.admin.Modify("user_mod", uid).Del("mail", extra)); err != nil {
 			t.Fatal(err)
 		}
 		if n := len(show().Get("mail").Array()); n != 1 {
 			t.Errorf("mail count = %d, want 1", n)
 		}
-		err = run(b.admin.Modify("user_mod", uid).Del("mail", extra))
-		if !errors.As(err, &ie) {
-			t.Fatalf("absent del err = %v", err)
-		}
-		t.Logf("absent del: %d %s %q", ie.Code, ie.Name, ie.Message)
-		err = run(b.admin.Modify("user_mod", uid).Set("nosuchattr", "v"))
-		if !errors.As(err, &ie) {
-			t.Fatalf("unknown attr err = %v", err)
-		}
-		t.Logf("unknown attr: %d %s %q", ie.Code, ie.Name, ie.Message)
-		if b.name == "ipatest" {
-			return
-		}
-		// Real server: the codes above are recorded for aligning the fake.
+		record("absent del", run(b.admin.Modify("user_mod", uid).Del("mail", extra)), ipa.CodeAttrValueNotFound)
+		record("unknown attr", run(b.admin.Modify("user_mod", uid).Set("nosuchattr", "v")), ipa.CodeValidation)
+		record("two title values", run(b.admin.Modify("user_mod", uid).Set("title", "A").Set("title", "B")), 4207)
 	})
 }

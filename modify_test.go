@@ -16,8 +16,8 @@ import (
 
 func TestModify_Options(t *testing.T) {
 	c, f := newFakeIPA(t, 200, envelope(`{}`))
-	_, err := c.Modify("user_mod", "bob").Add("mail", "a@x").Add("mail", "b@x").Set("title", "T").
-		Del("mail", "c@x").Set("title", "U").Run(context.Background())
+	_, err := c.Modify("user_mod", "bob").Add("mail", "a@x").Add("mail", "b@x").Set("ou", "T").
+		Del("mail", "c@x").Set("ou", "U").Run(context.Background())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -27,7 +27,7 @@ func TestModify_Options(t *testing.T) {
 	}
 	want := map[string]any{
 		"addattr": []any{"mail=a@x", "mail=b@x"},
-		"setattr": []any{"title=T", "title=U"},
+		"setattr": []any{"ou=T", "ou=U"},
 		"delattr": []any{"mail=c@x"},
 		"all":     true,
 	}
@@ -119,5 +119,26 @@ func TestModify_EmptyModlist(t *testing.T) {
 	}
 	if _, ok := err.(*ipa.IpaError); !ok {
 		t.Errorf("err %T is wrapped", err)
+	}
+}
+
+func TestModify_SingleValued(t *testing.T) {
+	s := ipatest.NewServer(t)
+	s.AddUser("bob", ipatest.User{First: "Bob", Last: "B", Title: "T"})
+	c := s.ClientAs("admin")
+	for name, m := range map[string]*ipa.Modification{
+		"two sets":     c.Modify("user_mod", "bob").Set("title", "A").Set("title", "B"),
+		"add to a set": c.Modify("user_mod", "bob").Add("title", "B"),
+	} {
+		t.Run(name, func(t *testing.T) {
+			_, err := m.Run(context.Background())
+			var ie *ipa.IpaError
+			if !errors.As(err, &ie) || ie.Code != 4207 || ie.Message != "title: Only one value allowed." {
+				t.Fatalf("err = %v", err)
+			}
+		})
+	}
+	if u, _ := s.User("bob"); u.Title != "T" {
+		t.Errorf("title = %q", u.Title)
 	}
 }
