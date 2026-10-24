@@ -9,12 +9,9 @@ import (
 	"crypto/x509"
 	"net"
 	"net/http"
-	"net/url"
-	"os"
 	"sync"
 	"time"
 
-	"github.com/go-ini/ini"
 	"github.com/jcmturner/gokrb5/v8/client"
 )
 
@@ -22,12 +19,6 @@ const (
 	DefaultKerbConf   = "/etc/krb5.conf"
 	IpaClientVersion  = "2.237"
 	IpaDatetimeFormat = "20060102150405Z"
-)
-
-var (
-	ipaDefaultHost  string
-	ipaDefaultRealm string
-	ipaCertPool     *x509.CertPool
 )
 
 // FreeIPA Client
@@ -49,34 +40,18 @@ type Client struct {
 	sessionID string
 	sticky    bool
 	krbClient *client.Client
+
+	krb5Path    string // krb5.conf path; empty means DefaultKerbConf
+	krb5Data    string // krb5.conf text (a string keeps Client comparable); wins over krb5Path
+	relogin     bool
+	reloginUser string // guarded by mu
+	reloginPass string // guarded by mu
 }
 
 // FreeIPA api options map
 type Options map[string]interface{}
 
-func init() {
-	// If ca.crt for ipa exists, use it as the cert pool
-	// otherwise default to system root ca.
-	pem, err := os.ReadFile("/etc/ipa/ca.crt")
-	if err == nil {
-		ipaCertPool = x509.NewCertPool()
-		if !ipaCertPool.AppendCertsFromPEM(pem) {
-			ipaCertPool = nil
-		}
-	}
-
-	// Load default IPA host
-	cfg, err := ini.Load("/etc/ipa/default.conf")
-	if err == nil {
-		ipaServerURL, err := url.Parse(cfg.Section("global").Key("xmlrpc_uri").MustString("http://localhost"))
-		if err == nil {
-			ipaDefaultHost = ipaServerURL.Host
-		}
-		ipaDefaultRealm = cfg.Section("global").Key("realm").MustString("LOCAL")
-	}
-}
-
-func newHTTPClient() *http.Client {
+func newHTTPClient(pool *x509.CertPool) *http.Client {
 	return &http.Client{
 		Timeout: 1 * time.Minute,
 		Transport: &http.Transport{
@@ -89,31 +64,22 @@ func newHTTPClient() *http.Client {
 			IdleConnTimeout:       90 * time.Second,
 			TLSHandshakeTimeout:   10 * time.Second,
 			ExpectContinueTimeout: 1 * time.Second,
-			TLSClientConfig:       &tls.Config{RootCAs: ipaCertPool},
+			TLSClientConfig:       &tls.Config{RootCAs: pool},
 			DisableCompression:    false,
 		},
 	}
 }
 
-// New default IPA Client using host and realm from /etc/ipa/default.conf
+// New default IPA Client using host and realm from /etc/ipa/default.conf, read on first use
 func NewDefaultClient() *Client {
-	return &Client{
-		host:       ipaDefaultHost,
-		realm:      ipaDefaultRealm,
-		sticky:     true,
-		httpClient: newHTTPClient(),
-	}
+	d := systemDefaults()
+	return &Client{host: d.host, realm: d.realm, sticky: true, httpClient: newHTTPClient(d.pool)}
 }
 
-// New default IPA Client with existing sessionID using host and realm from /etc/ipa/default.conf
+// New default IPA Client with existing sessionID using host and realm from /etc/ipa/default.conf, read on first use
 func NewDefaultClientWithSession(sessionID string) *Client {
-	return &Client{
-		host:       ipaDefaultHost,
-		realm:      ipaDefaultRealm,
-		httpClient: newHTTPClient(),
-		sticky:     true,
-		sessionID:  sessionID,
-	}
+	d := systemDefaults()
+	return &Client{host: d.host, realm: d.realm, sticky: true, sessionID: sessionID, httpClient: newHTTPClient(d.pool)}
 }
 
 // New IPA Client with host and realm
@@ -122,7 +88,7 @@ func NewClient(host, realm string) *Client {
 		host:       host,
 		realm:      realm,
 		sticky:     true,
-		httpClient: newHTTPClient(),
+		httpClient: newHTTPClient(systemDefaults().pool),
 	}
 }
 

@@ -8,6 +8,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
+	"encoding/pem"
 	"fmt"
 	"io"
 	"maps"
@@ -167,6 +168,11 @@ func (s *Server) Realm() string { return realm }
 
 // HTTPClient returns an HTTP client that trusts only this server.
 func (s *Server) HTTPClient() *http.Client { return s.srv.Client() }
+
+// CACert returns the server certificate as PEM, for ipa.WithCACert.
+func (s *Server) CACert() []byte {
+	return pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: s.srv.Certificate().Raw})
+}
 
 // Client returns a goipa client wired to the server, without a session.
 func (s *Server) Client() *ipa.Client {
