@@ -245,6 +245,45 @@ func twinCalls() []twinCall {
 		}},
 		{"HostGroupRemoveMemberManagerContext", func(ctx context.Context, c *ipa.Client) error {
 			_, err := c.HostGroupRemoveMemberManagerContext(ctx, "hg", []string{"bob"}, nil)
+		{"HBACRuleShowContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.HBACRuleShowContext(ctx, "r")
+			return err
+		}},
+		{"HBACRuleAddContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.HBACRuleAddContext(ctx, &ipa.HBACRule{Name: "r"})
+			return err
+		}},
+		{"HBACRuleDeleteContext", func(ctx context.Context, c *ipa.Client) error {
+			return c.HBACRuleDeleteContext(ctx, "r")
+		}},
+		{"HBACRuleEnableContext", func(ctx context.Context, c *ipa.Client) error {
+			return c.HBACRuleEnableContext(ctx, "r")
+		}},
+		{"HBACRuleDisableContext", func(ctx context.Context, c *ipa.Client) error {
+			return c.HBACRuleDisableContext(ctx, "r")
+		}},
+		{"HBACRuleAddUserContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.HBACRuleAddUserContext(ctx, "r", []string{"u"}, nil)
+			return err
+		}},
+		{"HBACRuleRemoveUserContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.HBACRuleRemoveUserContext(ctx, "r", []string{"u"}, nil)
+			return err
+		}},
+		{"HBACRuleAddHostContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.HBACRuleAddHostContext(ctx, "r", []string{"h"}, nil)
+			return err
+		}},
+		{"HBACRuleRemoveHostContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.HBACRuleRemoveHostContext(ctx, "r", []string{"h"}, nil)
+			return err
+		}},
+		{"HBACRuleAddServiceContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.HBACRuleAddServiceContext(ctx, "r", []string{"sshd"}, nil)
+			return err
+		}},
+		{"HBACRuleRemoveServiceContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.HBACRuleRemoveServiceContext(ctx, "r", []string{"sshd"}, nil)
 			return err
 		}},
 	}
