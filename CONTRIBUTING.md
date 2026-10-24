@@ -76,7 +76,9 @@ and uploads a `replay-<image>` artifact per FreeIPA version), then:
 gh run download <run-id> -R neverlless/goipa -D /tmp/replay
 ```
 
-Replace each `ipatest/replay/<version>/` with the matching download, scan the
+Each `replay-<image>` folder of the download holds one `<version>/` folder
+(e.g. `/tmp/replay/replay-almalinux-9-4.13.4/4.13.4/`); replace each
+`ipatest/replay/<version>/` with the matching one, scan the
 files for secrets (passwords, keys, tokens, real host names) the recorder's
 redaction missed, run `go test ./ipatest/...`, and commit.
 

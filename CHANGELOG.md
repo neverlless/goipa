@@ -30,8 +30,8 @@ existing exported identifiers keep their signatures).
   calls return the updated object and a `*MemberError` for members the
   server refused
 - `ipatest`: models for all of the above, with `AddHostGroup`, `AddService`,
-  `AddHBACRule`, `AddSudoRule`, `AddRole`, `AddPrivilege` and `AddPermission`
-  seed helpers
+  `AddRole`, `AddPrivilege` and `AddPermission` seed helpers (`AddHBACRule`
+  and `AddSudoRule` exist since v0.5.0)
 - `ipatest`: `NewRecorder` records a real server's `*_show`/`*_find`
   responses (secrets redacted) and `Server.SetReplay` answers from them; the
   recordings of FreeIPA 4.9.13, 4.12.2 and 4.13.4 are embedded, so tests of
@@ -40,7 +40,15 @@ existing exported identifiers keep their signatures).
 
 ### Changed
 
-- `ipatest`: `host_add` and `host_del` are modelled
+- `ipatest`: `host_add` and `host_del` are modelled; `host_del` and
+  `hostgroup_del` remove the deleted entry from host groups, HBAC and sudo
+  rules and services that named it
+- `ipatest`: `sudorule_add_user` (and the other sudo member calls) with
+  unknown users, groups or hosts now succeeds, keeping them as external
+  members as FreeIPA does; a duplicate `sudorule_add_option` is 4002
+- `ipatest`: commands that are not modelled are checked against the
+  catalogue too, so an unknown option is 3005 before the 905 or replayed
+  answer
 - `ipatest`: a `*_show` or `*_find` command that is not modelled and has no
   `Handle` override is answered from the recordings instead of 905 (a
   built-in or a `Handle` override still wins); `SetReplay(nil)` restores 905.
