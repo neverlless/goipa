@@ -1,0 +1,10 @@
+{
+  "result": {
+    "associateddomain": [
+      "example.test"
+    ],
+    "dn": "cn=Realm Domains,cn=ipa,cn=etc,dc=example,dc=test"
+  },
+  "summary": null,
+  "value": null
+}

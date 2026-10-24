@@ -1,0 +1,12 @@
+{
+  "result": {
+    "ipapasskey": [
+      "passkey:Z29pcGEtdGVzdC1pZA==,MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEgJ0OGh7RCx0W7lUgaq4bbkS5+r9uuEXFc8lWWhNH0uphy0Xv4/2mTD9h4KbXWYcpr0bxLYvifagCSgDbVZZlcg=="
+    ],
+    "uid": [
+      "gta6c9880b"
+    ]
+  },
+  "summary": "Added passkey mappings to user \"gta6c9880b\"",
+  "value": "gta6c9880b"
+}

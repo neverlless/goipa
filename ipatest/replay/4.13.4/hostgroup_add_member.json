@@ -1,0 +1,18 @@
+{
+  "completed": 1,
+  "failed": {
+    "member": {
+      "host": [],
+      "hostgroup": []
+    }
+  },
+  "result": {
+    "cn": [
+      "hgbd71832c"
+    ],
+    "dn": "cn=hgbd71832c,cn=hostgroups,cn=accounts,dc=example,dc=test",
+    "member_host": [
+      "ipa.example.test"
+    ]
+  }
+}

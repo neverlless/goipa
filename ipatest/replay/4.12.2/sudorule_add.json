@@ -1,0 +1,23 @@
+{
+  "result": {
+    "cn": [
+      "gs2323ae60"
+    ],
+    "dn": "ipaUniqueID=c894a870-cfdf-11f1-a386-66f7b5c167e5,cn=sudorules,cn=sudo,dc=example,dc=test",
+    "ipaenabledflag": [
+      true
+    ],
+    "ipauniqueid": [
+      "c894a870-cfdf-11f1-a386-66f7b5c167e5"
+    ],
+    "objectclass": [
+      "ipaassociation",
+      "ipasudorule"
+    ],
+    "sudoorder": [
+      "5"
+    ]
+  },
+  "summary": "Added Sudo Rule \"gs2323ae60\"",
+  "value": "gs2323ae60"
+}

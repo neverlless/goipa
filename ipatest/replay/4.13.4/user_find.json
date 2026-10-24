@@ -1,0 +1,104 @@
+{
+  "count": 3,
+  "result": [
+    {
+      "dn": "uid=admin,cn=users,cn=accounts,dc=example,dc=test",
+      "gidnumber": [
+        "145400000"
+      ],
+      "homedirectory": [
+        "/home/admin"
+      ],
+      "krbcanonicalname": [
+        "admin@EXAMPLE.TEST"
+      ],
+      "krbprincipalname": [
+        "admin@EXAMPLE.TEST",
+        "root@EXAMPLE.TEST"
+      ],
+      "loginshell": [
+        "/bin/bash"
+      ],
+      "nsaccountlock": false,
+      "sn": [
+        "Administrator"
+      ],
+      "uid": [
+        "admin"
+      ],
+      "uidnumber": [
+        "145400000"
+      ]
+    },
+    {
+      "dn": "uid=goipa-svc,cn=users,cn=accounts,dc=example,dc=test",
+      "gidnumber": [
+        "145400003"
+      ],
+      "givenname": [
+        "Go"
+      ],
+      "homedirectory": [
+        "/home/goipa-svc"
+      ],
+      "krbcanonicalname": [
+        "goipa-svc@EXAMPLE.TEST"
+      ],
+      "krbprincipalname": [
+        "goipa-svc@EXAMPLE.TEST"
+      ],
+      "loginshell": [
+        "/bin/sh"
+      ],
+      "mail": [
+        "goipa-svc@example.test"
+      ],
+      "nsaccountlock": false,
+      "sn": [
+        "Svc"
+      ],
+      "uid": [
+        "goipa-svc"
+      ],
+      "uidnumber": [
+        "145400003"
+      ]
+    },
+    {
+      "dn": "uid=jast3787,cn=users,cn=accounts,dc=example,dc=test",
+      "gidnumber": [
+        "145400067"
+      ],
+      "givenname": [
+        "Travis"
+      ],
+      "homedirectory": [
+        "/home/jast3787"
+      ],
+      "krbcanonicalname": [
+        "jast3787@EXAMPLE.TEST"
+      ],
+      "krbprincipalname": [
+        "jast3787@EXAMPLE.TEST"
+      ],
+      "loginshell": [
+        "/bin/sh"
+      ],
+      "mail": [
+        "jast3787@example.test"
+      ],
+      "nsaccountlock": false,
+      "sn": [
+        "Rosenbaum"
+      ],
+      "uid": [
+        "jast3787"
+      ],
+      "uidnumber": [
+        "145400067"
+      ]
+    }
+  ],
+  "summary": "3 users matched",
+  "truncated": false
+}

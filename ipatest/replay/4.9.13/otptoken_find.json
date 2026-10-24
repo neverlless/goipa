@@ -1,0 +1,17 @@
+{
+  "count": 1,
+  "result": [
+    {
+      "dn": "ipatokenuniqueid=d9b288ad-e4b5-40c8-aec9-7e8779a60e0a,cn=otp,dc=example,dc=test",
+      "ipatokenowner": [
+        "fritsch9058"
+      ],
+      "ipatokenuniqueid": [
+        "d9b288ad-e4b5-40c8-aec9-7e8779a60e0a"
+      ],
+      "type": "TOTP"
+    }
+  ],
+  "summary": "1 OTP token matched",
+  "truncated": false
+}

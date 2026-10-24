@@ -1,0 +1,104 @@
+{
+  "count": 3,
+  "result": [
+    {
+      "dn": "uid=admin,cn=users,cn=accounts,dc=example,dc=test",
+      "gidnumber": [
+        "1477000000"
+      ],
+      "homedirectory": [
+        "/home/admin"
+      ],
+      "krbcanonicalname": [
+        "admin@EXAMPLE.TEST"
+      ],
+      "krbprincipalname": [
+        "admin@EXAMPLE.TEST",
+        "root@EXAMPLE.TEST"
+      ],
+      "loginshell": [
+        "/bin/bash"
+      ],
+      "nsaccountlock": false,
+      "sn": [
+        "Administrator"
+      ],
+      "uid": [
+        "admin"
+      ],
+      "uidnumber": [
+        "1477000000"
+      ]
+    },
+    {
+      "dn": "uid=goipa-svc,cn=users,cn=accounts,dc=example,dc=test",
+      "gidnumber": [
+        "1477000003"
+      ],
+      "givenname": [
+        "Go"
+      ],
+      "homedirectory": [
+        "/home/goipa-svc"
+      ],
+      "krbcanonicalname": [
+        "goipa-svc@EXAMPLE.TEST"
+      ],
+      "krbprincipalname": [
+        "goipa-svc@EXAMPLE.TEST"
+      ],
+      "loginshell": [
+        "/bin/sh"
+      ],
+      "mail": [
+        "goipa-svc@example.test"
+      ],
+      "nsaccountlock": false,
+      "sn": [
+        "Svc"
+      ],
+      "uid": [
+        "goipa-svc"
+      ],
+      "uidnumber": [
+        "1477000003"
+      ]
+    },
+    {
+      "dn": "uid=mraz7433,cn=users,cn=accounts,dc=example,dc=test",
+      "gidnumber": [
+        "1477000067"
+      ],
+      "givenname": [
+        "Emely"
+      ],
+      "homedirectory": [
+        "/home/mraz7433"
+      ],
+      "krbcanonicalname": [
+        "mraz7433@EXAMPLE.TEST"
+      ],
+      "krbprincipalname": [
+        "mraz7433@EXAMPLE.TEST"
+      ],
+      "loginshell": [
+        "/bin/sh"
+      ],
+      "mail": [
+        "mraz7433@example.test"
+      ],
+      "nsaccountlock": false,
+      "sn": [
+        "Hilll"
+      ],
+      "uid": [
+        "mraz7433"
+      ],
+      "uidnumber": [
+        "1477000067"
+      ]
+    }
+  ],
+  "summary": "3 users matched",
+  "truncated": false
+}

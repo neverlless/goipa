@@ -1,0 +1,10 @@
+{
+  "error": [
+    "nosuchrule-3651d3e4"
+  ],
+  "matched": null,
+  "notmatched": null,
+  "summary": "Unresolved rules in --rules",
+  "value": false,
+  "warning": null
+}

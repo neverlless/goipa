@@ -1,0 +1,19 @@
+{
+  "count": 1,
+  "result": [
+    {
+      "dn": "fqdn=ipa.example.test,cn=computers,cn=accounts,dc=example,dc=test",
+      "fqdn": [
+        "ipa.example.test"
+      ],
+      "krbcanonicalname": [
+        "host/ipa.example.test@EXAMPLE.TEST"
+      ],
+      "krbprincipalname": [
+        "host/ipa.example.test@EXAMPLE.TEST"
+      ]
+    }
+  ],
+  "summary": "1 host matched",
+  "truncated": false
+}

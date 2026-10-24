@@ -1,0 +1,349 @@
+{
+  "count": 38,
+  "result": [
+    {
+      "cn": [
+        "ADTrust Agents"
+      ],
+      "description": [
+        "System accounts able to access trust information"
+      ],
+      "dn": "cn=ADTrust Agents,cn=privileges,cn=pbac,dc=example,dc=test"
+    },
+    {
+      "cn": [
+        "Automember Readers"
+      ],
+      "description": [
+        "Read Automember definitions"
+      ],
+      "dn": "cn=Automember Readers,cn=privileges,cn=pbac,dc=example,dc=test"
+    },
+    {
+      "cn": [
+        "Automember Task Administrator"
+      ],
+      "description": [
+        "Automember Task Administrator"
+      ],
+      "dn": "cn=Automember Task Administrator,cn=privileges,cn=pbac,dc=example,dc=test"
+    },
+    {
+      "cn": [
+        "Automount Administrators"
+      ],
+      "description": [
+        "Automount Administrators"
+      ],
+      "dn": "cn=Automount Administrators,cn=privileges,cn=pbac,dc=example,dc=test"
+    },
+    {
+      "cn": [
+        "CA Administrator"
+      ],
+      "description": [
+        "CA Administrator"
+      ],
+      "dn": "cn=CA Administrator,cn=privileges,cn=pbac,dc=example,dc=test"
+    },
+    {
+      "cn": [
+        "Certificate Administrators"
+      ],
+      "description": [
+        "Certificate Administrators"
+      ],
+      "dn": "cn=Certificate Administrators,cn=privileges,cn=pbac,dc=example,dc=test"
+    },
+    {
+      "cn": [
+        "Certificate Identity Mapping Administrators"
+      ],
+      "description": [
+        "Certificate Identity Mapping Administrators"
+      ],
+      "dn": "cn=Certificate Identity Mapping Administrators,cn=privileges,cn=pbac,dc=example,dc=test"
+    },
+    {
+      "cn": [
+        "Delegation Administrator"
+      ],
+      "description": [
+        "Role administration"
+      ],
+      "dn": "cn=Delegation Administrator,cn=privileges,cn=pbac,dc=example,dc=test"
+    },
+    {
+      "cn": [
+        "DNS Administrators"
+      ],
+      "description": [
+        "DNS Administrators"
+      ],
+      "dn": "cn=DNS Administrators,cn=privileges,cn=pbac,dc=example,dc=test"
+    },
+    {
+      "cn": [
+        "DNS Servers"
+      ],
+      "description": [
+        "DNS Servers"
+      ],
+      "dn": "cn=DNS Servers,cn=privileges,cn=pbac,dc=example,dc=test"
+    },
+    {
+      "cn": [
+        "External IdP server Administrators"
+      ],
+      "description": [
+        "External IdP server Administrators"
+      ],
+      "dn": "cn=External IdP server Administrators,cn=privileges,cn=pbac,dc=example,dc=test"
+    },
+    {
+      "cn": [
+        "Group Administrators"
+      ],
+      "description": [
+        "Group Administrators"
+      ],
+      "dn": "cn=Group Administrators,cn=privileges,cn=pbac,dc=example,dc=test"
+    },
+    {
+      "cn": [
+        "HBAC Administrator"
+      ],
+      "description": [
+        "HBAC Administrator"
+      ],
+      "dn": "cn=HBAC Administrator,cn=privileges,cn=pbac,dc=example,dc=test"
+    },
+    {
+      "cn": [
+        "Host Administrators"
+      ],
+      "description": [
+        "Host Administrators"
+      ],
+      "dn": "cn=Host Administrators,cn=privileges,cn=pbac,dc=example,dc=test"
+    },
+    {
+      "cn": [
+        "Host Enrollment"
+      ],
+      "description": [
+        "Host Enrollment"
+      ],
+      "dn": "cn=Host Enrollment,cn=privileges,cn=pbac,dc=example,dc=test"
+    },
+    {
+      "cn": [
+        "Host Group Administrators"
+      ],
+      "description": [
+        "Host Group Administrators"
+      ],
+      "dn": "cn=Host Group Administrators,cn=privileges,cn=pbac,dc=example,dc=test"
+    },
+    {
+      "cn": [
+        "IPA Masters Readers"
+      ],
+      "description": [
+        "Read list of IPA masters"
+      ],
+      "dn": "cn=IPA Masters Readers,cn=privileges,cn=pbac,dc=example,dc=test"
+    },
+    {
+      "cn": [
+        "Kerberos Ticket Policy Readers"
+      ],
+      "description": [
+        "Read global and per-user Kerberos ticket policy"
+      ],
+      "dn": "cn=Kerberos Ticket Policy Readers,cn=privileges,cn=pbac,dc=example,dc=test"
+    },
+    {
+      "cn": [
+        "Modify Group membership"
+      ],
+      "description": [
+        "Modify Group membership"
+      ],
+      "dn": "cn=Modify Group membership,cn=privileges,cn=pbac,dc=example,dc=test"
+    },
+    {
+      "cn": [
+        "Modify Users and Reset passwords"
+      ],
+      "description": [
+        "Modify Users and Reset passwords"
+      ],
+      "dn": "cn=Modify Users and Reset passwords,cn=privileges,cn=pbac,dc=example,dc=test"
+    },
+    {
+      "cn": [
+        "Netgroups Administrators"
+      ],
+      "description": [
+        "Netgroups Administrators"
+      ],
+      "dn": "cn=Netgroups Administrators,cn=privileges,cn=pbac,dc=example,dc=test"
+    },
+    {
+      "cn": [
+        "Passkey Administrators"
+      ],
+      "description": [
+        "Passkey Administrators"
+      ],
+      "dn": "cn=Passkey Administrators,cn=privileges,cn=pbac,dc=example,dc=test"
+    },
+    {
+      "cn": [
+        "PassSync Service"
+      ],
+      "description": [
+        "PassSync Service"
+      ],
+      "dn": "cn=PassSync Service,cn=privileges,cn=pbac,dc=example,dc=test"
+    },
+    {
+      "cn": [
+        "Password Policy Administrator"
+      ],
+      "description": [
+        "Password Policy Administrator"
+      ],
+      "dn": "cn=Password Policy Administrator,cn=privileges,cn=pbac,dc=example,dc=test"
+    },
+    {
+      "cn": [
+        "Password Policy Readers"
+      ],
+      "description": [
+        "Read password policies"
+      ],
+      "dn": "cn=Password Policy Readers,cn=privileges,cn=pbac,dc=example,dc=test"
+    },
+    {
+      "cn": [
+        "RBAC Readers"
+      ],
+      "description": [
+        "Read roles, privileges, permissions and ACIs"
+      ],
+      "dn": "cn=RBAC Readers,cn=privileges,cn=pbac,dc=example,dc=test"
+    },
+    {
+      "cn": [
+        "Replication Administrators"
+      ],
+      "description": [
+        "Replication Administrators"
+      ],
+      "dn": "cn=Replication Administrators,cn=privileges,cn=pbac,dc=example,dc=test"
+    },
+    {
+      "cn": [
+        "SELinux User Map Administrators"
+      ],
+      "description": [
+        "SELinux User Map Administrators"
+      ],
+      "dn": "cn=SELinux User Map Administrators,cn=privileges,cn=pbac,dc=example,dc=test"
+    },
+    {
+      "cn": [
+        "Service Administrators"
+      ],
+      "description": [
+        "Service Administrators"
+      ],
+      "dn": "cn=Service Administrators,cn=privileges,cn=pbac,dc=example,dc=test"
+    },
+    {
+      "cn": [
+        "Stage User Administrators"
+      ],
+      "description": [
+        "Stage User Administrators"
+      ],
+      "dn": "cn=Stage User Administrators,cn=privileges,cn=pbac,dc=example,dc=test"
+    },
+    {
+      "cn": [
+        "Stage User Provisioning"
+      ],
+      "description": [
+        "Stage User Provisioning"
+      ],
+      "dn": "cn=Stage User Provisioning,cn=privileges,cn=pbac,dc=example,dc=test"
+    },
+    {
+      "cn": [
+        "Subordinate ID Administrators"
+      ],
+      "description": [
+        "Subordinate ID Administrators"
+      ],
+      "dn": "cn=Subordinate ID Administrators,cn=privileges,cn=pbac,dc=example,dc=test"
+    },
+    {
+      "cn": [
+        "Subordinate ID Selfservice Users"
+      ],
+      "description": [
+        "Subordinate ID Selfservice User"
+      ],
+      "dn": "cn=Subordinate ID Selfservice Users,cn=privileges,cn=pbac,dc=example,dc=test"
+    },
+    {
+      "cn": [
+        "Sudo Administrator"
+      ],
+      "description": [
+        "Sudo Administrator"
+      ],
+      "dn": "cn=Sudo Administrator,cn=privileges,cn=pbac,dc=example,dc=test"
+    },
+    {
+      "cn": [
+        "System Accounts Administrators"
+      ],
+      "description": [
+        "System Accounts Administrators"
+      ],
+      "dn": "cn=System Accounts Administrators,cn=privileges,cn=pbac,dc=example,dc=test"
+    },
+    {
+      "cn": [
+        "User Administrators"
+      ],
+      "description": [
+        "User Administrators"
+      ],
+      "dn": "cn=User Administrators,cn=privileges,cn=pbac,dc=example,dc=test"
+    },
+    {
+      "cn": [
+        "Vault Administrators"
+      ],
+      "description": [
+        "Vault Administrators"
+      ],
+      "dn": "cn=Vault Administrators,cn=privileges,cn=pbac,dc=example,dc=test"
+    },
+    {
+      "cn": [
+        "Write IPA Configuration"
+      ],
+      "description": [
+        "Write IPA Configuration"
+      ],
+      "dn": "cn=Write IPA Configuration,cn=privileges,cn=pbac,dc=example,dc=test"
+    }
+  ],
+  "summary": "38 privileges matched",
+  "truncated": false
+}

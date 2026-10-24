@@ -1,0 +1,21 @@
+{
+  "completed": 1,
+  "failed": {
+    "memberuser": {
+      "group": [],
+      "user": []
+    }
+  },
+  "result": {
+    "cn": [
+      "gra7020cd6"
+    ],
+    "dn": "ipaUniqueID=c85afa58-cfdf-11f1-9519-66f7b5c167e5,cn=hbac,dc=example,dc=test",
+    "ipaenabledflag": [
+      true
+    ],
+    "memberuser_user": [
+      "gtd49ead7a"
+    ]
+  }
+}

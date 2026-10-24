@@ -1,0 +1,32 @@
+{
+  "count": 5,
+  "result": [
+    {
+      "role_servrole": "AD trust agent",
+      "server_server": "ipa.example.test",
+      "status": "absent"
+    },
+    {
+      "role_servrole": "AD trust controller",
+      "server_server": "ipa.example.test",
+      "status": "absent"
+    },
+    {
+      "role_servrole": "CA server",
+      "server_server": "ipa.example.test",
+      "status": "enabled"
+    },
+    {
+      "role_servrole": "DNS server",
+      "server_server": "ipa.example.test",
+      "status": "absent"
+    },
+    {
+      "role_servrole": "KRA server",
+      "server_server": "ipa.example.test",
+      "status": "absent"
+    }
+  ],
+  "summary": "5 server roles matched",
+  "truncated": false
+}

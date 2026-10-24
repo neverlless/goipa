@@ -1,0 +1,75 @@
+{
+  "result": {
+    "cn": [
+      "Go Test"
+    ],
+    "displayname": [
+      "Go Test"
+    ],
+    "dn": "uid=gt23e0d8c7,cn=users,cn=accounts,dc=example,dc=test",
+    "gecos": [
+      "Go Test"
+    ],
+    "gidnumber": [
+      "145400059"
+    ],
+    "givenname": [
+      "Go"
+    ],
+    "has_keytab": false,
+    "has_password": false,
+    "homedirectory": [
+      "/home/gt23e0d8c7"
+    ],
+    "initials": [
+      "GT"
+    ],
+    "ipauniqueid": [
+      "f959a8f2-cfdf-11f1-819a-2276371f0835"
+    ],
+    "krbcanonicalname": [
+      "gt23e0d8c7@EXAMPLE.TEST"
+    ],
+    "krbprincipalname": [
+      "gt23e0d8c7@EXAMPLE.TEST"
+    ],
+    "loginshell": [
+      "/bin/sh"
+    ],
+    "mail": [
+      "gt23e0d8c7@example.test"
+    ],
+    "memberof_group": [
+      "ipausers"
+    ],
+    "mepmanagedentry": [
+      "cn=gt23e0d8c7,cn=groups,cn=accounts,dc=example,dc=test"
+    ],
+    "objectclass": [
+      "top",
+      "person",
+      "organizationalperson",
+      "inetorgperson",
+      "inetuser",
+      "posixaccount",
+      "krbprincipalaux",
+      "krbticketpolicyaux",
+      "ipaobject",
+      "ipasshuser",
+      "ipaSshGroupOfPubKeys",
+      "mepOriginEntry",
+      "ipantuserattrs"
+    ],
+    "sn": [
+      "Test"
+    ],
+    "uid": [
+      "gt23e0d8c7"
+    ],
+    "uidnumber": [
+      "145400059"
+    ]
+  },
+  "summary": "Added user \"gt23e0d8c7\"",
+  "value": "gt23e0d8c7"
+}

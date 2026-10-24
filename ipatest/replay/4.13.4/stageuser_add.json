@@ -1,0 +1,71 @@
+{
+  "result": {
+    "cn": [
+      "Go Test"
+    ],
+    "description": [
+      "__no_upg__"
+    ],
+    "displayname": [
+      "Go Test"
+    ],
+    "dn": "uid=gsa5febfeb,cn=staged users,cn=accounts,cn=provisioning,dc=example,dc=test",
+    "gecos": [
+      "Go Test"
+    ],
+    "gidnumber": [
+      "-1"
+    ],
+    "givenname": [
+      "Go"
+    ],
+    "has_keytab": false,
+    "has_password": false,
+    "homedirectory": [
+      "/home/gsa5febfeb"
+    ],
+    "initials": [
+      "GT"
+    ],
+    "ipauniqueid": [
+      "autogenerate"
+    ],
+    "krbcanonicalname": [
+      "gsa5febfeb@EXAMPLE.TEST"
+    ],
+    "krbprincipalname": [
+      "gsa5febfeb@EXAMPLE.TEST"
+    ],
+    "loginshell": [
+      "/bin/sh"
+    ],
+    "mail": [
+      "gsa5febfeb@example.test"
+    ],
+    "nsaccountlock": true,
+    "objectclass": [
+      "top",
+      "person",
+      "organizationalperson",
+      "inetorgperson",
+      "inetuser",
+      "posixaccount",
+      "krbprincipalaux",
+      "krbticketpolicyaux",
+      "ipaobject",
+      "ipasshuser",
+      "ipaSshGroupOfPubKeys"
+    ],
+    "sn": [
+      "Test"
+    ],
+    "uid": [
+      "gsa5febfeb"
+    ],
+    "uidnumber": [
+      "-1"
+    ]
+  },
+  "summary": "Added stage user \"gsa5febfeb\"",
+  "value": "gsa5febfeb"
+}

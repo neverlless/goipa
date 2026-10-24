@@ -1,0 +1,57 @@
+{
+  "result": {
+    "cn": [
+      "ipa.example.test"
+    ],
+    "dn": "fqdn=ipa.example.test,cn=computers,cn=accounts,dc=example,dc=test",
+    "fqdn": [
+      "ipa.example.test"
+    ],
+    "has_keytab": true,
+    "has_password": false,
+    "ipakrbokasdelegate": false,
+    "ipakrboktoauthasdelegate": false,
+    "ipakrbrequirespreauth": true,
+    "ipauniqueid": [
+      "530ec36a-cfdf-11f1-8ae8-66f7b5c167e5"
+    ],
+    "krbcanonicalname": [
+      "host/ipa.example.test@EXAMPLE.TEST"
+    ],
+    "krblastpwdchange": [
+      {
+        "__datetime__": "20261024191550Z"
+      }
+    ],
+    "krbprincipalname": [
+      "host/ipa.example.test@EXAMPLE.TEST"
+    ],
+    "managedby_host": [
+      "ipa.example.test"
+    ],
+    "managing_host": [
+      "ipa.example.test"
+    ],
+    "memberof_hostgroup": [
+      "ipaservers"
+    ],
+    "objectclass": [
+      "top",
+      "ipaobject",
+      "nshost",
+      "ipahost",
+      "ipaservice",
+      "pkiuser",
+      "krbprincipalaux",
+      "krbprincipal",
+      "krbticketpolicyaux",
+      "ipasshhost",
+      "ipaSshGroupOfPubKeys"
+    ],
+    "serverhostname": [
+      "ipa"
+    ]
+  },
+  "summary": null,
+  "value": "ipa.example.test"
+}

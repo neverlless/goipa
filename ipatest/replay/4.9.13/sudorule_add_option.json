@@ -1,0 +1,21 @@
+{
+  "result": {
+    "cn": [
+      "gs5e6cb7a2"
+    ],
+    "ipaenabledflag": [
+      true
+    ],
+    "ipasudoopt": [
+      "!authenticate"
+    ],
+    "memberuser_user": [
+      "gt7f0caf6e"
+    ],
+    "sudoorder": [
+      "5"
+    ]
+  },
+  "summary": null,
+  "value": "gs5e6cb7a2"
+}

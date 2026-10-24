@@ -1,0 +1,21 @@
+{
+  "result": {
+    "cn": [
+      "gs0ba797b5"
+    ],
+    "ipaenabledflag": [
+      true
+    ],
+    "ipasudoopt": [
+      "!authenticate"
+    ],
+    "memberuser_user": [
+      "gt138d5f21"
+    ],
+    "sudoorder": [
+      "5"
+    ]
+  },
+  "summary": null,
+  "value": "gs0ba797b5"
+}

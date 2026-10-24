@@ -1,0 +1,23 @@
+{
+  "completed": 0,
+  "failed": {
+    "membermanager": {
+      "group": [],
+      "user": [
+        [
+          "nosuchuser0313a9",
+          "no such entry"
+        ]
+      ]
+    }
+  },
+  "result": {
+    "cn": [
+      "ggc7f35b56"
+    ],
+    "dn": "cn=ggc7f35b56,cn=groups,cn=accounts,dc=example,dc=test",
+    "gidnumber": [
+      "1145000026"
+    ]
+  }
+}

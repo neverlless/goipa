@@ -1,0 +1,43 @@
+{
+  "result": {
+    "dn": "uid=gsa5febfeb,cn=users,cn=accounts,dc=example,dc=test",
+    "gidnumber": [
+      "145400052"
+    ],
+    "givenname": [
+      "Go"
+    ],
+    "has_keytab": false,
+    "has_password": false,
+    "homedirectory": [
+      "/home/gsa5febfeb"
+    ],
+    "krbcanonicalname": [
+      "gsa5febfeb@EXAMPLE.TEST"
+    ],
+    "krbprincipalname": [
+      "gsa5febfeb@EXAMPLE.TEST"
+    ],
+    "loginshell": [
+      "/bin/sh"
+    ],
+    "mail": [
+      "gsa5febfeb@example.test"
+    ],
+    "memberof_group": [
+      "ipausers"
+    ],
+    "nsaccountlock": false,
+    "sn": [
+      "Test"
+    ],
+    "uid": [
+      "gsa5febfeb"
+    ],
+    "uidnumber": [
+      "145400052"
+    ]
+  },
+  "summary": "Stage user gsa5febfeb activated",
+  "value": "gsa5febfeb"
+}

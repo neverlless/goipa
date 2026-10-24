@@ -1,0 +1,10 @@
+{
+  "result": {
+    "dn": "cn=certmap,dc=example,dc=test",
+    "ipacertmappromptusername": [
+      false
+    ]
+  },
+  "summary": null,
+  "value": null
+}

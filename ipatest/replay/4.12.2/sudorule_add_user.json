@@ -1,0 +1,24 @@
+{
+  "completed": 1,
+  "failed": {
+    "memberuser": {
+      "group": [],
+      "user": []
+    }
+  },
+  "result": {
+    "cn": [
+      "gs2323ae60"
+    ],
+    "dn": "ipaUniqueID=c894a870-cfdf-11f1-a386-66f7b5c167e5,cn=sudorules,cn=sudo,dc=example,dc=test",
+    "ipaenabledflag": [
+      true
+    ],
+    "memberuser_user": [
+      "gt642bc8d9"
+    ],
+    "sudoorder": [
+      "5"
+    ]
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "result": {
+    "cn": [
+      "hgbd71832c"
+    ],
+    "dn": "cn=hgbd71832c,cn=hostgroups,cn=accounts,dc=example,dc=test",
+    "ipauniqueid": [
+      "ea256a74-cfdf-11f1-b009-2276371f0835"
+    ],
+    "mepmanagedentry": [
+      "cn=hgbd71832c,cn=ng,cn=alt,dc=example,dc=test"
+    ],
+    "objectclass": [
+      "ipaobject",
+      "ipahostgroup",
+      "nestedGroup",
+      "groupOfNames",
+      "top",
+      "mepOriginEntry"
+    ]
+  },
+  "summary": "Added hostgroup \"hgbd71832c\"",
+  "value": "hgbd71832c"
+}

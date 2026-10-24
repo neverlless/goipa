@@ -1,0 +1,104 @@
+{
+  "count": 3,
+  "result": [
+    {
+      "dn": "uid=admin,cn=users,cn=accounts,dc=example,dc=test",
+      "gidnumber": [
+        "1145000000"
+      ],
+      "homedirectory": [
+        "/home/admin"
+      ],
+      "krbcanonicalname": [
+        "admin@EXAMPLE.TEST"
+      ],
+      "krbprincipalname": [
+        "admin@EXAMPLE.TEST",
+        "root@EXAMPLE.TEST"
+      ],
+      "loginshell": [
+        "/bin/bash"
+      ],
+      "nsaccountlock": false,
+      "sn": [
+        "Administrator"
+      ],
+      "uid": [
+        "admin"
+      ],
+      "uidnumber": [
+        "1145000000"
+      ]
+    },
+    {
+      "dn": "uid=fritsch9058,cn=users,cn=accounts,dc=example,dc=test",
+      "gidnumber": [
+        "1145000066"
+      ],
+      "givenname": [
+        "Jamarcus"
+      ],
+      "homedirectory": [
+        "/home/fritsch9058"
+      ],
+      "krbcanonicalname": [
+        "fritsch9058@EXAMPLE.TEST"
+      ],
+      "krbprincipalname": [
+        "fritsch9058@EXAMPLE.TEST"
+      ],
+      "loginshell": [
+        "/bin/sh"
+      ],
+      "mail": [
+        "fritsch9058@example.test"
+      ],
+      "nsaccountlock": false,
+      "sn": [
+        "Baumbach"
+      ],
+      "uid": [
+        "fritsch9058"
+      ],
+      "uidnumber": [
+        "1145000066"
+      ]
+    },
+    {
+      "dn": "uid=goipa-svc,cn=users,cn=accounts,dc=example,dc=test",
+      "gidnumber": [
+        "1145000003"
+      ],
+      "givenname": [
+        "Go"
+      ],
+      "homedirectory": [
+        "/home/goipa-svc"
+      ],
+      "krbcanonicalname": [
+        "goipa-svc@EXAMPLE.TEST"
+      ],
+      "krbprincipalname": [
+        "goipa-svc@EXAMPLE.TEST"
+      ],
+      "loginshell": [
+        "/bin/sh"
+      ],
+      "mail": [
+        "goipa-svc@example.test"
+      ],
+      "nsaccountlock": false,
+      "sn": [
+        "Svc"
+      ],
+      "uid": [
+        "goipa-svc"
+      ],
+      "uidnumber": [
+        "1145000003"
+      ]
+    }
+  ],
+  "summary": "3 users matched",
+  "truncated": false
+}

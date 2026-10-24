@@ -1,0 +1,17 @@
+{
+  "count": 1,
+  "result": [
+    {
+      "dn": "ipatokenuniqueid=082f6811-6813-4387-a848-cee401ffd36b,cn=otp,dc=example,dc=test",
+      "ipatokenowner": [
+        "jast3787"
+      ],
+      "ipatokenuniqueid": [
+        "082f6811-6813-4387-a848-cee401ffd36b"
+      ],
+      "type": "TOTP"
+    }
+  ],
+  "summary": "1 OTP token matched",
+  "truncated": false
+}

@@ -1,0 +1,12 @@
+{
+  "result": {
+    "ipapasskey": [
+      "passkey:Z29pcGEtdGVzdC1pZA==,MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEgJ0OGh7RCx0W7lUgaq4bbkS5+r9uuEXFc8lWWhNH0uphy0Xv4/2mTD9h4KbXWYcpr0bxLYvifagCSgDbVZZlcg=="
+    ],
+    "uid": [
+      "gt10e361e3"
+    ]
+  },
+  "summary": "Added passkey mappings to user \"gt10e361e3\"",
+  "value": "gt10e361e3"
+}

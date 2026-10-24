@@ -1,0 +1,537 @@
+{
+  "count": 106,
+  "result": [
+    {
+      "full_name": "aci/1",
+      "name": "aci",
+      "version": "1"
+    },
+    {
+      "full_name": "automember/1",
+      "name": "automember",
+      "version": "1"
+    },
+    {
+      "full_name": "automember_default_group/1",
+      "name": "automember_default_group",
+      "version": "1"
+    },
+    {
+      "full_name": "automember_task/1",
+      "name": "automember_task",
+      "version": "1"
+    },
+    {
+      "full_name": "automountkey/1",
+      "name": "automountkey",
+      "version": "1"
+    },
+    {
+      "full_name": "automountlocation/1",
+      "name": "automountlocation",
+      "version": "1"
+    },
+    {
+      "full_name": "automountmap/1",
+      "name": "automountmap",
+      "version": "1"
+    },
+    {
+      "full_name": "ca/1",
+      "name": "ca",
+      "version": "1"
+    },
+    {
+      "full_name": "caacl/1",
+      "name": "caacl",
+      "version": "1"
+    },
+    {
+      "full_name": "cert/1",
+      "name": "cert",
+      "version": "1"
+    },
+    {
+      "full_name": "certmap/1",
+      "name": "certmap",
+      "version": "1"
+    },
+    {
+      "full_name": "certmapconfig/1",
+      "name": "certmapconfig",
+      "version": "1"
+    },
+    {
+      "full_name": "certmaprule/1",
+      "name": "certmaprule",
+      "version": "1"
+    },
+    {
+      "full_name": "certprofile/1",
+      "name": "certprofile",
+      "version": "1"
+    },
+    {
+      "full_name": "certreq/1",
+      "name": "certreq",
+      "version": "1"
+    },
+    {
+      "full_name": "class/1",
+      "name": "class",
+      "version": "1"
+    },
+    {
+      "full_name": "command/1",
+      "name": "command",
+      "version": "1"
+    },
+    {
+      "full_name": "config/1",
+      "name": "config",
+      "version": "1"
+    },
+    {
+      "full_name": "cosentry/1",
+      "name": "cosentry",
+      "version": "1"
+    },
+    {
+      "full_name": "delegation/1",
+      "name": "delegation",
+      "version": "1"
+    },
+    {
+      "full_name": "dns_system_records/1",
+      "name": "dns_system_records",
+      "version": "1"
+    },
+    {
+      "full_name": "dnsa6record/1",
+      "name": "dnsa6record",
+      "version": "1"
+    },
+    {
+      "full_name": "dnsaaaarecord/1",
+      "name": "dnsaaaarecord",
+      "version": "1"
+    },
+    {
+      "full_name": "dnsafsdbrecord/1",
+      "name": "dnsafsdbrecord",
+      "version": "1"
+    },
+    {
+      "full_name": "dnsaplrecord/1",
+      "name": "dnsaplrecord",
+      "version": "1"
+    },
+    {
+      "full_name": "dnsarecord/1",
+      "name": "dnsarecord",
+      "version": "1"
+    },
+    {
+      "full_name": "dnscertrecord/1",
+      "name": "dnscertrecord",
+      "version": "1"
+    },
+    {
+      "full_name": "dnscnamerecord/1",
+      "name": "dnscnamerecord",
+      "version": "1"
+    },
+    {
+      "full_name": "dnsconfig/1",
+      "name": "dnsconfig",
+      "version": "1"
+    },
+    {
+      "full_name": "dnsdhcidrecord/1",
+      "name": "dnsdhcidrecord",
+      "version": "1"
+    },
+    {
+      "full_name": "dnsdlvrecord/1",
+      "name": "dnsdlvrecord",
+      "version": "1"
+    },
+    {
+      "full_name": "dnsdnamerecord/1",
+      "name": "dnsdnamerecord",
+      "version": "1"
+    },
+    {
+      "full_name": "dnsdsrecord/1",
+      "name": "dnsdsrecord",
+      "version": "1"
+    },
+    {
+      "full_name": "dnsforwardzone/1",
+      "name": "dnsforwardzone",
+      "version": "1"
+    },
+    {
+      "full_name": "dnshiprecord/1",
+      "name": "dnshiprecord",
+      "version": "1"
+    },
+    {
+      "full_name": "dnsipseckeyrecord/1",
+      "name": "dnsipseckeyrecord",
+      "version": "1"
+    },
+    {
+      "full_name": "dnskeyrecord/1",
+      "name": "dnskeyrecord",
+      "version": "1"
+    },
+    {
+      "full_name": "dnskxrecord/1",
+      "name": "dnskxrecord",
+      "version": "1"
+    },
+    {
+      "full_name": "dnslocrecord/1",
+      "name": "dnslocrecord",
+      "version": "1"
+    },
+    {
+      "full_name": "dnsmxrecord/1",
+      "name": "dnsmxrecord",
+      "version": "1"
+    },
+    {
+      "full_name": "dnsnaptrrecord/1",
+      "name": "dnsnaptrrecord",
+      "version": "1"
+    },
+    {
+      "full_name": "dnsnsecrecord/1",
+      "name": "dnsnsecrecord",
+      "version": "1"
+    },
+    {
+      "full_name": "dnsnsrecord/1",
+      "name": "dnsnsrecord",
+      "version": "1"
+    },
+    {
+      "full_name": "dnsptrrecord/1",
+      "name": "dnsptrrecord",
+      "version": "1"
+    },
+    {
+      "full_name": "dnsrecord/1",
+      "name": "dnsrecord",
+      "version": "1"
+    },
+    {
+      "full_name": "dnsrprecord/1",
+      "name": "dnsrprecord",
+      "version": "1"
+    },
+    {
+      "full_name": "dnsrrsigrecord/1",
+      "name": "dnsrrsigrecord",
+      "version": "1"
+    },
+    {
+      "full_name": "dnsserver/1",
+      "name": "dnsserver",
+      "version": "1"
+    },
+    {
+      "full_name": "dnssigrecord/1",
+      "name": "dnssigrecord",
+      "version": "1"
+    },
+    {
+      "full_name": "dnsspfrecord/1",
+      "name": "dnsspfrecord",
+      "version": "1"
+    },
+    {
+      "full_name": "dnssrvrecord/1",
+      "name": "dnssrvrecord",
+      "version": "1"
+    },
+    {
+      "full_name": "dnssshfprecord/1",
+      "name": "dnssshfprecord",
+      "version": "1"
+    },
+    {
+      "full_name": "dnstlsarecord/1",
+      "name": "dnstlsarecord",
+      "version": "1"
+    },
+    {
+      "full_name": "dnstxtrecord/1",
+      "name": "dnstxtrecord",
+      "version": "1"
+    },
+    {
+      "full_name": "dnsurirecord/1",
+      "name": "dnsurirecord",
+      "version": "1"
+    },
+    {
+      "full_name": "dnszone/1",
+      "name": "dnszone",
+      "version": "1"
+    },
+    {
+      "full_name": "group/1",
+      "name": "group",
+      "version": "1"
+    },
+    {
+      "full_name": "hbacrule/1",
+      "name": "hbacrule",
+      "version": "1"
+    },
+    {
+      "full_name": "hbacsvc/1",
+      "name": "hbacsvc",
+      "version": "1"
+    },
+    {
+      "full_name": "hbacsvcgroup/1",
+      "name": "hbacsvcgroup",
+      "version": "1"
+    },
+    {
+      "full_name": "host/1",
+      "name": "host",
+      "version": "1"
+    },
+    {
+      "full_name": "hostgroup/1",
+      "name": "hostgroup",
+      "version": "1"
+    },
+    {
+      "full_name": "idoverridegroup/1",
+      "name": "idoverridegroup",
+      "version": "1"
+    },
+    {
+      "full_name": "idoverrideuser/1",
+      "name": "idoverrideuser",
+      "version": "1"
+    },
+    {
+      "full_name": "idp/1",
+      "name": "idp",
+      "version": "1"
+    },
+    {
+      "full_name": "idrange/1",
+      "name": "idrange",
+      "version": "1"
+    },
+    {
+      "full_name": "idview/1",
+      "name": "idview",
+      "version": "1"
+    },
+    {
+      "full_name": "krbtpolicy/1",
+      "name": "krbtpolicy",
+      "version": "1"
+    },
+    {
+      "full_name": "location/1",
+      "name": "location",
+      "version": "1"
+    },
+    {
+      "full_name": "metaobject/1",
+      "name": "metaobject",
+      "version": "1"
+    },
+    {
+      "full_name": "netgroup/1",
+      "name": "netgroup",
+      "version": "1"
+    },
+    {
+      "full_name": "otpconfig/1",
+      "name": "otpconfig",
+      "version": "1"
+    },
+    {
+      "full_name": "otptoken/1",
+      "name": "otptoken",
+      "version": "1"
+    },
+    {
+      "full_name": "output/1",
+      "name": "output",
+      "version": "1"
+    },
+    {
+      "full_name": "param/1",
+      "name": "param",
+      "version": "1"
+    },
+    {
+      "full_name": "permission/1",
+      "name": "permission",
+      "version": "1"
+    },
+    {
+      "full_name": "pkinit/1",
+      "name": "pkinit",
+      "version": "1"
+    },
+    {
+      "full_name": "privilege/1",
+      "name": "privilege",
+      "version": "1"
+    },
+    {
+      "full_name": "pwpolicy/1",
+      "name": "pwpolicy",
+      "version": "1"
+    },
+    {
+      "full_name": "radiusproxy/1",
+      "name": "radiusproxy",
+      "version": "1"
+    },
+    {
+      "full_name": "realmdomains/1",
+      "name": "realmdomains",
+      "version": "1"
+    },
+    {
+      "full_name": "role/1",
+      "name": "role",
+      "version": "1"
+    },
+    {
+      "full_name": "selfservice/1",
+      "name": "selfservice",
+      "version": "1"
+    },
+    {
+      "full_name": "selinuxusermap/1",
+      "name": "selinuxusermap",
+      "version": "1"
+    },
+    {
+      "full_name": "server/1",
+      "name": "server",
+      "version": "1"
+    },
+    {
+      "full_name": "server_role/1",
+      "name": "server_role",
+      "version": "1"
+    },
+    {
+      "full_name": "service/1",
+      "name": "service",
+      "version": "1"
+    },
+    {
+      "full_name": "servicedelegationrule/1",
+      "name": "servicedelegationrule",
+      "version": "1"
+    },
+    {
+      "full_name": "servicedelegationtarget/1",
+      "name": "servicedelegationtarget",
+      "version": "1"
+    },
+    {
+      "full_name": "servrole/1",
+      "name": "servrole",
+      "version": "1"
+    },
+    {
+      "full_name": "stageuser/1",
+      "name": "stageuser",
+      "version": "1"
+    },
+    {
+      "full_name": "subid/1",
+      "name": "subid",
+      "version": "1"
+    },
+    {
+      "full_name": "sudocmd/1",
+      "name": "sudocmd",
+      "version": "1"
+    },
+    {
+      "full_name": "sudocmdgroup/1",
+      "name": "sudocmdgroup",
+      "version": "1"
+    },
+    {
+      "full_name": "sudorule/1",
+      "name": "sudorule",
+      "version": "1"
+    },
+    {
+      "full_name": "topic/1",
+      "name": "topic",
+      "version": "1"
+    },
+    {
+      "full_name": "topologysegment/1",
+      "name": "topologysegment",
+      "version": "1"
+    },
+    {
+      "full_name": "topologysuffix/1",
+      "name": "topologysuffix",
+      "version": "1"
+    },
+    {
+      "full_name": "trust/1",
+      "name": "trust",
+      "version": "1"
+    },
+    {
+      "full_name": "trustconfig/1",
+      "name": "trustconfig",
+      "version": "1"
+    },
+    {
+      "full_name": "trustdomain/1",
+      "name": "trustdomain",
+      "version": "1"
+    },
+    {
+      "full_name": "user/1",
+      "name": "user",
+      "version": "1"
+    },
+    {
+      "full_name": "userstatus/1",
+      "name": "userstatus",
+      "version": "1"
+    },
+    {
+      "full_name": "vault/1",
+      "name": "vault",
+      "version": "1"
+    },
+    {
+      "full_name": "vaultconfig/1",
+      "name": "vaultconfig",
+      "version": "1"
+    },
+    {
+      "full_name": "vaultcontainer/1",
+      "name": "vaultcontainer",
+      "version": "1"
+    }
+  ],
+  "summary": null,
+  "truncated": false
+}

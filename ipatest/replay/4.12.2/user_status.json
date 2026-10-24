@@ -1,0 +1,26 @@
+{
+  "count": 1,
+  "result": [
+    {
+      "dn": "uid=gt78604c93,cn=users,cn=accounts,dc=example,dc=test",
+      "krblastfailedauth": [
+        {
+          "__datetime__": "20261024191908Z"
+        }
+      ],
+      "krblastsuccessfulauth": [
+        "N/A"
+      ],
+      "krbloginfailedcount": [
+        "0"
+      ],
+      "now": "2026-10-24T19:19:08Z",
+      "passwordgraceusertime": [
+        "0"
+      ],
+      "server": "ipa.example.test"
+    }
+  ],
+  "summary": "Account disabled: False",
+  "truncated": false
+}

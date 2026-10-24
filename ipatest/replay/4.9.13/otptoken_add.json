@@ -1,0 +1,32 @@
+{
+  "result": {
+    "dn": "ipatokenuniqueid=fd585cc4-0b18-46ba-b9d8-476ffe438899,cn=otp,dc=example,dc=test",
+    "ipatokenotpalgorithm": [
+      "sha1"
+    ],
+    "ipatokenotpdigits": [
+      "6"
+    ],
+    "ipatokenowner": [
+      "gt3334cc83"
+    ],
+    "ipatokentotptimestep": [
+      "30"
+    ],
+    "ipatokenuniqueid": [
+      "fd585cc4-0b18-46ba-b9d8-476ffe438899"
+    ],
+    "managedby_user": [
+      "gt3334cc83"
+    ],
+    "objectclass": [
+      "ipatoken",
+      "ipatokentotp",
+      "top"
+    ],
+    "type": "TOTP",
+    "uri": "REDACTED"
+  },
+  "summary": "Added OTP token \"\"",
+  "value": null
+}

@@ -1,0 +1,29 @@
+{
+  "result": {
+    "accessruletype": [
+      "allow"
+    ],
+    "cn": [
+      "gr4fcaa560"
+    ],
+    "dn": "ipaUniqueID=b70e6460-cfdf-11f1-bdfb-52f53a5c7008,cn=hbac,dc=example,dc=test",
+    "hostcategory": [
+      "all"
+    ],
+    "ipaenabledflag": [
+      true
+    ],
+    "ipauniqueid": [
+      "b70e6460-cfdf-11f1-bdfb-52f53a5c7008"
+    ],
+    "objectclass": [
+      "ipaassociation",
+      "ipahbacrule"
+    ],
+    "servicecategory": [
+      "all"
+    ]
+  },
+  "summary": "Added HBAC rule \"gr4fcaa560\"",
+  "value": "gr4fcaa560"
+}

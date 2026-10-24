@@ -1,0 +1,10 @@
+{
+  "error": [
+    "nosuchrule-dbd5912a"
+  ],
+  "matched": null,
+  "notmatched": null,
+  "summary": "Unresolved rules in --rules",
+  "value": false,
+  "warning": null
+}

@@ -1,0 +1,23 @@
+{
+  "completed": 1,
+  "failed": {
+    "member": {
+      "group": [],
+      "idoverrideuser": [],
+      "service": [],
+      "user": []
+    }
+  },
+  "result": {
+    "cn": [
+      "gpf66db981"
+    ],
+    "dn": "cn=gpf66db981,cn=groups,cn=accounts,dc=example,dc=test",
+    "gidnumber": [
+      "145400047"
+    ],
+    "member_user": [
+      "gt3e572149"
+    ]
+  }
+}

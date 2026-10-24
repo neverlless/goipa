@@ -1,0 +1,35 @@
+{
+  "result": {
+    "description": [
+      "auto-assigned subid"
+    ],
+    "dn": "ipauniqueid=a3857745-a0e4-4da2-94a3-6098fd35bb07,cn=subids,cn=accounts,dc=example,dc=test",
+    "ipaowner": [
+      "gt203534e1"
+    ],
+    "ipasubgidcount": [
+      "65536"
+    ],
+    "ipasubgidnumber": [
+      "2147483648"
+    ],
+    "ipasubuidcount": [
+      "65536"
+    ],
+    "ipasubuidnumber": [
+      "2147483648"
+    ],
+    "ipauniqueid": [
+      "a3857745-a0e4-4da2-94a3-6098fd35bb07"
+    ],
+    "objectclass": [
+      "ipasubordinateidentry",
+      "ipasubordinateuid",
+      "ipasubordinateid",
+      "ipasubordinategid",
+      "top"
+    ]
+  },
+  "summary": "Added subordinate id \"a3857745-a0e4-4da2-94a3-6098fd35bb07\"",
+  "value": "a3857745-a0e4-4da2-94a3-6098fd35bb07"
+}

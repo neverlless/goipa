@@ -1,0 +1,10 @@
+{
+  "error": [
+    "nosuchrule-fc2e72cc"
+  ],
+  "matched": null,
+  "notmatched": null,
+  "summary": "Unresolved rules in --rules",
+  "value": false,
+  "warning": null
+}

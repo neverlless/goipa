@@ -1,0 +1,117 @@
+{
+  "count": 10,
+  "result": [
+    {
+      "cacn": "ipa",
+      "issuer": "CN=Certificate Authority,O=EXAMPLE.TEST",
+      "revoked": false,
+      "serial_number": 1,
+      "serial_number_hex": "0x1",
+      "status": "VALID",
+      "subject": "CN=Certificate Authority,O=EXAMPLE.TEST",
+      "valid_not_after": "Wed Oct 24 19:16:23 2046 UTC",
+      "valid_not_before": "Sat Oct 24 19:16:23 2026 UTC"
+    },
+    {
+      "cacn": "ipa",
+      "issuer": "CN=Certificate Authority,O=EXAMPLE.TEST",
+      "revoked": false,
+      "serial_number": 2,
+      "serial_number_hex": "0x2",
+      "status": "VALID",
+      "subject": "CN=OCSP Subsystem,O=EXAMPLE.TEST",
+      "valid_not_after": "Fri Oct 13 19:16:29 2028 UTC",
+      "valid_not_before": "Sat Oct 24 19:16:29 2026 UTC"
+    },
+    {
+      "cacn": "ipa",
+      "issuer": "CN=Certificate Authority,O=EXAMPLE.TEST",
+      "revoked": false,
+      "serial_number": 3,
+      "serial_number_hex": "0x3",
+      "status": "VALID",
+      "subject": "CN=ipa.example.test,O=EXAMPLE.TEST",
+      "valid_not_after": "Fri Oct 13 19:16:36 2028 UTC",
+      "valid_not_before": "Sat Oct 24 19:16:36 2026 UTC"
+    },
+    {
+      "cacn": "ipa",
+      "issuer": "CN=Certificate Authority,O=EXAMPLE.TEST",
+      "revoked": false,
+      "serial_number": 4,
+      "serial_number_hex": "0x4",
+      "status": "VALID",
+      "subject": "CN=CA Subsystem,O=EXAMPLE.TEST",
+      "valid_not_after": "Fri Oct 13 19:16:42 2028 UTC",
+      "valid_not_before": "Sat Oct 24 19:16:42 2026 UTC"
+    },
+    {
+      "cacn": "ipa",
+      "issuer": "CN=Certificate Authority,O=EXAMPLE.TEST",
+      "revoked": false,
+      "serial_number": 5,
+      "serial_number_hex": "0x5",
+      "status": "VALID",
+      "subject": "CN=CA Audit,O=EXAMPLE.TEST",
+      "valid_not_after": "Fri Oct 13 19:16:48 2028 UTC",
+      "valid_not_before": "Sat Oct 24 19:16:48 2026 UTC"
+    },
+    {
+      "cacn": "ipa",
+      "issuer": "CN=Certificate Authority,O=EXAMPLE.TEST",
+      "revoked": false,
+      "serial_number": 6,
+      "serial_number_hex": "0x6",
+      "status": "VALID",
+      "subject": "CN=ipa-ca-agent,O=EXAMPLE.TEST",
+      "valid_not_after": "Fri Oct 13 19:17:00 2028 UTC",
+      "valid_not_before": "Sat Oct 24 19:17:00 2026 UTC"
+    },
+    {
+      "cacn": "ipa",
+      "issuer": "CN=Certificate Authority,O=EXAMPLE.TEST",
+      "revoked": false,
+      "serial_number": 7,
+      "serial_number_hex": "0x7",
+      "status": "VALID",
+      "subject": "CN=IPA RA,O=EXAMPLE.TEST",
+      "valid_not_after": "Fri Oct 13 19:17:51 2028 UTC",
+      "valid_not_before": "Sat Oct 24 19:17:51 2026 UTC"
+    },
+    {
+      "cacn": "ipa",
+      "issuer": "CN=Certificate Authority,O=EXAMPLE.TEST",
+      "revoked": false,
+      "serial_number": 8,
+      "serial_number_hex": "0x8",
+      "status": "VALID",
+      "subject": "CN=ipa.example.test,O=EXAMPLE.TEST",
+      "valid_not_after": "Tue Oct 24 19:17:59 2028 UTC",
+      "valid_not_before": "Sat Oct 24 19:17:59 2026 UTC"
+    },
+    {
+      "cacn": "ipa",
+      "issuer": "CN=Certificate Authority,O=EXAMPLE.TEST",
+      "revoked": false,
+      "serial_number": 9,
+      "serial_number_hex": "0x9",
+      "status": "VALID",
+      "subject": "CN=ipa.example.test,O=EXAMPLE.TEST",
+      "valid_not_after": "Tue Oct 24 19:18:15 2028 UTC",
+      "valid_not_before": "Sat Oct 24 19:18:15 2026 UTC"
+    },
+    {
+      "cacn": "ipa",
+      "issuer": "CN=Certificate Authority,O=EXAMPLE.TEST",
+      "revoked": false,
+      "serial_number": 10,
+      "serial_number_hex": "0xA",
+      "status": "VALID",
+      "subject": "CN=ipa.example.test,O=EXAMPLE.TEST",
+      "valid_not_after": "Tue Oct 24 19:18:17 2028 UTC",
+      "valid_not_before": "Sat Oct 24 19:18:17 2026 UTC"
+    }
+  ],
+  "summary": "10 certificates matched",
+  "truncated": false
+}

@@ -1,0 +1,24 @@
+{
+  "result": {
+    "cn": [
+      "gpf66db981"
+    ],
+    "dn": "cn=gpf66db981,cn=groups,cn=accounts,dc=example,dc=test",
+    "gidnumber": [
+      "145400047"
+    ],
+    "ipauniqueid": [
+      "f0eab71a-cfdf-11f1-8a16-2276371f0835"
+    ],
+    "objectclass": [
+      "top",
+      "groupofnames",
+      "nestedgroup",
+      "ipausergroup",
+      "ipaobject",
+      "posixgroup"
+    ]
+  },
+  "summary": "Added group \"gpf66db981\"",
+  "value": "gpf66db981"
+}

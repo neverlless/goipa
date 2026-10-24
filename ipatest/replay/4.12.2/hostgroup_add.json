@@ -1,0 +1,24 @@
+{
+  "result": {
+    "cn": [
+      "hg59efefd5"
+    ],
+    "dn": "cn=hg59efefd5,cn=hostgroups,cn=accounts,dc=example,dc=test",
+    "ipauniqueid": [
+      "c77bce78-cfdf-11f1-a386-66f7b5c167e5"
+    ],
+    "mepmanagedentry": [
+      "cn=hg59efefd5,cn=ng,cn=alt,dc=example,dc=test"
+    ],
+    "objectclass": [
+      "ipaobject",
+      "ipahostgroup",
+      "nestedGroup",
+      "groupOfNames",
+      "top",
+      "mepOriginEntry"
+    ]
+  },
+  "summary": "Added hostgroup \"hg59efefd5\"",
+  "value": "hg59efefd5"
+}

@@ -1,0 +1,43 @@
+{
+  "result": {
+    "dn": "uid=gsbca76c21,cn=users,cn=accounts,dc=example,dc=test",
+    "gidnumber": [
+      "1477000052"
+    ],
+    "givenname": [
+      "Go"
+    ],
+    "has_keytab": false,
+    "has_password": false,
+    "homedirectory": [
+      "/home/gsbca76c21"
+    ],
+    "krbcanonicalname": [
+      "gsbca76c21@EXAMPLE.TEST"
+    ],
+    "krbprincipalname": [
+      "gsbca76c21@EXAMPLE.TEST"
+    ],
+    "loginshell": [
+      "/bin/sh"
+    ],
+    "mail": [
+      "gsbca76c21@example.test"
+    ],
+    "memberof_group": [
+      "ipausers"
+    ],
+    "nsaccountlock": false,
+    "sn": [
+      "Test"
+    ],
+    "uid": [
+      "gsbca76c21"
+    ],
+    "uidnumber": [
+      "1477000052"
+    ]
+  },
+  "summary": "Stage user gsbca76c21 activated",
+  "value": "gsbca76c21"
+}

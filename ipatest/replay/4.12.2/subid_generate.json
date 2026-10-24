@@ -1,0 +1,35 @@
+{
+  "result": {
+    "description": [
+      "auto-assigned subid"
+    ],
+    "dn": "ipauniqueid=84cef433-8dd3-43fb-83d3-b83bb41b3dcd,cn=subids,cn=accounts,dc=example,dc=test",
+    "ipaowner": [
+      "gte29c4002"
+    ],
+    "ipasubgidcount": [
+      "65536"
+    ],
+    "ipasubgidnumber": [
+      "2147483648"
+    ],
+    "ipasubuidcount": [
+      "65536"
+    ],
+    "ipasubuidnumber": [
+      "2147483648"
+    ],
+    "ipauniqueid": [
+      "84cef433-8dd3-43fb-83d3-b83bb41b3dcd"
+    ],
+    "objectclass": [
+      "ipasubordinateidentry",
+      "ipasubordinateuid",
+      "ipasubordinateid",
+      "ipasubordinategid",
+      "top"
+    ]
+  },
+  "summary": "Added subordinate id \"84cef433-8dd3-43fb-83d3-b83bb41b3dcd\"",
+  "value": "84cef433-8dd3-43fb-83d3-b83bb41b3dcd"
+}

@@ -1,0 +1,10 @@
+{
+  "result": {
+    "dn": "cn=passkeyconfig,cn=etc,dc=example,dc=test",
+    "iparequireuserverification": [
+      true
+    ]
+  },
+  "summary": null,
+  "value": null
+}

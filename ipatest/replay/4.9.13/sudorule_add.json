@@ -1,0 +1,23 @@
+{
+  "result": {
+    "cn": [
+      "gs5e6cb7a2"
+    ],
+    "dn": "ipaUniqueID=b6c289dc-cfdf-11f1-8bad-52f53a5c7008,cn=sudorules,cn=sudo,dc=example,dc=test",
+    "ipaenabledflag": [
+      true
+    ],
+    "ipauniqueid": [
+      "b6c289dc-cfdf-11f1-8bad-52f53a5c7008"
+    ],
+    "objectclass": [
+      "ipaassociation",
+      "ipasudorule"
+    ],
+    "sudoorder": [
+      "5"
+    ]
+  },
+  "summary": "Added Sudo Rule \"gs5e6cb7a2\"",
+  "value": "gs5e6cb7a2"
+}

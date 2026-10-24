@@ -1,0 +1,24 @@
+{
+  "result": {
+    "ipatokendisabled": [
+      false
+    ],
+    "ipatokennotbefore": [
+      {
+        "__datetime__": "20261024191947Z"
+      }
+    ],
+    "ipatokenowner": [
+      "gt65439754"
+    ],
+    "ipatokenuniqueid": [
+      "840b263b-9f9f-47a6-acd4-2adb37430f36"
+    ],
+    "managedby_user": [
+      "gt65439754"
+    ],
+    "type": "TOTP"
+  },
+  "summary": "Modified OTP token \"840b263b-9f9f-47a6-acd4-2adb37430f36\"",
+  "value": "840b263b-9f9f-47a6-acd4-2adb37430f36"
+}

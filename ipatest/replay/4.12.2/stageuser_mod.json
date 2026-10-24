@@ -1,0 +1,44 @@
+{
+  "result": {
+    "displayname": [
+      "Go Test"
+    ],
+    "gidnumber": [
+      "-1"
+    ],
+    "givenname": [
+      "Go"
+    ],
+    "has_keytab": false,
+    "has_password": false,
+    "homedirectory": [
+      "/home/gs9e5fe115"
+    ],
+    "krbcanonicalname": [
+      "gs9e5fe115@EXAMPLE.TEST"
+    ],
+    "krbprincipalname": [
+      "gs9e5fe115@EXAMPLE.TEST"
+    ],
+    "loginshell": [
+      "/bin/sh"
+    ],
+    "mail": [
+      "x@example.com"
+    ],
+    "sn": [
+      "Test"
+    ],
+    "uid": [
+      "gs9e5fe115"
+    ],
+    "uidnumber": [
+      "-1"
+    ],
+    "userclass": [
+      "c2"
+    ]
+  },
+  "summary": "Modified stage user \"gs9e5fe115\"",
+  "value": "gs9e5fe115"
+}

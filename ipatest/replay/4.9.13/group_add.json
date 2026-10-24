@@ -1,0 +1,25 @@
+{
+  "result": {
+    "cn": [
+      "gp37b9c3a2"
+    ],
+    "dn": "cn=gp37b9c3a2,cn=groups,cn=accounts,dc=example,dc=test",
+    "gidnumber": [
+      "1145000046"
+    ],
+    "ipauniqueid": [
+      "b80a28fe-cfdf-11f1-b209-52f53a5c7008"
+    ],
+    "objectclass": [
+      "top",
+      "groupofnames",
+      "nestedgroup",
+      "ipausergroup",
+      "ipaobject",
+      "posixgroup",
+      "ipantgroupattrs"
+    ]
+  },
+  "summary": "Added group \"gp37b9c3a2\"",
+  "value": "gp37b9c3a2"
+}

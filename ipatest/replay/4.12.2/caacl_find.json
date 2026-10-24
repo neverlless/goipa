@@ -1,0 +1,22 @@
+{
+  "count": 1,
+  "result": [
+    {
+      "cn": [
+        "hosts_services_caIPAserviceCert"
+      ],
+      "dn": "ipaUniqueID=9efb72c8-cfdf-11f1-a10c-66f7b5c167e5,cn=caacls,cn=ca,dc=example,dc=test",
+      "hostcategory": [
+        "all"
+      ],
+      "ipaenabledflag": [
+        true
+      ],
+      "servicecategory": [
+        "all"
+      ]
+    }
+  ],
+  "summary": "1 CA ACL matched",
+  "truncated": false
+}

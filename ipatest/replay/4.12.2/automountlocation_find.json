@@ -1,0 +1,13 @@
+{
+  "count": 1,
+  "result": [
+    {
+      "cn": [
+        "default"
+      ],
+      "dn": "cn=default,cn=automount,dc=example,dc=test"
+    }
+  ],
+  "summary": "1 automount location matched",
+  "truncated": false
+}

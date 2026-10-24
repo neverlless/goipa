@@ -1,0 +1,17 @@
+{
+  "count": 1,
+  "result": [
+    {
+      "dn": "ipatokenuniqueid=af2827f7-04cc-43b2-8e27-5341b6a8174b,cn=otp,dc=example,dc=test",
+      "ipatokenowner": [
+        "mraz7433"
+      ],
+      "ipatokenuniqueid": [
+        "af2827f7-04cc-43b2-8e27-5341b6a8174b"
+      ],
+      "type": "TOTP"
+    }
+  ],
+  "summary": "1 OTP token matched",
+  "truncated": false
+}
