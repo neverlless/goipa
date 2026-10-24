@@ -28,9 +28,15 @@ func TestRecordShapes(t *testing.T) {
 			if !readOnly || slices.ContainsFunc(cmd.Args, func(p ipa.Param) bool { return p.Required }) {
 				continue
 			}
-			var o ipa.Options
-			if slices.ContainsFunc(cmd.Options, func(p ipa.Param) bool { return p.Name == "all" }) {
-				o = ipa.Options{"all": true} // as the typed calls send it
+			o := ipa.Options{}
+			takes := func(opt string) bool {
+				return slices.ContainsFunc(cmd.Options, func(p ipa.Param) bool { return p.Name == opt })
+			}
+			if takes("all") {
+				o["all"] = true // as the typed calls send it
+			}
+			if takes("sizelimit") {
+				o["sizelimit"] = 0 // the whole result, not the first 100 entries
 			}
 			_, _ = c.RPC(cmd.Name, nil, o) // a command the server lacks is simply not recorded
 		}
