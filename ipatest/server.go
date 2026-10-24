@@ -97,25 +97,26 @@ type HandlerFunc func(c Call) (result any, err *ipa.IpaError)
 type Server struct {
 	srv *httptest.Server
 
-	mu        sync.Mutex
-	sessions  map[string]string // session id -> uid
-	expired   map[string]bool   // session ids from ExpireSession
-	negotiate string
-	version   string // release reported in every envelope
-	calls     []Call
-	handlers  map[string]HandlerFunc
-	users     map[string]*userRec
-	stage     map[string]*userRec
-	groups    map[string]*groupRec
-	hosts     map[string]Host
-	subids    map[string]SubID // by owner uid
-	hbac      map[string]*hbacRec
-	sudo      map[string]*sudoRec
-	pwpol     map[string]PwPolicy
-	tokens    []*OTPToken
-	nextID    int // last uidnumber handed out
-	nextGID   int // last gidnumber handed out
-
+	mu         sync.Mutex
+	sessions   map[string]string // session id -> uid
+	expired    map[string]bool   // session ids from ExpireSession
+	negotiate  string
+	version    string // release reported in every envelope
+	calls      []Call
+	handlers   map[string]HandlerFunc
+	users      map[string]*userRec
+	stage      map[string]*userRec
+	groups     map[string]*groupRec
+	hosts      map[string]Host
+	subids     map[string]SubID // by owner uid
+	hbac       map[string]*hbacRec
+	sudo       map[string]*sudoRec
+	pwpol      map[string]PwPolicy
+	tokens     []*OTPToken
+	nextID     int                 // last uidnumber handed out
+	nextGID    int                 // last gidnumber handed out
+	ca         *fakeCA             // created by the first cert_request
+	certs      map[string]*certRec // by decimal serial
 	hostgroups map[string]*HostGroup
 }
 
@@ -131,21 +132,21 @@ func NewServer(tb testing.TB) *Server {
 // Call Close when done.
 func New() *Server {
 	s := &Server{
-		sessions: map[string]string{},
-		expired:  map[string]bool{},
-		handlers: map[string]HandlerFunc{},
-		users:    map[string]*userRec{},
-		stage:    map[string]*userRec{},
-		groups:   map[string]*groupRec{},
-		hosts:    map[string]Host{serverFQDN: {HasKeytab: true}},
-		subids:   map[string]SubID{},
-		hbac:     seedAllowAll(),
-		sudo:     map[string]*sudoRec{},
-		pwpol:    seedPwPolicies(),
-		version:  defaultVersion,
-		nextID:   firstID - 1,
-		nextGID:  firstID - 1,
-
+		sessions:   map[string]string{},
+		expired:    map[string]bool{},
+		handlers:   map[string]HandlerFunc{},
+		users:      map[string]*userRec{},
+		stage:      map[string]*userRec{},
+		groups:     map[string]*groupRec{},
+		hosts:      map[string]Host{serverFQDN: {HasKeytab: true}},
+		subids:     map[string]SubID{},
+		hbac:       seedAllowAll(),
+		sudo:       map[string]*sudoRec{},
+		pwpol:      seedPwPolicies(),
+		version:    defaultVersion,
+		nextID:     firstID - 1,
+		nextGID:    firstID - 1,
+		certs:      map[string]*certRec{},
 		hostgroups: map[string]*HostGroup{},
 	}
 	mux := http.NewServeMux()
