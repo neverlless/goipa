@@ -327,6 +327,30 @@ func twinCalls() []twinCall {
 		{"DNSRecordDeleteContext", func(ctx context.Context, c *ipa.Client) error {
 			return c.DNSRecordDeleteContext(ctx, "z.test.", "www")
 		}},
+		{"RoleShowContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.RoleShowContext(ctx, "r")
+			return err
+		}},
+		{"RoleFindContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.RoleFindContext(ctx, nil)
+			return err
+		}},
+		{"PrivilegeShowContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.PrivilegeShowContext(ctx, "p")
+			return err
+		}},
+		{"PrivilegeFindContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.PrivilegeFindContext(ctx, nil)
+			return err
+		}},
+		{"PermissionShowContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.PermissionShowContext(ctx, "p")
+			return err
+		}},
+		{"PermissionFindContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.PermissionFindContext(ctx, nil)
+			return err
+		}},
 	}
 }
 

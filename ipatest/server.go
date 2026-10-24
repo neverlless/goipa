@@ -119,6 +119,9 @@ type Server struct {
 	certs      map[string]*certRec // by decimal serial
 	hostgroups map[string]*HostGroup
 	dnsZones   map[string]*dnsZone // by absolute name
+	roles      map[string]*ipa.Role
+	privs      map[string]*ipa.Privilege
+	perms      map[string]*ipa.Permission
 }
 
 // NewServer starts a server and closes it with tb.Cleanup.
@@ -150,6 +153,9 @@ func New() *Server {
 		certs:      map[string]*certRec{},
 		hostgroups: map[string]*HostGroup{},
 		dnsZones:   seedDNS(),
+		roles:      seedRoles(),
+		privs:      seedPrivileges(),
+		perms:      seedPermissions(),
 	}
 	mux := http.NewServeMux()
 	mux.HandleFunc("/ipa/session/json", s.serveSessionJSON)
