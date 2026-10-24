@@ -51,6 +51,10 @@ type OTPToken struct {
 	NotAfter    time.Time `json:"ipatokennotafter"`
 }
 
+// DefaultTOTPToken holds the defaults AddOTPToken applies to zero fields.
+//
+// Deprecated: use AddOTPToken(nil), or leave fields zero; the defaults apply
+// field by field. Changing this variable while AddOTPToken runs is a data race.
 var DefaultTOTPToken *OTPToken = &OTPToken{
 	Type:      TokenTypeTOTP,
 	Algorithm: AlgorithmSHA1,
@@ -110,6 +114,9 @@ func (c *Client) RemoveOTPTokenContext(ctx context.Context, tokenUUID string) er
 }
 
 // Fetch OTP tokens by owner.
+//
+// A truncated search is not reported (kept for compatibility); use FindEntries
+// with the same method to detect it.
 func (c *Client) FetchOTPTokens(owner string) ([]*OTPToken, error) {
 	return c.FetchOTPTokensContext(context.Background(), owner)
 }
@@ -121,7 +128,7 @@ func (c *Client) FetchOTPTokensContext(ctx context.Context, owner string) ([]*OT
 		"all":           true,
 	}
 
-	res, err := c.rpc(ctx, "otptoken_find", []string{}, options)
+	res, err := c.rpc(ctx, "otptoken_find", []string{""}, options)
 
 	if err != nil {
 		return nil, err
@@ -288,7 +295,7 @@ func (c *Client) SyncOTPTokenContext(ctx context.Context, username, password, fi
 	defer res.Body.Close()
 
 	if res.StatusCode != 200 {
-		return fmt.Errorf("ipa: token sync failed with HTTP status code: %d", res.StatusCode)
+		return newFormHTTPError("ipa: token sync failed", res)
 	}
 
 	switch status := res.Header.Get("X-IPA-TokenSync-Result"); strings.ToLower(status) {

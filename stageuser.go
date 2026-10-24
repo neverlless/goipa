@@ -61,6 +61,9 @@ func (c *Client) StageUserShowContext(ctx context.Context, username string) (*Us
 // StageUserFind finds stage users with `stageuser_find`; options are passed
 // through (e.g. `uid`, `sizelimit`). It requires the Stage User Administrators
 // privilege.
+//
+// A truncated search is not reported (kept for compatibility); use FindEntries
+// with the same method to detect it.
 func (c *Client) StageUserFind(options Options) ([]*User, error) {
 	return c.StageUserFindContext(context.Background(), options)
 }

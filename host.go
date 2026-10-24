@@ -75,6 +75,9 @@ func (c *Client) HostShowContext(ctx context.Context, fqdn string) (*Host, error
 // HostFind finds hosts with `host_find`; options are passed through (e.g.
 // `fqdn`, `in_hostgroup`, `sizelimit`). Any authenticated user may read hosts
 // (System: Read Hosts). ubccr/goipa#11.
+//
+// A truncated search is not reported (kept for compatibility); use FindEntries
+// with the same method to detect it.
 func (c *Client) HostFind(options Options) ([]*Host, error) {
 	return c.HostFindContext(context.Background(), options)
 }

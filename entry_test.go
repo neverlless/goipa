@@ -86,3 +86,17 @@ func TestEntry_DNSName(t *testing.T) {
 		t.Errorf("Strs(many) = %v", got)
 	}
 }
+
+func TestEntry_StrsObject(t *testing.T) {
+	var e ipa.Entry
+	in := `{"hint":{"__dns_name__":"a.test.","x":"b"},"obj":{"k":"v","n":1}}`
+	if err := json.Unmarshal([]byte(in), &e); err != nil {
+		t.Fatal(err)
+	}
+	if got := e.Strs("hint"); !reflect.DeepEqual(got, []string{"a.test."}) {
+		t.Errorf("Strs(hint) = %v", got)
+	}
+	if got := e.Strs("obj"); !reflect.DeepEqual(got, []string{`{"k":"v","n":1}`}) {
+		t.Errorf("Strs(obj) = %v", got)
+	}
+}

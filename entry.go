@@ -76,6 +76,9 @@ func (e Entry) Strs(attr string) []string {
 	if v.Type == gjson.Null {
 		return nil
 	}
+	if v.IsObject() { // a scalar class hint such as {"__dns_name__": "x"}, not a list
+		return []string{dnsName(v)}
+	}
 	var out []string
 	v.ForEach(func(_, v gjson.Result) bool {
 		out = append(out, dnsName(v))

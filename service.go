@@ -135,11 +135,7 @@ func (c *Client) serviceMembers(ctx context.Context, method, principal string, l
 	if principal == "" {
 		return nil, errServicePrincipal
 	}
-	e, err := c.memberEntry(ctx, method, []string{principal}, lists)
-	if _, ok := errors.AsType[*MemberError](err); err != nil && !ok {
-		return nil, err
-	}
-	return serviceFromEntry(e), err
+	return members(ctx, c, method, []string{principal}, lists, serviceFromEntry)
 }
 
 // ServiceAddHost lets hosts manage a service (managedby) with

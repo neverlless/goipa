@@ -169,6 +169,18 @@ func TestToOptions_Extras(t *testing.T) {
 	}
 }
 
+func TestUserAdd_SeveralEmails(t *testing.T) {
+	c, f := newFakeIPA(t, http.StatusOK, envelope(`{"result":{"uid":["jdoe"]},"value":"jdoe","summary":null}`))
+	_, _ = c.UserAdd(&ipa.User{Username: "jdoe", First: "J", Last: "D", Email: "a@x", Emails: []string{"a@x", "b@x"}}, false)
+	calls := f.Calls()
+	if len(calls) != 1 || calls[0].Method != "user_add" {
+		t.Fatalf("calls = %+v", calls)
+	}
+	if got := calls[0].Options["mail"]; !reflect.DeepEqual(got, []any{"a@x", "b@x"}) {
+		t.Errorf("mail = %#v, want a list", got)
+	}
+}
+
 func TestToOptions_DedupCaseInsensitive(t *testing.T) {
 	if got := (&ipa.User{Email: "B@x", Emails: []string{"a@x", "b@x"}}).ToOptions()["mail"]; got != "B@x" {
 		t.Errorf("mail = %#v, want string B@x", got)

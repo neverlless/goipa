@@ -208,6 +208,7 @@ func (s *Server) CACert() []byte {
 
 // Client returns a goipa client wired to the server, without a session.
 func (s *Server) Client() *ipa.Client {
+	//lint:ignore SA1019 the client has to match v0.9.1 exactly; New would add nothing here
 	return ipa.NewClientCustomHttp(s.Host(), realm, s.HTTPClient())
 }
 

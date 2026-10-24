@@ -6,8 +6,12 @@
 // Package ipa is a Go client for the FreeIPA JSON-RPC API. It is a maintained
 // continuation of github.com/ubccr/goipa.
 //
-// Create a Client with New and its With* options, or NewDefaultClient on a
-// host enrolled in FreeIPA. A *Client is safe for concurrent use.
+// Create a Client with New and its With* options; on a host enrolled in
+// FreeIPA, New() alone reads /etc/ipa. A *Client is safe for concurrent use.
+//
+// Calls from ubccr/goipa keep their names; calls added since are named
+// Object+Verb (GroupAdd, HostGroupShow). Add calls take a struct where FreeIPA
+// takes many attributes, positional values where it takes a key and a flag.
 //
 // # Which login to use
 //
@@ -19,7 +23,7 @@
 //	                                           and a realm. Services, daemons.
 //	LoginFromCCache, LoginFromCCacheData       an existing ticket cache (kinit); needs krb5.conf
 //	                                           (DefaultKerbConf, or WithKrb5Config*). CLI tools.
-//	SetSessionID, NewDefaultClientWithSession  an ipa_session cookie. Restoring a web session.
+//	SetSessionID                               an ipa_session cookie. Restoring a web session.
 //
 // Login is Kerberos, not the web login; use RemoteLogin for a password over
 // HTTPS. For a host not enrolled in FreeIPA:
@@ -36,16 +40,9 @@
 // httpd answering 401 before it runs the command; a proxy that answers 401
 // after forwarding the request breaks that.
 //
-// A FreeIPA error is returned as a bare *IpaError: match it with errors.Is
-// against ErrNotFound and the other sentinels, or with a type assertion.
-//
-// Every method that talks to the server has a ...Context twin that bounds the
-// request with a context, except the Kerberos logins (Login, LoginWithKeytab,
-// LoginFromCCache and their Data variants; gokrb5 is not cancellable). RPC
-// calls any command goipa does not wrap.
-//
 // # Any command
 //
+// RPC calls any command goipa does not wrap and returns the raw response.
 // Call decodes the result of any command into a type of your choice; Entry
 // reads FreeIPA's attribute encoding (lists, dates, binary values):
 //
@@ -74,4 +71,63 @@
 // ErrInvalidCall (or ErrNotSupported for a feature newer than the server). It
 // is off by default, does not check values or required options, and does
 // nothing when the server is newer than the newest catalogued release.
+//
+// # Errors
+//
+// A FreeIPA error is returned as a bare *IpaError, never wrapped. This applies
+// to typed calls, RPC, Call, FindEntries, Modification.Run and each
+// BatchResult.Err. Match it with errors.Is against ErrNotFound,
+// ErrDuplicateEntry, ErrACI or ErrEmptyModlist (compared by code only), or
+// read Code and Data through errors.As or err.(*ipa.IpaError). The Code*
+// constants name the other codes.
+//
+// Member calls (...AddMember, HBACRuleAddUser, ServiceAllow...,
+// AutomemberAddCondition, ...) return the updated object together with a
+// *MemberError listing what FreeIPA refused. In that case the call itself
+// succeeded.
+//
+// A response with a status other than 200 is a *HTTPError, and a 401 also
+// matches ErrUnauthorized. The password form endpoints return
+// ErrInvalidPassword, ErrExpiredPassword, ErrPasswordPolicy,
+// ErrInvalidCredentials or ErrUnauthorized for the outcomes FreeIPA names.
+//
+// Some errors come before anything is sent:
+//   - ErrNotSupported: the last server seen is too old for the call.
+//   - ErrInvalidCall: WithValidation rejected the call.
+//
+// A Find returns ErrTruncated together with the entries it got, when the
+// server cut the search short. This applies to the Finds added in v0.9 and to
+// FindEntries.
+//
+// UserAdd keeps upstream's ErrUserExists for 4002.
+//
+// Transport, TLS, context and Kerberos errors are returned as they come, or
+// wrapped with %w and an "ipa:" prefix. Use errors.Is(err,
+// context.DeadlineExceeded). Sentinels are matched with errors.Is, never ==.
+// goipa does not log.
+//
+// # Context
+//
+// Every Client method that talks to the server has a twin with a Context
+// suffix that takes ctx first. The form without a suffix is exactly
+// context.Background().
+//
+// The context bounds the whole call:
+//   - the HTTP request,
+//   - the one retry after a 401,
+//   - a password re-login,
+//   - the per-option requests of SudoRuleAddOption.
+//
+// Cancelling it also stops a call before anything is sent.
+//
+// APIs added since v0.7 take a context only (Call, FindEntries, Batch,
+// Modification.Run). New API in v1 follows that rule: a context-only generic
+// or builder, or a method pair.
+//
+// The Kerberos logins (Login, LoginWithKeytab, LoginFromCCache and their Data
+// forms) take no context, because gokrb5 cannot be cancelled. SPNEGO header
+// generation inside a Context call is not cancellable either.
+//
+// goipa stores no context, and the Client's http.Client timeout (1 minute by
+// default, or yours via WithHTTPClient) still applies.
 package ipa

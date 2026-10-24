@@ -317,6 +317,9 @@ func (c *Client) UserShowContext(ctx context.Context, username string) (*User, e
 }
 
 // Find users.
+//
+// A truncated search is not reported (kept for compatibility); use FindEntries
+// with the same method to detect it.
 func (c *Client) UserFind(options Options) ([]*User, error) {
 	return c.UserFindContext(context.Background(), options)
 }
@@ -386,6 +389,8 @@ func (c *Client) ResetPasswordContext(ctx context.Context, username string) (str
 
 // Change user password. This will run the passwd ipa command. Optionally
 // provide an OTP if required
+//
+// Unlike SetPassword, it needs a session (or Kerberos) to run passwd.
 func (c *Client) ChangePassword(username, oldPasswd, newPasswd, otpcode string) error {
 	return c.ChangePasswordContext(context.Background(), username, oldPasswd, newPasswd, otpcode)
 }
@@ -421,6 +426,8 @@ func (c *Client) ChangePasswordContext(ctx context.Context, username, oldPasswd,
 // then immediately calling this function. *WARNING* See
 // https://www.freeipa.org/page/Self-Service_Password_Reset for security issues
 // and possible weaknesses of this approach.
+//
+// Unlike ChangePassword, it uses the form endpoint and needs no session.
 func (c *Client) SetPassword(username, oldPasswd, newPasswd, otpcode string) error {
 	return c.SetPasswordContext(context.Background(), username, oldPasswd, newPasswd, otpcode)
 }
@@ -452,7 +459,7 @@ func (c *Client) SetPasswordContext(ctx context.Context, username, oldPasswd, ne
 	defer res.Body.Close()
 
 	if res.StatusCode != 200 {
-		return fmt.Errorf("ipa: change password failed with HTTP status code: %d", res.StatusCode)
+		return newFormHTTPError("ipa: change password failed", res)
 	}
 
 	status := res.Header.Get("x-ipa-pwchange-result")
@@ -603,6 +610,9 @@ func (c *Client) UserAddContext(ctx context.Context, user *User, random bool) (*
 // Delete user. If preserve is false the user will be permanetly deleted, if
 // true the users is moved to the Delete container. If stopOnError is false the
 // operation will be in continuous mode otherwise it will stop on errors
+//
+// stopOnError=false is FreeIPA's continue=true; other Delete calls always
+// stop on the first error.
 func (c *Client) UserDelete(preserve, stopOnError bool, usernames ...string) error {
 	return c.UserDeleteContext(context.Background(), preserve, stopOnError, usernames...)
 }

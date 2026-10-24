@@ -60,7 +60,7 @@ func (c *Client) HostGroupFind(options Options) ([]*HostGroup, error) {
 
 // HostGroupFindContext is like HostGroupFind but bounds the request with ctx.
 func (c *Client) HostGroupFindContext(ctx context.Context, options Options) ([]*HostGroup, error) {
-	return findTyped(ctx, c, "hostgroup_find", nil, options, hostGroupFromEntry)
+	return findTyped(ctx, c, "hostgroup_find", []string{""}, options, hostGroupFromEntry)
 }
 
 // HostGroupAdd creates a host group with `hostgroup_add` from g's Name and
@@ -105,11 +105,7 @@ func (c *Client) hostGroupMembers(ctx context.Context, method, name string, list
 	if name == "" {
 		return nil, errHostGroupName
 	}
-	e, err := c.memberEntry(ctx, method, []string{name}, lists)
-	if err != nil && e.raw == nil {
-		return nil, err
-	}
-	return hostGroupFromEntry(e), err
+	return members(ctx, c, method, []string{name}, lists, hostGroupFromEntry)
 }
 
 // HostGroupAddMember adds hosts and host groups to a host group with
