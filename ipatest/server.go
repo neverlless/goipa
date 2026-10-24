@@ -48,6 +48,7 @@ var errorNames = map[int]string{
 	ipa.CodeAlreadyContainsValue: "AlreadyContainsValueError",
 	ipa.CodeEmptyModlist:         "EmptyModlist",
 	ipa.CodeDatabase:             "DatabaseError",
+	ipa.CodeObjectclassViolation: "ObjectclassViolation",
 	ipa.CodeOnlyOneValueAllowed:  "OnlyOneValueAllowed",
 }
 

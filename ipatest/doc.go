@@ -284,14 +284,15 @@
 //   - Q41: user_mod (and stageuser_mod) takes setattr, addattr and delattr
 //     for the attributes it models, mail included, applied in that order.
 //     setattr attr=v replaces and attr= clears; addattr of a value already
-//     present is 4038 AlreadyContainsValue "'attr' already contains 'v'";
+//     present adds nothing, so alone it is 4202 EmptyModlist;
 //     delattr of an absent value is 4026 AttrValueNotFound "'attr' does not
 //     contain 'v'"; delattr of an attribute that has no values (and is not
 //     set or added in the same call) is first 3009 "invalid 'attr': No such
 //     attribute on this entry", as process_attr_options; an attribute the
-//     fake does not model is 3009 "invalid 'attr': attribute not allowed".
-//     The real codes and messages of the
-//     last three are checked by TestContractModify; TestModify_Apply pins
+//     fake does not model is 4205 ObjectclassViolation `attribute "attr" not
+//     allowed`. The duplicate addattr and the unknown attribute were
+//     verified on FreeIPA 4.9.13 and 4.13.4; all five are checked by
+//     TestContractModify; TestModify_Apply pins
 //     the fake. More than one value for a single-valued attribute (two
 //     setattr values, or addattr on a set one) is 4207 OnlyOneValueAllowed
 //     "attr: Only one value allowed.", TestModify_SingleValued. Only mail,

@@ -32,6 +32,7 @@ const (
 	CodeAlreadyContainsValue = 4038
 	CodeEmptyModlist         = 4202
 	CodeDatabase             = 4203
+	CodeObjectclassViolation = 4205
 	CodeOnlyOneValueAllowed  = 4207
 )
 

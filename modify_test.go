@@ -78,9 +78,9 @@ func TestModify_Apply(t *testing.T) {
 		m    *ipa.Modification
 		code int
 	}{
-		{"duplicate", c.Modify("user_mod", "bob").Add("mail", "b2@x"), ipa.CodeAlreadyContainsValue},
+		{"duplicate", c.Modify("user_mod", "bob").Add("mail", "b2@x"), ipa.CodeEmptyModlist},
 		{"absent", c.Modify("user_mod", "bob").Del("mail", "nope@x"), ipa.CodeAttrValueNotFound},
-		{"unknown", c.Modify("user_mod", "bob").Set("nosuch", "v"), ipa.CodeValidation},
+		{"unknown", c.Modify("user_mod", "bob").Set("nosuch", "v"), ipa.CodeObjectclassViolation},
 		{"no such attribute", c.Modify("user_mod", "bob").Del("ou", "x").Add("mail", "b2@x"), ipa.CodeValidation},
 	} {
 		t.Run(tc.name, func(t *testing.T) {

@@ -371,7 +371,7 @@ func (u *User) applyAttrOpts(opts map[string]any) *ipa.IpaError {
 	for _, l := range [][]kv{set, add, del} {
 		for _, e := range l {
 			if _, ok := u.attrVals(e.attr); !ok {
-				return &ipa.IpaError{Code: ipa.CodeValidation, Name: "ValidationError", Message: fmt.Sprintf("invalid '%s': attribute not allowed", e.attr)}
+				return &ipa.IpaError{Code: ipa.CodeObjectclassViolation, Name: "ObjectclassViolation", Message: fmt.Sprintf("attribute %q not allowed", e.attr)}
 			}
 		}
 	}
@@ -397,8 +397,8 @@ func (u *User) applyAttrOpts(opts map[string]any) *ipa.IpaError {
 		}
 	}
 	for _, e := range add {
-		if slices.Contains(cur(e.attr), e.val) {
-			return &ipa.IpaError{Code: ipa.CodeAlreadyContainsValue, Name: "AlreadyContainsValue", Message: fmt.Sprintf("'%s' already contains '%s'", e.attr, e.val)}
+		if slices.Contains(cur(e.attr), e.val) { // a no-op; alone it ends as EmptyModlist
+			continue
 		}
 		vals[e.attr] = append(cur(e.attr), e.val)
 	}
