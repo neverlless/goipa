@@ -103,9 +103,12 @@ func certRequest(s *Server, c Call) (any, *ipa.IpaError) {
 	if !strings.EqualFold(csr.Subject.CommonName, fqdn) {
 		return nil, invalid(fmt.Sprintf("invalid 'csr': hostname in subject of request '%s' does not match name or aliases of principal '%s'", csr.Subject.CommonName, principal))
 	}
+	if csr.PublicKeyAlgorithm != x509.RSA {
+		return nil, certOpError("Key Type RSA Not Matched")
+	}
 	ca, err := s.caLocked()
 	if err != nil {
-		return nil, &ipa.IpaError{Code: 4301, Name: "CertificateOperationError", Message: err.Error()}
+		return nil, certOpError(err.Error())
 	}
 	ca.next++
 	now := time.Now().UTC().Truncate(time.Second)
@@ -159,6 +162,10 @@ func fingerprint(sum []byte) string {
 	return strings.Join(parts, ":")
 }
 
+func certOpError(msg string) *ipa.IpaError {
+	return &ipa.IpaError{Code: 4301, Name: "CertificateOperationError", Message: "Certificate operation cannot be completed: " + msg}
+}
+
 // certLookup finds the certificate a serial_number argument names, decimal or
 // 0x-prefixed hex as FreeIPA accepts.
 func certLookup(s *Server, c Call) (*certRec, *ipa.IpaError) {
@@ -171,6 +178,10 @@ func certLookup(s *Server, c Call) (*certRec, *ipa.IpaError) {
 	}
 	r := s.certs[n.String()]
 	if r == nil {
+		var x, y int
+		if _, err := fmt.Sscanf(s.version, "%d.%d", &x, &y); err == nil && (x < 4 || x == 4 && y < 12) {
+			return nil, certOpError(fmt.Sprintf("Request failed with status 404: Non-2xx response from CA REST API: 404. Certificate ID 0x%x not found (404)", n))
+		}
 		return nil, &ipa.IpaError{Code: ipa.CodeNotFound, Message: fmt.Sprintf("Certificate ID 0x%x not found", n)}
 	}
 	return r, nil

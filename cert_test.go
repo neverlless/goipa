@@ -67,3 +67,10 @@ func TestCertRevoke_SendsReason(t *testing.T) {
 		t.Errorf("call %+v", call)
 	}
 }
+
+func TestCertShow_MissingBefore412(t *testing.T) {
+	s, c := newFake(t)
+	s.SetVersion("4.9.13")
+	_, err := c.CertShow("5")
+	wantCertCode(t, err, 4301)
+}

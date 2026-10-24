@@ -8,10 +8,12 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
+	"crypto/rsa"
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"errors"
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -30,9 +32,10 @@ func newCertHost(t *testing.T, b backend) string {
 	return fqdn
 }
 
+// csrFor makes an RSA CSR: FreeIPA's default profile rejects other keys (Q94).
 func csrFor(t *testing.T, cn string) string {
 	t.Helper()
-	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	key, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -97,7 +100,43 @@ func TestContractCert(t *testing.T) {
 func TestContractCertShowMissing(t *testing.T) {
 	forEachBackend(t, func(t *testing.T, b backend) {
 		_, err := b.admin.CertShow("987654321")
-		wantIs(t, err, ipa.ErrNotFound)
+		if certNotFoundIs4301(t, b) {
+			wantCertCode(t, err, 4301)
+		} else {
+			wantIs(t, err, ipa.ErrNotFound)
+		}
+	})
+}
+
+// certNotFoundIs4301 reports whether b predates 4.12, where Dogtag's 404 came
+// back as 4301 CertificateOperationError.
+func certNotFoundIs4301(t *testing.T, b backend) bool {
+	t.Helper()
+	res, err := b.admin.Ping()
+	if err != nil {
+		t.Fatal(err)
+	}
+	var x, y int
+	if _, err := fmt.Sscanf(res.Version, "%d.%d", &x, &y); err != nil {
+		t.Fatalf("server version %q: %v", res.Version, err)
+	}
+	return x < 4 || x == 4 && y < 12
+}
+
+// TestContractCertRequestECDSA pins Q94.
+func TestContractCertRequestECDSA(t *testing.T) {
+	forEachBackend(t, func(t *testing.T, b backend) {
+		fqdn := newCertHost(t, b)
+		key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+		if err != nil {
+			t.Fatal(err)
+		}
+		der, err := x509.CreateCertificateRequest(rand.Reader, &x509.CertificateRequest{Subject: pkix.Name{CommonName: fqdn}}, key)
+		if err != nil {
+			t.Fatal(err)
+		}
+		_, err = b.admin.CertRequest("host/"+fqdn, string(pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE REQUEST", Bytes: der})))
+		wantCertCode(t, err, 4301)
 	})
 }
 

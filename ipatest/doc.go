@@ -339,10 +339,16 @@
 //   - Q91: cert_revoke marks the certificate revoked; cert_show then answers
 //     revoked true and revocation_reason, the code given (default 0).
 //     goipa.TestContractCert.
-//   - Q92: cert_show and cert_revoke of an unknown serial are 4001 NotFound.
-//     goipa.TestContractCertShowMissing.
+//   - Q92: cert_show and cert_revoke of an unknown serial are 4001 NotFound
+//     "Certificate ID 0x<hex> not found"; before 4.12 (verified on 4.9.13,
+//     4.10 and 4.11 not checked) Dogtag's 404 surfaces as 4301
+//     CertificateOperationError. goipa.TestContractCertShowMissing.
 //   - Q93: a CSR whose CN is not the principal's host is 3009
 //     ValidationError on csr. goipa.TestContractCertRequestWrongCN.
+//   - Q94: the default profile, caIPAserviceCert, takes RSA keys only; any
+//     other key is 4301 CertificateOperationError "Certificate operation
+//     cannot be completed: Key Type RSA Not Matched".
+//     goipa.TestContractCertRequestECDSA.
 //
 // A response's version is the server release, 4.13.4 unless SetVersion
 // changes it, and its principal is
