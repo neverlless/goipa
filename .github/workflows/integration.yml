@@ -35,7 +35,17 @@ jobs:
       # ipa-up.sh writes the credentials to .env; CI=true makes the contract
       # tests fail instead of skipping when they are missing.
       - name: Test
+        env:
+          IPATEST_RECORD: ${{ runner.temp }}/replay
         run: set -a; . ./.env; set +a; go test -race -tags integration -count=1 ./...
+
+      - name: Upload recordings
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: replay-${{ matrix.image }}
+          path: ${{ runner.temp }}/replay
+          if-no-files-found: ignore
 
       - name: Container logs
         if: failure()
