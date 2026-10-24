@@ -234,7 +234,7 @@
 //     cospriority only for group policies, zero optional ones are omitted.
 //     Any caller may read it ([unverified] V7). pwpolicy_add needs an existing
 //     group (4001) and cospriority (3007); login_password and change_password
-//     use the global MaxFailures and MinLength. TestContractPwPolicyGlobal,
+//     use the global MaxFailures (0 disables lockout) and MinLength. TestContractPwPolicyGlobal,
 //     TestUserPwPolicy_Resolution, TestPwPolicy_AddDelAndLoginUseGlobal.
 //
 // A response's version is the server release, 4.13.4, and its principal is

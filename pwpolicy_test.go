@@ -138,3 +138,38 @@ func TestPwPolicy_AddDelAndLoginUseGlobal(t *testing.T) {
 		t.Error("login succeeded after MaxFailures wrong passwords")
 	}
 }
+
+func TestPwPolicy_ZeroMaxFailuresNoLockout(t *testing.T) {
+	s := ipatest.NewServer(t)
+	s.AddUser("bob", ipatest.User{First: "B", Last: "B", Password: "Secret123!"})
+	s.SetPwPolicy("global_policy", ipatest.PwPolicy{MinLength: 3})
+	for range 20 {
+		_ = s.Client().RemoteLogin("bob", "bad")
+	}
+	if err := s.Client().RemoteLogin("bob", "Secret123!"); err != nil {
+		t.Errorf("login with MaxFailures 0: %v", err)
+	}
+}
+
+func TestPwPolicy_DelAndMinLength(t *testing.T) {
+	s := ipatest.NewServer(t)
+	s.AddUser("bob", ipatest.User{First: "B", Last: "B", Password: "Secret123!"})
+	s.AddGroup("g", ipatest.Group{})
+	c := s.ClientAs("admin")
+	if _, err := c.RPC("pwpolicy_add", []string{"g"}, ipa.Options{"cospriority": 1}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := c.RPC("pwpolicy_del", []string{"g"}, nil); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := c.PwPolicyShow("g"); !errors.Is(err, ipa.ErrNotFound) {
+		t.Errorf("show after del err = %v", err)
+	}
+	s.SetPwPolicy("global_policy", ipatest.PwPolicy{MinLength: 12, MaxFailures: 6})
+	if err := s.Client().SetPassword("bob", "Secret123!", "short1!", ""); err == nil {
+		t.Error("password below MinLength accepted")
+	}
+	if err := s.Client().SetPassword("bob", "Secret123!", "longenough123!", ""); err != nil {
+		t.Errorf("long password rejected: %v", err)
+	}
+}

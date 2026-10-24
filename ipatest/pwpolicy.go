@@ -35,7 +35,8 @@ func seedPwPolicies() map[string]PwPolicy {
 }
 
 // SetPwPolicy creates or replaces the password policy cn: "global_policy" or
-// the name of a group.
+// the name of a group. MaxLife and MinLife are rendered in whole days and
+// hours; a sub-unit part is truncated.
 func (s *Server) SetPwPolicy(cn string, p PwPolicy) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -49,9 +50,8 @@ func (p PwPolicy) render(cn string) map[string]any {
 			out[k] = []string{strconv.Itoa(v)}
 		}
 	}
-	set("cospriority", p.Priority, false)
-	if cn == globalPolicy {
-		delete(out, "cospriority")
+	if cn != globalPolicy {
+		set("cospriority", p.Priority, false)
 	}
 	set("krbmaxpwdlife", int(p.MaxLife/(24*time.Hour)), true)
 	set("krbminpwdlife", int(p.MinLife/time.Hour), true)
