@@ -124,6 +124,7 @@ type Server struct {
 	privs      map[string]*ipa.Privilege
 	perms      map[string]*ipa.Permission
 	replay     fs.FS
+	services   map[string]*serviceRec
 }
 
 // NewServer starts a server and closes it with tb.Cleanup.
@@ -159,6 +160,7 @@ func New() *Server {
 		privs:      seedPrivileges(),
 		perms:      seedPermissions(),
 		replay:     shippedReplay(),
+		services:   map[string]*serviceRec{},
 	}
 	mux := http.NewServeMux()
 	mux.HandleFunc("/ipa/session/json", s.serveSessionJSON)

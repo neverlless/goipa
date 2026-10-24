@@ -351,6 +351,48 @@ func twinCalls() []twinCall {
 			_, err := c.PermissionFindContext(ctx, nil)
 			return err
 		}},
+		{"ServiceShowContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.ServiceShowContext(ctx, "HTTP/h")
+			return err
+		}},
+		{"ServiceFindContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.ServiceFindContext(ctx, nil)
+			return err
+		}},
+		{"ServiceAddContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.ServiceAddContext(ctx, "HTTP/h", false)
+			return err
+		}},
+		{"ServiceDeleteContext", func(ctx context.Context, c *ipa.Client) error {
+			return c.ServiceDeleteContext(ctx, "HTTP/h")
+		}},
+		{"ServiceAddHostContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.ServiceAddHostContext(ctx, "HTTP/h", []string{"h"})
+			return err
+		}},
+		{"ServiceRemoveHostContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.ServiceRemoveHostContext(ctx, "HTTP/h", []string{"h"})
+			return err
+		}},
+		{"ServiceAllowRetrieveKeytabContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.ServiceAllowRetrieveKeytabContext(ctx, "HTTP/h", ipa.KeytabAccess{Users: []string{"bob"}})
+			return err
+		}},
+		{"ServiceDisallowRetrieveKeytabContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.ServiceDisallowRetrieveKeytabContext(ctx, "HTTP/h", ipa.KeytabAccess{Users: []string{"bob"}})
+			return err
+		}},
+		{"ServiceAllowCreateKeytabContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.ServiceAllowCreateKeytabContext(ctx, "HTTP/h", ipa.KeytabAccess{Users: []string{"bob"}})
+			return err
+		}},
+		{"ServiceDisallowCreateKeytabContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.ServiceDisallowCreateKeytabContext(ctx, "HTTP/h", ipa.KeytabAccess{Users: []string{"bob"}})
+			return err
+		}},
+		{"ServiceDisableContext", func(ctx context.Context, c *ipa.Client) error {
+			return c.ServiceDisableContext(ctx, "HTTP/h")
+		}},
 	}
 }
 
