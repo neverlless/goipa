@@ -69,7 +69,11 @@ func (c *Client) StickySession(enable bool) {
 func (c *Client) setSessionID(res *http.Response) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
+	return c.setSessionIDLocked(res)
+}
 
+// setSessionIDLocked is setSessionID with c.mu held.
+func (c *Client) setSessionIDLocked(res *http.Response) error {
 	if !c.sticky {
 		return nil
 	}
@@ -105,6 +109,14 @@ func (c *Client) RemoteLogin(uid, passwd string) error {
 
 // RemoteLoginContext is like RemoteLogin but bounds the request with ctx.
 func (c *Client) RemoteLoginContext(ctx context.Context, uid, passwd string) error {
+	return c.remoteLogin(ctx, uid, passwd, false)
+}
+
+// errReloginCleared means the credentials of a re-login were cleared or
+// replaced while it ran, so its session is dropped.
+var errReloginCleared = errors.New("ipa: re-login credentials changed during login")
+
+func (c *Client) remoteLogin(ctx context.Context, uid, passwd string, relogin bool) error {
 	ipaURL := fmt.Sprintf("https://%s/ipa/session/login_password", c.host)
 
 	form := url.Values{"user": {uid}, "password": {passwd}}
@@ -134,19 +146,20 @@ func (c *Client) RemoteLoginContext(ctx context.Context, uid, passwd string) err
 	}
 
 	if res.StatusCode != 200 {
-		return fmt.Errorf("IPA login failed with HTTP status code: %d", res.StatusCode)
+		return newFormHTTPError("IPA login failed", res)
 	}
 
-	if err = c.setSessionID(res); err != nil {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if relogin && (c.reloginUser != uid || c.reloginPass != passwd) { // ClearSession ran meanwhile
+		return errReloginCleared
+	}
+	if err = c.setSessionIDLocked(res); err != nil {
 		return err
 	}
-
 	if c.relogin {
-		c.mu.Lock()
 		c.reloginUser, c.reloginPass = uid, passwd
-		c.mu.Unlock()
 	}
-
 	return nil
 }
 

@@ -87,3 +87,32 @@ func TestKerberosLoginErrors(t *testing.T) {
 		t.Error("LoginFromCCache: nil error")
 	}
 }
+
+// TestDeprecated_StillWork runs a v0.0.7-style program: the deprecated
+// identifiers keep their v0.9.1 behaviour.
+func TestDeprecated_StillWork(t *testing.T) {
+	s := ipatest.NewServer(t)
+	s.AddUser("bob", ipatest.User{Password: "secret123"})
+	c := ipa.NewClientCustomHttp(s.Host(), s.Realm(), s.HTTPClient())
+	if err := c.RemoteLogin("bob", "secret123"); err != nil {
+		t.Fatal(err)
+	}
+	res, err := c.Ping()
+	if err != nil || res.Error != nil {
+		t.Fatalf("Ping = %+v, %v", res, err)
+	}
+	tok, err := c.AddOTPToken(nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	d := ipa.DefaultTOTPToken
+	if tok.Type != d.Type || tok.Algorithm != d.Algorithm || tok.Digits != d.Digits || tok.TimeStep != d.TimeStep {
+		t.Errorf("token = %+v, want defaults %+v", tok, d)
+	}
+	if !ipa.ParseDateTime("20261022090000Z").Equal(time.Date(2026, 10, 22, 9, 0, 0, 0, time.UTC)) {
+		t.Error("ParseDateTime")
+	}
+	if ipa.NewClient("h", "R").Host() != "h" || ipa.NewDefaultClient() == nil || ipa.NewDefaultClientWithSession("sid").SessionID() != "sid" {
+		t.Error("constructors")
+	}
+}

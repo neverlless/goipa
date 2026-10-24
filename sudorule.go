@@ -117,12 +117,7 @@ func (c *Client) sudoMembers(ctx context.Context, method, name string, lists map
 	if name == "" {
 		return nil, errSudoRuleName
 	}
-	e, err := c.memberEntry(ctx, method, []string{name}, lists)
-	var me *MemberError
-	if err != nil && !errors.As(err, &me) {
-		return nil, err
-	}
-	return sudoRule(e), err
+	return members(ctx, c, method, []string{name}, lists, sudoRule)
 }
 
 // sudoOptions sends one call per option, each a scalar: FreeIPA 4.9

@@ -59,7 +59,11 @@ func (r *Result) UnmarshalJSON(b []byte) error {
 }
 
 // Response returned from a FreeIPA JSON rpc call
+//
+// ID is always 0.
 type Response struct {
+	// Deprecated: never set in a *Response goipa returns; the FreeIPA error is
+	// the returned error, a bare *IpaError.
 	Error     *IpaError `json:"error"`
 	ID        int       `json:"id"`
 	Principal string    `json:"principal"`
@@ -146,29 +150,50 @@ func (c *Client) rpcParams(ctx context.Context, method string, params []any, opt
 }
 
 // passwordRelogin logs in again with the stored credentials unless another
-// goroutine already did; reloginMu makes concurrent 401s cost one login, so a
-// changed password costs one failure, not one per goroutine. ok is false when
-// no credentials are stored (never given, cleared, or dropped after a
-// rejection), and the caller returns its 401.
+// goroutine already did; concurrent 401s wait for one login, so a changed
+// password costs one failure, not one per goroutine. ok is false when no
+// credentials are stored (never given, cleared, or dropped after a rejection)
+// or they were cleared during the login, and the caller returns its 401.
 func (c *Client) passwordRelogin(ctx context.Context) (ok bool, err error) {
-	c.reloginMu.Lock()
-	defer c.reloginMu.Unlock()
 	c.mu.Lock()
+	for c.reloginDone != nil {
+		done := c.reloginDone
+		c.mu.Unlock()
+		select {
+		case <-done:
+		case <-ctx.Done():
+			return true, ctx.Err()
+		}
+		c.mu.Lock()
+	}
 	fresh, user, pass := c.sessionID, c.reloginUser, c.reloginPass
-	c.mu.Unlock()
 	switch {
 	case fresh != "":
+		c.mu.Unlock()
 		return true, nil
 	case user == "":
+		c.mu.Unlock()
 		return false, nil
 	}
-	if err := c.RemoteLoginContext(ctx, user, pass); err != nil {
-		if errors.Is(err, ErrInvalidPassword) || errors.Is(err, ErrExpiredPassword) || errors.Is(err, ErrUnauthorized) {
-			c.dropRelogin(user, pass) // retrying a rejected password ends in lockout
-		}
+	done := make(chan struct{})
+	c.reloginDone = done
+	c.mu.Unlock()
+	defer func() {
+		c.mu.Lock()
+		c.reloginDone = nil
+		c.mu.Unlock()
+		close(done)
+	}()
+
+	switch err := c.remoteLogin(ctx, user, pass, true); {
+	case errors.Is(err, errReloginCleared):
+		return false, nil
+	case errors.Is(err, ErrInvalidPassword) || errors.Is(err, ErrExpiredPassword) || errors.Is(err, ErrUnauthorized):
+		c.dropRelogin(user, pass) // retrying a rejected password ends in lockout
+		return true, err
+	default:
 		return true, err
 	}
-	return true, nil
 }
 
 // send makes one request with body b and returns the session it carried and
@@ -284,6 +309,9 @@ func (c *Client) PingContext(ctx context.Context) (*Response, error) {
 // Parse a FreeIPA datetime. Datetimes in FreeIPA are returned using a
 // class-hint system. Values are stored as an array with a single element
 // indicating the type and value, for example, '[{"__datetime__": "YYYY-MM-DDTHH:MM:SSZ"]}'
+//
+// Deprecated: use Entry.Time (through Call[Entry]), or
+// time.Parse(IpaDatetimeFormat, s).
 func ParseDateTime(str string) time.Time {
 	dt, err := time.Parse(IpaDatetimeFormat, str)
 	if err != nil {

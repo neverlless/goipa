@@ -142,7 +142,7 @@ func (c *Client) DNSZoneDeleteContext(ctx context.Context, names ...string) erro
 	if len(names) == 0 || slices.Contains(names, "") {
 		return errZoneRequired
 	}
-	_, err := c.rpc(ctx, "dnszone_del", names, nil)
+	_, err := c.rpc(ctx, "dnszone_del", names, Options{"continue": false})
 	return err
 }
 
@@ -260,6 +260,8 @@ func (c *Client) DNSRecordAddContext(ctx context.Context, zone, name, rtype stri
 // DNSRecordRemove removes values of type rtype at name in zone with
 // `dnsrecord_del`; FreeIPA deletes the name when no records are left. It
 // requires the DNS Administrators privilege (System: Update DNS Entries).
+//
+// Call DNSRecordShow for the records left.
 func (c *Client) DNSRecordRemove(zone, name, rtype string, values ...string) error {
 	return c.DNSRecordRemoveContext(context.Background(), zone, name, rtype, values...)
 }

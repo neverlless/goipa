@@ -153,3 +153,32 @@ func TestIpaErrorMarshalJSONInvalidData(t *testing.T) {
 		t.Errorf("got %s, %v", b, err)
 	}
 }
+
+func checkFormHTTPError(t *testing.T, err error, want string) {
+	t.Helper()
+	if err == nil || err.Error() != want {
+		t.Fatalf("err = %v, want %q", err, want)
+	}
+	var herr *ipa.HTTPError
+	if !errors.As(err, &herr) || herr.StatusCode != 500 || herr.Status != "500 Internal Server Error" {
+		t.Errorf("errors.As(*HTTPError) = %+v", herr)
+	}
+	if errors.Is(err, ipa.ErrUnauthorized) {
+		t.Error("500 must not match ErrUnauthorized")
+	}
+}
+
+func TestFormHTTPError_RemoteLogin(t *testing.T) {
+	c, _ := newFakeIPA(t, http.StatusInternalServerError, "")
+	checkFormHTTPError(t, c.RemoteLogin("u", "p"), "IPA login failed with HTTP status code: 500")
+}
+
+func TestFormHTTPError_SetPassword(t *testing.T) {
+	c, _ := newFakeIPA(t, http.StatusInternalServerError, "")
+	checkFormHTTPError(t, c.SetPassword("u", "old", "new", ""), "ipa: change password failed with HTTP status code: 500")
+}
+
+func TestFormHTTPError_SyncOTPToken(t *testing.T) {
+	c, _ := newFakeIPA(t, http.StatusInternalServerError, "")
+	checkFormHTTPError(t, c.SyncOTPToken("u", "p", "1", "2", ""), "ipa: token sync failed with HTTP status code: 500")
+}

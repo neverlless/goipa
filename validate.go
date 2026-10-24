@@ -54,14 +54,12 @@ func validateCall(method, version string, nargs int, opts Options) error {
 	}
 	for _, key := range slices.Sorted(maps.Keys(opts)) {
 		byName := func(p Param) bool { return p.Name == key }
-		j := slices.IndexFunc(cmd.Options, byName)
 		var since string
-		switch {
-		case j >= 0:
+		if j := slices.IndexFunc(cmd.Options, byName); j >= 0 {
 			since = cmd.Options[j].Since
-		case slices.ContainsFunc(args, byName):
-			continue // FreeIPA takes an argument by name among the options too (passwd current_password)
-		default:
+		} else if j := slices.IndexFunc(cmd.Args, byName); j >= 0 {
+			since = cmd.Args[j].Since // FreeIPA takes an argument by name among the options too (passwd current_password)
+		} else {
 			return fmt.Errorf("%w: %s has no option %q", ErrInvalidCall, method, key)
 		}
 		if !sinceOK(since, limit, all) {

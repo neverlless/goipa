@@ -105,6 +105,9 @@ func (c *Client) GroupShowContext(ctx context.Context, name string) (*Group, err
 // GroupFind finds groups with `group_find`; options are passed through (e.g.
 // `cn`, `user`, `in_group`, `sizelimit`). Any authenticated user may read
 // groups (System: Read Groups).
+//
+// A truncated search is not reported (kept for compatibility); use FindEntries
+// with the same method to detect it.
 func (c *Client) GroupFind(options Options) ([]*Group, error) {
 	return c.GroupFindContext(context.Background(), options)
 }
@@ -217,13 +220,13 @@ func (c *Client) GroupDeleteContext(ctx context.Context, names ...string) error 
 
 // MemberFailure is one member FreeIPA refused to add or remove.
 type MemberFailure struct {
-	Kind    string // "member" or "membermanager"
-	Type    string // "user" or "group"
+	Kind    string // "member", "membermanager" or "condition" (automember)
+	Type    string // the key FreeIPA reports: "user", "group", "host", "hbacsvc", ..., or the automember regex attribute
 	Name    string
 	Message string
 }
 
-// MemberError reports the members a group member call could not change.
+// MemberError reports the members a member call could not change.
 // FreeIPA lists them in the result, with no error, even when the caller lacks
 // the right to change members at all.
 type MemberError struct {
@@ -256,6 +259,7 @@ func parseMemberFailures(failed json.RawMessage) []MemberFailure {
 	return out
 }
 
+// groupMembers has the same contract as members.
 func (c *Client) groupMembers(ctx context.Context, method, group string, users, groups []string) (*Group, error) {
 	if group == "" {
 		return nil, errors.New("ipa: group name is required")

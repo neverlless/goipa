@@ -68,9 +68,9 @@ func TestFindTyped_CallerOptionsWin(t *testing.T) {
 	}
 }
 
-func TestMemberEntry_Empty(t *testing.T) {
+func TestMembers_Empty(t *testing.T) {
 	s, c := newFake(t)
-	_, err := ipa.MemberEntry(context.Background(), c, "group_add_member", []string{"g"}, map[string][]string{"user": nil, "group": {}})
+	_, err := ipa.Members(context.Background(), c, "group_add_member", []string{"g"}, map[string][]string{"user": nil, "group": {}})
 	if err == nil {
 		t.Fatal("want error")
 	}
@@ -79,15 +79,40 @@ func TestMemberEntry_Empty(t *testing.T) {
 	}
 }
 
-func TestMemberEntry_Failures(t *testing.T) {
+func TestMembers_Failures(t *testing.T) {
 	s, c := newFake(t)
 	s.AddGroup("g", ipatest.Group{})
-	e, err := ipa.MemberEntry(context.Background(), c, "group_add_member", []string{"g"}, map[string][]string{"user": {"ghost"}})
+	e, err := ipa.Members(context.Background(), c, "group_add_member", []string{"g"}, map[string][]string{"user": {"ghost"}})
 	var me *ipa.MemberError
 	if !errors.As(err, &me) {
 		t.Fatalf("err = %v", err)
 	}
 	if e.Str("cn") != "g" {
 		t.Errorf("entry empty: %s", e.Raw())
+	}
+}
+
+func TestMembers_OneHelper(t *testing.T) {
+	s, c := newFake(t)
+	s.AddHostGroup("hg", ipatest.HostGroup{})
+	s.AddHBACRule("hr", ipatest.HBACRule{})
+	s.AddSudoRule("sr", ipatest.SudoRule{})
+	s.AddService("HTTP/web.example.test@EXAMPLE.TEST", ipatest.Service{})
+	calls := map[string]func() (any, error){
+		"hostgroup": func() (any, error) { return c.HostGroupAddMember("hg", []string{"ghost.example.test"}, nil) },
+		"hbacrule":  func() (any, error) { return c.HBACRuleAddUser("hr", []string{"ghost"}, nil) },
+		"sudorule":  func() (any, error) { return c.SudoRuleAddHost("sr", nil, []string{"ghost"}) },
+		"service": func() (any, error) {
+			return c.ServiceAllowRetrieveKeytab("HTTP/web.example.test@EXAMPLE.TEST", ipa.KeytabAccess{Users: []string{"ghost"}})
+		},
+	}
+	for name, call := range calls {
+		obj, err := call()
+		if _, ok := errors.AsType[*ipa.MemberError](err); !ok {
+			t.Errorf("%s: err = %v, want *MemberError", name, err)
+		}
+		if reflect.ValueOf(obj).IsNil() {
+			t.Errorf("%s: object is nil", name)
+		}
 	}
 }

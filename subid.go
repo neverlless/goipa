@@ -36,6 +36,9 @@ func subIDFrom(res gjson.Result) *SubID {
 // SubIDFind finds sub-ID ranges with `subid_find`; options are passed through
 // (e.g. `ipaowner`). Any authenticated user may read sub-IDs. FreeIPA 4.9.7+;
 // ErrNotSupported when the server version is known to be older.
+//
+// A truncated search is not reported (kept for compatibility); use FindEntries
+// with the same method to detect it.
 func (c *Client) SubIDFind(options Options) ([]*SubID, error) {
 	return c.SubIDFindContext(context.Background(), options)
 }

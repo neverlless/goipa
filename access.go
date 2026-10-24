@@ -63,6 +63,9 @@ type SudoRule struct {
 // through (e.g. `cn`, `ipaenabledflag`, `sizelimit`). Any authenticated user
 // may read rules (System: Read HBAC Rules). FreeIPA returns at most its search
 // limit (100 by default) unless `sizelimit` is set.
+//
+// A truncated search is not reported (kept for compatibility); use FindEntries
+// with the same method to detect it.
 func (c *Client) HBACRuleFind(options Options) ([]*HBACRule, error) {
 	return c.HBACRuleFindContext(context.Background(), options)
 }
@@ -76,6 +79,9 @@ func (c *Client) HBACRuleFindContext(ctx context.Context, options Options) ([]*H
 // through (e.g. `cn`, `ipaenabledflag`, `sizelimit`). Any authenticated user
 // may read rules (System: Read Sudo Rules). FreeIPA returns at most its search
 // limit (100 by default) unless `sizelimit` is set.
+//
+// A truncated search is not reported (kept for compatibility); use FindEntries
+// with the same method to detect it.
 func (c *Client) SudoRuleFind(options Options) ([]*SudoRule, error) {
 	return c.SudoRuleFindContext(context.Background(), options)
 }

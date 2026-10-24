@@ -88,7 +88,7 @@ func (c *Client) HBACRuleDeleteContext(ctx context.Context, names ...string) err
 	if len(names) == 0 || slices.Contains(names, "") {
 		return errHBACRuleName
 	}
-	_, err := c.rpc(ctx, "hbacrule_del", names, Options{})
+	_, err := c.rpc(ctx, "hbacrule_del", names, Options{"continue": false})
 	return err
 }
 
@@ -209,10 +209,5 @@ func (c *Client) hbacRuleMembers(ctx context.Context, method, name string, lists
 	if name == "" {
 		return nil, errHBACRuleName
 	}
-	e, err := c.memberEntry(ctx, method, []string{name}, lists)
-	var me *MemberError
-	if err != nil && !errors.As(err, &me) {
-		return nil, err
-	}
-	return hbacRuleEntry(e), err
+	return members(ctx, c, method, []string{name}, lists, hbacRuleEntry)
 }
