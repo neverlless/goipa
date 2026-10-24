@@ -12,10 +12,10 @@ import (
 )
 
 // TestContract_UnknownOption pins Q44 with a client that does not validate
-// (b.admin comes from NewClientCustomHttp), so the server sees the option.
+// (rawAdmin), so the server sees the option instead of the catalogue check.
 func TestContract_UnknownOption(t *testing.T) {
 	forEachBackend(t, func(t *testing.T, b backend) {
-		_, err := b.admin.RPC("user_show", []string{"admin"}, ipa.Options{"no_such_opt": true})
+		_, err := b.rawAdmin().RPC("user_show", []string{"admin"}, ipa.Options{"no_such_opt": true})
 		var ie *ipa.IpaError
 		if !errors.As(err, &ie) || ie.Code != ipa.CodeOption || ie.Name != "OptionError" || ie.Message != "Unknown option: no_such_opt" {
 			t.Fatalf("got %#v, want 3005 OptionError \"Unknown option: no_such_opt\"", err)
