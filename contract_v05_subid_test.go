@@ -40,7 +40,11 @@ func enableSubIDs(t *testing.T, b backend) {
 	if err := set(rest); err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(func() { _ = set(orig) })
+	t.Cleanup(func() {
+		if err := set(orig); err != nil {
+			t.Errorf("restore ipaconfigstring %v: %v", orig, err)
+		}
+	})
 }
 
 // V8
