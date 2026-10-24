@@ -332,14 +332,17 @@
 //     categories; hbacrule_show of a missing rule is 4001 "<cn>: HBAC rule
 //     not found" and shows members unless no_members is true.
 //     goipa.TestContractHBACRuleLifecycle, goipa.TestHBACRuleShow_FakeRule.
-//   - Q71: hbacrule_disable of a disabled rule is 4010 AlreadyInactive,
-//     hbacrule_enable of an enabled one 4009 AlreadyActive; success answers
-//     result true. goipa.TestContractHBACRuleEnableDisable.
+//   - Q71: hbacrule_enable and hbacrule_disable answer result true even
+//     when the rule is already in that state, unlike user_enable (Q17);
+//     verified on FreeIPA 4.9.13, 4.12.2 and 4.13.4.
+//     goipa.TestContractHBACRuleEnableDisable.
 //   - Q72: hbacrule_{add,remove}_{user,host,service} take user/group,
 //     host/hostgroup and hbacsvc/hbacsvcgroup and answer as group_add_member
 //     with failed.memberuser, failed.memberhost and failed.memberservice:
-//     "no such entry", "This entry is already a member" or "This entry is
-//     not a member". goipa.TestContractHBACRuleMemberMissing,
+//     adding a missing name is "no such entry", adding a member "This entry
+//     is already a member"; removing any name that is not a member, missing
+//     or not, is "This entry is not a member" (unlike group_remove_member).
+//     goipa.TestContractHBACRuleMemberMissing,
 //     goipa.TestContractHBACRuleMembers.
 //   - Q73: adding users, hosts or services to a rule whose matching category
 //     is all is 4303 MutuallyExclusiveError "users cannot be added when user

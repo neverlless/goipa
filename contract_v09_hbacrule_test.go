@@ -53,14 +53,18 @@ func TestContractHBACRuleEnableDisable(t *testing.T) {
 		if got, err := b.admin.HBACRuleShow(r.Name); err != nil || got.Enabled {
 			t.Fatalf("after disable = %+v, %v", got, err)
 		}
-		wantCode(t, "disable", b.admin.HBACRuleDisable(r.Name), ipa.CodeAlreadyInactive)
+		if err := b.admin.HBACRuleDisable(r.Name); err != nil {
+			t.Errorf("disable twice: %v", err)
+		}
 		if err := b.admin.HBACRuleEnable(r.Name); err != nil {
 			t.Fatal(err)
 		}
 		if got, err := b.admin.HBACRuleShow(r.Name); err != nil || !got.Enabled {
 			t.Fatalf("after enable = %+v, %v", got, err)
 		}
-		wantCode(t, "enable", b.admin.HBACRuleEnable(r.Name), ipa.CodeAlreadyActive)
+		if err := b.admin.HBACRuleEnable(r.Name); err != nil {
+			t.Errorf("enable twice: %v", err)
+		}
 		wantIs(t, b.admin.HBACRuleEnable("nosuchrule-"+randHex(t, 4)), ipa.ErrNotFound)
 	})
 }
@@ -132,7 +136,7 @@ func TestContractHBACRuleMemberMissing(t *testing.T) {
 		got, err = b.admin.HBACRuleAddService(r.Name, []string{ghost}, nil)
 		check("add service", got, err, "hbacsvc", "no such entry")
 		got, err = b.admin.HBACRuleRemoveService(r.Name, nil, []string{ghost})
-		check("remove service group", got, err, "hbacsvcgroup", "no such entry")
+		check("remove service group", got, err, "hbacsvcgroup", "This entry is not a member")
 
 		got, err = b.admin.HBACRuleAddService(r.Name, []string{"sshd"}, nil)
 		if err != nil {

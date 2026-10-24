@@ -50,12 +50,6 @@ func hbacRuleToggle(disable bool) builtin {
 		if err != nil {
 			return nil, err
 		}
-		if r.Disabled == disable {
-			if disable {
-				return nil, &ipa.IpaError{Code: ipa.CodeAlreadyInactive, Message: "This entry is already disabled"}
-			}
-			return nil, &ipa.IpaError{Code: ipa.CodeAlreadyActive, Message: "This entry is already enabled"}
-		}
 		r.Disabled = disable
 		verb := "Enabled"
 		if disable {
@@ -119,10 +113,10 @@ func hbacMembers(part string, add bool) builtin {
 				switch {
 				case add && in:
 					failed[l.opt] = append(failed[l.opt], []string{n, "This entry is already a member"})
-				case !in && !l.known(n):
-					failed[l.opt] = append(failed[l.opt], []string{n, "no such entry"})
 				case !add && !in:
 					failed[l.opt] = append(failed[l.opt], []string{n, "This entry is not a member"})
+				case !in && !l.known(n):
+					failed[l.opt] = append(failed[l.opt], []string{n, "no such entry"})
 				case add:
 					*l.dst = append(*l.dst, n)
 					completed++

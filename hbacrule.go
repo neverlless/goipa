@@ -92,8 +92,8 @@ func (c *Client) HBACRuleDeleteContext(ctx context.Context, names ...string) err
 }
 
 // HBACRuleEnable enables an HBAC rule with `hbacrule_enable`; it requires the
-// HBAC Administrator privilege (System: Modify HBAC Rule). An enabled rule is
-// 4009 AlreadyActive.
+// HBAC Administrator privilege (System: Modify HBAC Rule). Enabling an
+// enabled rule succeeds.
 func (c *Client) HBACRuleEnable(name string) error {
 	return c.HBACRuleEnableContext(context.Background(), name)
 }
@@ -104,8 +104,8 @@ func (c *Client) HBACRuleEnableContext(ctx context.Context, name string) error {
 }
 
 // HBACRuleDisable disables an HBAC rule with `hbacrule_disable`; it requires
-// the HBAC Administrator privilege (System: Modify HBAC Rule). A disabled rule
-// is 4010 AlreadyInactive.
+// the HBAC Administrator privilege (System: Modify HBAC Rule). Disabling a
+// disabled rule succeeds.
 func (c *Client) HBACRuleDisable(name string) error {
 	return c.HBACRuleDisableContext(context.Background(), name)
 }
