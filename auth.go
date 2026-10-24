@@ -81,6 +81,10 @@ func (c *Client) setSessionID(res *http.Response) error {
 		if len(cookie.Value) != 32 && !strings.HasPrefix(cookie.Value, "MagBearerToken") {
 			return errors.New("invalid set-cookie header")
 		}
+		if cookie.Value == "MagBearerToken=" { // FreeIPA's logout cookie
+			c.sessionID = ""
+			continue
+		}
 		c.sessionID = cookie.Value
 	}
 

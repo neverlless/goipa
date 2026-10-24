@@ -99,6 +99,17 @@ func TestExpiredSession_CompareAndClear(t *testing.T) {
 	}
 }
 
+func TestSetSessionID_LogoutCookieClears(t *testing.T) {
+	c := &Client{sticky: true, sessionID: oldSID}
+	res := &http.Response{Header: http.Header{"Set-Cookie": {"ipa_session=MagBearerToken=; Path=/ipa"}}}
+	if err := c.setSessionID(res); err != nil {
+		t.Fatal(err)
+	}
+	if c.SessionID() != "" {
+		t.Errorf("SessionID = %q, want cleared", c.SessionID())
+	}
+}
+
 func TestSPNEGO401NotRetried(t *testing.T) {
 	orig := setSPNEGOHeader
 	t.Cleanup(func() { setSPNEGOHeader = orig })
