@@ -34,20 +34,16 @@ func TestContractModify(t *testing.T) {
 			_, err := m.Run(ctx)
 			return err
 		}
-		// On the real server these only record the code; ipatest must match the brief.
+		// Asserted on every backend, so a FreeIPA release that answers differently fails the nightly with its code.
 		record := func(what string, err error, code int) {
 			t.Helper()
 			var ie *ipa.IpaError
 			if !errors.As(err, &ie) {
-				if b.name == "ipatest" {
-					t.Fatalf("%s err = %v", what, err)
-				}
-				t.Logf("%s: err = %v", what, err)
+				t.Errorf("%s: err = %v, want code %d", what, err, code)
 				return
 			}
-			t.Logf("%s: %d %s %q", what, ie.Code, ie.Name, ie.Message)
-			if b.name == "ipatest" && ie.Code != code {
-				t.Errorf("%s code = %d, want %d", what, ie.Code, code)
+			if ie.Code != code {
+				t.Errorf("%s: %d %s %q, want code %d", what, ie.Code, ie.Name, ie.Message, code)
 			}
 		}
 		record("delattr of an attribute the entry lacks", run(b.admin.Modify("user_mod", uid).Del("title", "x")), ipa.CodeValidation)
