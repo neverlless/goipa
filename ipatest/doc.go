@@ -338,7 +338,8 @@
 //     groups in ipasudorunasextgroup. Only host groups, commands and
 //     command groups fail with "no such entry"; host groups and command
 //     groups are not modelled, so each one fails. Removing a name that is
-//     neither a member nor external is "no such entry".
+//     neither a member nor external, existing or not, is "This entry is not
+//     a member".
 //     goipa.TestContractSudoRuleExternalMembers,
 //     goipa.TestContractSudoRuleMemberMissing, TestSudoMember_External.
 //   - Q82: sudorule_add_option of an option the rule has is 4002

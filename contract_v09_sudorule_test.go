@@ -204,6 +204,11 @@ func TestContractSudoRuleMemberMissing(t *testing.T) {
 		if !reflect.DeepEqual(me.Failures, want) {
 			t.Errorf("failures = %+v", me.Failures)
 		}
+		r, err = b.admin.SudoRuleRemoveAllowCommand(cn, []string{ghost}, nil)
+		want[0].Message = "This entry is not a member"
+		if !errors.As(err, &me) || r == nil || !reflect.DeepEqual(me.Failures, want) {
+			t.Errorf("remove missing: rule = %+v, err = %v", r, err)
+		}
 		_, err = b.admin.SudoRuleAddUser("gsmissing"+randHex(t, 4), []string{"admin"}, nil)
 		wantIs(t, err, ipa.ErrNotFound)
 	})

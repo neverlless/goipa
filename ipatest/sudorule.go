@@ -89,6 +89,8 @@ func sudoMember(add bool, k sudoKind) builtin {
 					*dst = append(*dst, n)
 				case slices.Contains(*dst, n):
 					*dst = slices.DeleteFunc(*dst, func(m string) bool { return m == n })
+				case !add:
+					msg = "This entry is not a member"
 				case !known:
 					msg = "no such entry"
 				default:

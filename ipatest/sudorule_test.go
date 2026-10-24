@@ -31,7 +31,7 @@ func TestSudoMember_External(t *testing.T) {
 	}
 	res = rpc(t, c, "sudorule_remove_user", []string{"s1"}, ipa.Options{"user": []string{"ghost", "nobody"}})
 	r = gjson.ParseBytes(res.Result.Raw)
-	if r.Get("completed").Int() != 1 || r.Get("failed.memberuser.user.0.1").String() != "no such entry" {
+	if r.Get("completed").Int() != 1 || r.Get("failed.memberuser.user.0.1").String() != "This entry is not a member" {
 		t.Errorf("remove = %s", res.Result.Raw)
 	}
 	if got := r.Get("result.externaluser").Raw; got != `["nogroup"]` {
