@@ -38,6 +38,9 @@ func TestContractStageUserLifecycle(t *testing.T) {
 		if u.Username != uid || !u.Locked { // V2
 			t.Errorf("added = %q locked %v", u.Username, u.Locked)
 		}
+		if u.Uid != "-1" || u.Gid != "-1" { // DNA magic value until activation
+			t.Errorf("stage uidnumber %q gidnumber %q, want -1", u.Uid, u.Gid)
+		}
 		if got, err := b.admin.StageUserShow(uid); err != nil || got.Category != "staff" {
 			t.Fatalf("show = %+v, %v", got, err)
 		}
@@ -70,7 +73,7 @@ func TestContractStageUserLifecycle(t *testing.T) {
 		}
 
 		act, err := b.admin.StageUserActivate(uid)
-		if err != nil || act.Username != uid || act.Locked {
+		if err != nil || act.Username != uid || act.Locked || act.Uid == "" || act.Uid == "-1" {
 			t.Fatalf("activate = %+v, %v", act, err)
 		}
 		if _, err := b.admin.UserShow(uid); err != nil {

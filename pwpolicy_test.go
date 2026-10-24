@@ -12,6 +12,7 @@ import (
 
 	ipa "github.com/neverlless/goipa"
 	"github.com/neverlless/goipa/ipatest"
+	"github.com/tidwall/gjson"
 )
 
 func TestPwPolicy_BoolForms(t *testing.T) {
@@ -190,5 +191,32 @@ func TestPwPolicy_DelAndMinLength(t *testing.T) {
 	}
 	if err := s.Client().SetPassword("bob", "Secret123!", "longenough123!", ""); err != nil {
 		t.Errorf("long password rejected: %v", err)
+	}
+}
+
+func TestPwPolicyShow_GroupOmitsUnset(t *testing.T) {
+	s := ipatest.NewServer(t)
+	s.AddGroup("ops", ipatest.Group{})
+	c := s.ClientAs("admin")
+	if _, err := c.RPC("pwpolicy_add", []string{"ops"}, ipa.Options{"cospriority": 5, "krbpwdminlength": 12}); err != nil {
+		t.Fatal(err)
+	}
+	res, err := c.RPC("pwpolicy_show", []string{"ops"}, ipa.Options{"all": true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := gjson.ParseBytes(res.Result.Data)
+	for _, k := range []string{"krbmaxpwdlife", "krbpwdmaxfailure", "ipapwddcredit", "ipapwddictcheck"} {
+		if got.Get(k).Exists() {
+			t.Errorf("%s = %s on a group policy that never set it", k, got.Get(k).Raw)
+		}
+	}
+	if got.Get("krbpwdminlength.0").String() != "12" || got.Get("cospriority.0").String() != "5" ||
+		got.Get("passwordgracelimit.0").String() != "-1" {
+		t.Errorf("policy = %s", res.Result.Data)
+	}
+	res, err = c.RPC("pwpolicy_show", nil, ipa.Options{"all": true})
+	if err != nil || !gjson.GetBytes(res.Result.Data, "ipapwddcredit").Exists() || !gjson.GetBytes(res.Result.Data, "krbpwdhistorylength").Exists() {
+		t.Errorf("global = %s, %v", res.Result.Data, err)
 	}
 }

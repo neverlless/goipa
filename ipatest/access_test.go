@@ -5,6 +5,7 @@
 package ipatest_test
 
 import (
+	"errors"
 	"slices"
 	"testing"
 
@@ -113,5 +114,39 @@ func TestRuleAddUserFailures(t *testing.T) {
 		if f.Get("group.#").Int() != 1 || f.Get("group.0.0").String() != "nogroup" || f.Get("group.0.1").String() != "no such entry" {
 			t.Errorf("%s: failed groups = %s", m, f.Get("group").Raw)
 		}
+	}
+}
+
+func TestUserDel_LeavesRules(t *testing.T) {
+	_, c := ruleServer(t)
+	rpc(t, c, "user_del", []string{"alice"}, nil)
+	h, err := c.HBACRuleFind(ipa.Options{"cn": "h1"})
+	if err != nil || len(h) != 1 || len(h[0].Users) != 0 {
+		t.Errorf("hbac h1 = %+v, %v", h, err)
+	}
+	r, err := c.SudoRuleFind(ipa.Options{"cn": "s1"})
+	if err != nil || len(r) != 1 || len(r[0].Users) != 0 {
+		t.Errorf("sudo s1 = %+v, %v", r, err)
+	}
+}
+
+func TestGroupDel_LeavesRulesAndPolicy(t *testing.T) {
+	s, c := ruleServer(t)
+	s.AddGroup("ops", ipatest.Group{})
+	s.AddHBACRule("h3", ipatest.HBACRule{Groups: []string{"ops"}})
+	s.AddSudoRule("s3", ipatest.SudoRule{Groups: []string{"ops"}})
+	s.SetPwPolicy("ops", ipatest.PwPolicy{Priority: 1})
+	rpc(t, c, "group_del", []string{"ops"}, nil)
+	h, err := c.HBACRuleFind(ipa.Options{"cn": "h3"})
+	if err != nil || len(h) != 1 || len(h[0].Groups) != 0 {
+		t.Errorf("hbac h3 = %+v, %v", h, err)
+	}
+	r, err := c.SudoRuleFind(ipa.Options{"cn": "s3"})
+	if err != nil || len(r) != 1 || len(r[0].Groups) != 0 {
+		t.Errorf("sudo s3 = %+v, %v", r, err)
+	}
+	s.AddGroup("ops", ipatest.Group{})
+	if _, err := c.PwPolicyShow("ops"); !errors.Is(err, ipa.ErrNotFound) {
+		t.Errorf("policy of a deleted group survived: %v", err)
 	}
 }

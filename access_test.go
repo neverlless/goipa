@@ -194,10 +194,15 @@ func TestHBACTest_NestedGroup(t *testing.T) {
 	if err != nil || got.Granted || !reflect.DeepEqual(got.NotMatched, []string{"r"}) {
 		t.Fatalf("other = %+v, %v", got, err)
 	}
-	// Explicit rules include disabled ones; unknown names are errors.
-	got, err = c.HBACTest("other", "ipa.test.local", "sshd", "off", "nope")
-	if err != nil || !got.Granted || !reflect.DeepEqual(got.Matched, []string{"off"}) || !reflect.DeepEqual(got.Errors, []string{"nope"}) {
+	// Explicit rules include disabled ones.
+	got, err = c.HBACTest("other", "ipa.test.local", "sshd", "off")
+	if err != nil || !got.Granted || !reflect.DeepEqual(got.Matched, []string{"off"}) || got.Errors != nil {
 		t.Fatalf("explicit = %+v, %v", got, err)
+	}
+	// An unknown name stops the evaluation: only the unresolved names come back.
+	got, err = c.HBACTest("other", "ipa.test.local", "sshd", "off", "nope")
+	if err != nil || got.Granted || got.Matched != nil || got.NotMatched != nil || !reflect.DeepEqual(got.Errors, []string{"nope"}) {
+		t.Fatalf("unresolved = %+v, %v", got, err)
 	}
 }
 

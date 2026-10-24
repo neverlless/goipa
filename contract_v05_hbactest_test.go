@@ -54,8 +54,8 @@ func TestContractHBACTest(t *testing.T) {
 			t.Errorf("rule without users = %+v, %v", got, err)
 		}
 		missing := "nosuchrule-" + randHex(t, 4)
-		got, err = b.admin.HBACTest(uid, host, "sshd", missing)
-		if err != nil || !slices.Contains(got.Errors, missing) {
+		got, err = b.admin.HBACTest("admin", host, "sshd", "allow_all", missing)
+		if err != nil || got.Granted || got.Matched != nil || got.NotMatched != nil || !reflect.DeepEqual(got.Errors, []string{missing}) {
 			t.Errorf("unknown rule = %+v, %v", got, err)
 		}
 	})

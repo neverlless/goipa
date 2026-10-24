@@ -322,6 +322,8 @@ func groupDel(s *Server, c Call) (any, *ipa.IpaError) {
 	deleted := slices.Clone(c.Args)
 	for _, cn := range deleted {
 		delete(s.groups, cn)
+		delete(s.pwpol, cn)
+		s.dropFromRules(cn, true)
 		for _, g := range s.groups {
 			g.MemberGroups = slices.DeleteFunc(g.MemberGroups, func(n string) bool { return n == cn })
 			g.ManagerGroups = slices.DeleteFunc(g.ManagerGroups, func(n string) bool { return n == cn })

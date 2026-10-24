@@ -51,26 +51,31 @@ func (p PwPolicy) render(cn string) map[string]any {
 			out[k] = []string{strconv.Itoa(v)}
 		}
 	}
-	if cn != globalPolicy {
+	// A group policy holds only what pwpolicy_add or SetPwPolicy set; zero
+	// stands for never set.
+	global := cn == globalPolicy
+	if !global {
 		set("cospriority", p.Priority, false)
 	}
-	set("krbmaxpwdlife", int(p.MaxLife/(24*time.Hour)), true)
-	set("krbminpwdlife", int(p.MinLife/time.Hour), true)
-	set("krbpwdhistorylength", p.HistoryLength, true)
-	set("krbpwdmindiffchars", p.MinClasses, true)
-	set("krbpwdminlength", p.MinLength, true)
-	set("krbpwdmaxfailure", p.MaxFailures, true)
-	set("krbpwdfailurecountinterval", int(p.FailureInterval/time.Second), true)
-	set("krbpwdlockoutduration", int(p.LockoutDuration/time.Second), true)
+	set("krbmaxpwdlife", int(p.MaxLife/(24*time.Hour)), global)
+	set("krbminpwdlife", int(p.MinLife/time.Hour), global)
+	set("krbpwdhistorylength", p.HistoryLength, global)
+	set("krbpwdmindiffchars", p.MinClasses, global)
+	set("krbpwdminlength", p.MinLength, global)
+	set("krbpwdmaxfailure", p.MaxFailures, global)
+	set("krbpwdfailurecountinterval", int(p.FailureInterval/time.Second), global)
+	set("krbpwdlockoutduration", int(p.LockoutDuration/time.Second), global)
 	set("ipapwdmaxrepeat", p.MaxRepeat, false)
 	set("ipapwdmaxsequence", p.MaxSequence, false)
 	set("passwordgracelimit", p.GraceLimit, false)
 	for k, v := range map[string]int{"ipapwddcredit": p.DigitCredit, "ipapwducredit": p.UpperCredit,
 		"ipapwdlcredit": p.LowerCredit, "ipapwdocredit": p.OtherCredit} {
-		set(k, v, true)
+		set(k, v, global)
 	}
 	for k, v := range map[string]bool{"ipapwddictcheck": p.DictCheck, "ipapwdusercheck": p.UserCheck} {
-		out[k] = []string{map[bool]string{true: "TRUE", false: "FALSE"}[v]}
+		if v || global {
+			out[k] = []string{map[bool]string{true: "TRUE", false: "FALSE"}[v]}
+		}
 	}
 	return out
 }
@@ -176,7 +181,7 @@ func init() {
 		if _, ok := s.pwpol[cn]; ok {
 			return nil, &ipa.IpaError{Code: ipa.CodeDuplicateEntry, Message: `password policy with name "` + cn + `" already exists`}
 		}
-		p := PwPolicy{}
+		p := PwPolicy{GraceLimit: -1} // passwordgracelimit is autofilled
 		p.apply(c.Options)
 		s.pwpol[cn] = p
 		return entry(cn, p.render(cn), fmt.Sprintf("Added policy for %s", cn)), nil

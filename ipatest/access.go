@@ -71,6 +71,25 @@ func (s *Server) AddHBACRule(cn string, r HBACRule) {
 	s.hbac[cn] = &hbacRec{HBACRule: r.clone(), uuid: newUUID()}
 }
 
+// dropFromRules removes a deleted user (or group) from every rule's users
+// (or groups).
+func (s *Server) dropFromRules(name string, group bool) {
+	is := func(n string) bool { return n == name }
+	for _, r := range s.hbac {
+		r.Users, r.Groups = drop(r.Users, r.Groups, group, is)
+	}
+	for _, r := range s.sudo {
+		r.Users, r.Groups = drop(r.Users, r.Groups, group, is)
+	}
+}
+
+func drop(users, groups []string, group bool, is func(string) bool) ([]string, []string) {
+	if group {
+		return users, slices.DeleteFunc(groups, is)
+	}
+	return slices.DeleteFunc(users, is), groups
+}
+
 // AddSudoRule creates or replaces sudo rule cn.
 func (s *Server) AddSudoRule(cn string, r SudoRule) {
 	s.mu.Lock()
@@ -298,6 +317,10 @@ func (s *Server) hbactest(c Call) (any, *ipa.IpaError) {
 		default:
 			notMatched = append(notMatched, cn)
 		}
+	}
+	if len(errs) > 0 {
+		return map[string]any{"summary": "Unresolved rules in --rules", "error": errs,
+			"matched": nil, "notmatched": nil, "warning": nil, "value": false}, nil
 	}
 	granted := "False"
 	if len(matched) > 0 {

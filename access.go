@@ -145,10 +145,11 @@ type HBACTestResult struct {
 }
 
 // HBACTest runs `hbactest`. It evaluates HBAC rules on the server: every
-// enabled rule, or only rules. Any authenticated user may run it; it reads
-// rules and group membership as the caller. FreeIPA ignores an unknown user,
-// host or service instead of failing, so a typo reads as denied. Names in
-// rules that do not exist are listed in Errors.
+// enabled rule, or only rules, disabled ones included. Any authenticated user
+// may run it; it reads rules and group membership as the caller. FreeIPA
+// ignores an unknown user, host or service instead of failing, so a typo
+// reads as denied. If a name in rules does not exist, nothing is evaluated:
+// Granted is false and Errors lists the unresolved names.
 func (c *Client) HBACTest(user, host, service string, rules ...string) (*HBACTestResult, error) {
 	return c.HBACTestContext(context.Background(), user, host, service, rules...)
 }

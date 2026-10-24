@@ -130,9 +130,12 @@
 //     changes nothing fails with 4202; a missing group is 4001
 //     "<cn>: group not found". TestGroupAddModDel, TestGroupShow_NotFound.
 //   - Q22: group_del returns {result: {failed: []}, value: [cns], summary}
-//     and drops the group from other groups and from users. user_del drops
-//     the user from every group's members and managers, preserved or not.
-//     TestGroupDel_Shape, TestUserDel_LeavesGroups.
+//     and drops the group from other groups, from users, from the groups of
+//     HBAC and sudo rules, and its password policy. user_del drops the user
+//     from every group's members and managers and from the users of HBAC and
+//     sudo rules, preserved or not.
+//     TestGroupDel_Shape, TestUserDel_LeavesGroups, TestUserDel_LeavesRules,
+//     TestGroupDel_LeavesRulesAndPolicy.
 //   - Q23: group_{add,remove}_member and the _member_manager commands report
 //     per-member problems ("This entry is already a member", "This entry is
 //     not a member", "no such entry") in failed, next to result, as
@@ -170,8 +173,9 @@
 //     TestHostShow_NotFound.
 //   - Q28: stage users live in their own store, with dn
 //     uid=<uid>,cn=staged users,cn=accounts,cn=provisioning,dc=test,dc=local,
-//     nsaccountlock always true, no memberof_*, and [unverified] no uidnumber
-//     until activation.
+//     nsaccountlock always true, no memberof_*, and uidnumber and gidnumber
+//     ["-1"] (the DNA magic value stageuser_add.pre_callback sets) until
+//     activation.
 //     stageuser_find leaves out userclass unless all is true, as Q1.
 //     TestContractStageFindUserclassNeedsAll, TestContractStageUserLifecycle.
 //   - Q29: stageuser_add without givenname or sn is 3007; a duplicate stage
@@ -195,16 +199,19 @@
 //     pwpolicy_show without cn is the global policy; option user resolves the
 //     lowest cospriority among the user's groups, nested ones included, else
 //     global (4001 for a missing user, "<cn>: password policy not found" for
-//     an unknown cn). Numbers are one-element string lists in wire units, the
-//     credits and the two checks (["TRUE"]/["FALSE"]) are always present,
-//     cospriority only for group policies, zero optional ones are omitted.
+//     an unknown cn). Numbers are one-element string lists in wire units. In
+//     global_policy the krb* attributes, the credits and the two checks
+//     (["TRUE"]/["FALSE"]) are always present; a group policy has
+//     cospriority, passwordgracelimit (-1 unless set) and only the attributes
+//     that were set; zero optional ones are omitted.
 //     Any caller may read it ([unverified] V7). pwpolicy_add needs an existing
 //     group (4001) and cospriority (3007); login_password and change_password
 //     use the global MaxFailures (0 disables lockout) and MinLength.
 //     pwpolicy_show takes only all, raw, rights, user and version; any other
 //     option is 3005 OptionError "Unknown option: <name>".
 //     TestContractPwPolicyGlobal, TestUserPwPolicy_Resolution,
-//     TestPwPolicy_AddDelAndLoginUseGlobal, TestPwPolicyShow_UnknownOption.
+//     TestPwPolicy_AddDelAndLoginUseGlobal, TestPwPolicyShow_UnknownOption,
+//     TestPwPolicyShow_GroupOmitsUnset.
 //   - Q33: sub-ID ranges start at 2147483648 and advance by 65536 (uid and gid
 //     equal). subid_find filters by ipaowner, ipauniqueid, ipasubuidnumber and
 //     description; values are lists of strings, plus dn
@@ -227,11 +234,14 @@
 //   - Q35: hbactest needs user, targethost and service (3007 otherwise) and
 //     answers with no result key: value, summary "Access granted: True|False",
 //     and matched, notmatched, error and warning as lists or null. The rules
-//     are the enabled ones, or those named in rules (an unknown name goes to
-//     error). A rule matches when its user, host and service parts all do:
-//     category all, the name listed, or a group of the user (nested ones
-//     included) or a hostgroup of the host listed. Service groups are not
-//     expanded. An unknown user or host just has no groups.
+//     are the enabled ones, or those named in rules, which are evaluated even
+//     when disabled. If a name in rules is unknown nothing is evaluated: value
+//     false, summary "Unresolved rules in --rules", error the unknown names,
+//     matched and notmatched null. A rule matches when its user, host and
+//     service parts all do: category all, the name listed, or a group of the
+//     user (nested ones included) or a direct hostgroup of the host listed;
+//     host groups are not expanded through nesting, service groups not at
+//     all. An unknown user or host just has no groups.
 //     TestContractHBACTest, TestHBACTest_*.
 //   - Q36: user_add_passkey and user_remove_passkey take one mapping,
 //     passkey:<id>,<key>[,<userid>]; id and key must be standard base64 and
@@ -256,7 +266,10 @@
 // # Not modelled
 //
 // Of HBAC and sudo rule management, only find, add, del and the member and
-// option calls the tests need; Handle is the way to reach the rest. Kerberos,
-// LDAP search filters, size limits, replication and HTTP fault injection are
-// left out; wrap HTTPClient's transport for the latter.
+// option calls the tests need; Handle is the way to reach the rest, as for
+// config_*, subid_show, stageuser_add_passkey and stageuser_remove_passkey.
+// Stage user passwords are not modelled: userpassword is ignored and random
+// behaves as for active users. Kerberos, LDAP search filters, size limits,
+// replication and HTTP fault injection are left out; wrap HTTPClient's
+// transport for the latter.
 package ipatest

@@ -193,6 +193,9 @@ func (r *userRec) render(s *Server, uid string, find, all bool) map[string]any {
 	if r.id != 0 {
 		out["uidnumber"], out["gidnumber"] = []string{strconv.Itoa(r.id)}, []string{strconv.Itoa(r.id)}
 	}
+	if r.stage { // DNA magic value, set by stageuser_add.pre_callback; the DNA plugin skips staged users
+		out["uidnumber"], out["gidnumber"] = []string{"-1"}, []string{"-1"}
+	}
 	for k, v := range map[string][]string{
 		"givenname":       {r.First},
 		"sn":              {r.Last},
@@ -515,6 +518,7 @@ func (s *Server) userDel(stage bool, c Call) (any, *ipa.IpaError) {
 				g.Members = slices.DeleteFunc(g.Members, func(m string) bool { return m == uid })
 				g.ManagerUsers = slices.DeleteFunc(g.ManagerUsers, func(m string) bool { return m == uid })
 			}
+			s.dropFromRules(uid, false)
 		}
 		if !stage && flag(c, "preserve") {
 			users[uid].Preserved, users[uid].Locked = true, true

@@ -13,8 +13,8 @@ import (
 )
 
 // Stage users are users waiting for activation: FreeIPA keeps them in a
-// separate container, always locked, and they have no uidnumber or group
-// membership until StageUserActivate moves them to the active users.
+// separate container, always locked, with uidnumber and gidnumber -1 and no
+// group membership until StageUserActivate moves them to the active users.
 
 func (c *Client) stageUser(ctx context.Context, method string, args []string, options Options) (*User, error) {
 	res, err := c.rpc(ctx, method, args, options)
