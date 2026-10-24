@@ -144,19 +144,19 @@ func TestHandleWholeResultObject(t *testing.T) {
 
 func TestCallsRecorded(t *testing.T) {
 	s := ipatest.NewServer(t)
-	if _, err := s.ClientAs("admin").RPC("ping", []string{"a"}, ipa.Options{"x": 1.0}); err != nil {
+	if _, err := s.ClientAs("admin").RPC("user_find", []string{"a"}, ipa.Options{"sizelimit": 1.0}); err != nil {
 		t.Fatal(err)
 	}
 	calls := s.Calls()
 	got := calls[len(calls)-1]
-	if got.Method != "ping" || !reflect.DeepEqual(got.Args, []string{"a"}) || got.Options["x"] != 1.0 || got.User != "admin" {
+	if got.Method != "user_find" || !reflect.DeepEqual(got.Args, []string{"a"}) || got.Options["sizelimit"] != 1.0 || got.User != "admin" {
 		t.Errorf("last call = %+v", got)
 	}
 	if _, ok := got.Options["version"]; !ok {
 		t.Errorf("Options = %v, want version", got.Options)
 	}
-	got.Options["x"] = 2.0
-	if s.Calls()[len(calls)-1].Options["x"] != 1.0 {
+	got.Options["sizelimit"] = 2.0
+	if s.Calls()[len(calls)-1].Options["sizelimit"] != 1.0 {
 		t.Error("Calls() shares Options with the server's log")
 	}
 }
@@ -298,5 +298,60 @@ func TestBatchMalformedEntries(t *testing.T) {
 	calls := s.Calls()
 	if last := calls[len(calls)-1]; last.Method != "ping" || last.Options["version"] != "2.251" {
 		t.Errorf("nested call %+v", last)
+	}
+}
+
+func TestServer_UnknownOption(t *testing.T) {
+	s := ipatest.NewServer(t)
+	s.AddUser("admin", ipatest.User{})
+	_, err := s.ClientAs("admin").RPC("user_show", []string{"admin"}, ipa.Options{"bogus": 1})
+	var ierr *ipa.IpaError
+	if !errors.As(err, &ierr) || ierr.Code != ipa.CodeOption || ierr.Name != "OptionError" || ierr.Message != "Unknown option: bogus" {
+		t.Fatalf("err = %#v, want 3005 OptionError \"Unknown option: bogus\"", err)
+	}
+}
+
+func TestServer_CommandNewerThanVersion(t *testing.T) {
+	s := ipatest.NewServer(t)
+	c := s.ClientAs("admin")
+	s.SetVersion("4.9.6")
+	_, err := c.RPC("subid_find", nil, nil)
+	var ierr *ipa.IpaError
+	if !errors.As(err, &ierr) || ierr.Code != ipa.CodeCommand || ierr.Message != "unknown command 'subid_find'" {
+		t.Fatalf("4.9.6: err = %#v, want 905 unknown command 'subid_find'", err)
+	}
+	s.SetVersion("4.13.4")
+	if _, err := c.RPC("subid_find", nil, nil); err != nil {
+		t.Fatalf("4.13.4: %v", err)
+	}
+}
+
+func TestServer_HandleBypassesCatalogue(t *testing.T) {
+	s := ipatest.NewServer(t)
+	ran := false
+	s.Handle("user_show", func(ipatest.Call) (any, *ipa.IpaError) {
+		ran = true
+		return map[string]any{"result": map[string]any{}}, nil
+	})
+	if _, err := s.ClientAs("admin").RPC("user_show", []string{"admin"}, ipa.Options{"bogus": 1}); err != nil || !ran {
+		t.Fatalf("ran = %v, err = %v", ran, err)
+	}
+}
+
+func TestServer_BatchUnknownOption(t *testing.T) {
+	s := ipatest.NewServer(t)
+	s.AddUser("admin", ipatest.User{})
+	rs, err := s.ClientAs("admin").Batch(context.Background(),
+		ipa.BatchCall{Method: "user_show", Args: []string{"admin"}, Options: ipa.Options{"bogus": 1}},
+		ipa.BatchCall{Method: "user_show", Args: []string{"admin"}})
+	if err != nil || len(rs) != 2 {
+		t.Fatalf("%v, %v", rs, err)
+	}
+	var ierr *ipa.IpaError
+	if !errors.As(rs[0].Err, &ierr) || ierr.Code != ipa.CodeOption || ierr.Name != "OptionError" || ierr.Message != "Unknown option: bogus" {
+		t.Errorf("result 0: %#v", rs[0].Err)
+	}
+	if rs[1].Err != nil || rs[1].Result == nil {
+		t.Errorf("result 1: %+v", rs[1])
 	}
 }

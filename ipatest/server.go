@@ -246,8 +246,8 @@ func (s *Server) Calls() []Call {
 }
 
 // SetVersion sets the FreeIPA release the server reports in every response
-// and in ping, default 4.13.4. It changes only that string, not which
-// commands are modelled.
+// and in ping, default 4.13.4. Modelled commands and options that release
+// lacks are then rejected as FreeIPA would (Q44, Q45).
 func (s *Server) SetVersion(v string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -390,20 +390,26 @@ func decodeParams(c *Call, params []json.RawMessage) error {
 }
 
 // dispatch records c and runs it: a handler without the lock, else batch,
-// else a builtin under s.mu, else 905. args is the raw params[0], which
+// else a builtin under s.mu (both after catalogueCheck), else 905. args is the raw params[0], which
 // batch needs; custom reports that a handler ran.
 func (s *Server) dispatch(c Call, args json.RawMessage) (result any, ierr *ipa.IpaError, custom bool) {
 	s.mu.Lock()
 	s.calls = append(s.calls, c.clone())
 	h := s.handlers[c.Method]
+	version := s.version
 	s.mu.Unlock()
 
 	switch b := builtins[c.Method]; {
 	case h != nil:
 		result, ierr = h(c)
-	case c.Method == "batch":
-		result, ierr = s.batch(c, args)
-	case b != nil:
+	case b != nil || c.Method == "batch":
+		if ierr = catalogueCheck(c, version); ierr != nil {
+			break
+		}
+		if c.Method == "batch" {
+			result, ierr = s.batch(c, args)
+			break
+		}
 		s.mu.Lock()
 		result, ierr = b(s, c)
 		s.mu.Unlock()
@@ -411,6 +417,26 @@ func (s *Server) dispatch(c Call, args json.RawMessage) (result any, ierr *ipa.I
 		ierr = &ipa.IpaError{Code: ipa.CodeCommand, Message: fmt.Sprintf("unknown command '%s'", c.Method)}
 	}
 	return result, ierr, h != nil
+}
+
+// catalogueCheck rejects a modelled command the release version lacks, or an
+// option it does not take there (Q44, Q45).
+func catalogueCheck(c Call, version string) *ipa.IpaError {
+	if _, known := ipa.LookupCommand(c.Method, ""); !known {
+		return nil
+	}
+	cmd, ok := ipa.LookupCommand(c.Method, version)
+	if !ok {
+		return &ipa.IpaError{Code: ipa.CodeCommand, Message: fmt.Sprintf("unknown command '%s'", c.Method)}
+	}
+	// ipalib's __options_2_params takes an argument by name as well.
+	params := slices.Concat(cmd.Args, cmd.Options)
+	for _, key := range slices.Sorted(maps.Keys(c.Options)) {
+		if !slices.ContainsFunc(params, func(p ipa.Param) bool { return p.Name == key }) {
+			return &ipa.IpaError{Code: ipa.CodeOption, Message: "Unknown option: " + key}
+		}
+	}
+	return nil
 }
 
 func writeEnvelope(w http.ResponseWriter, uid, version string, result any, ierr *ipa.IpaError) {
