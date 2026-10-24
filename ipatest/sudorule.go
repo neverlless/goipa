@@ -25,11 +25,12 @@ type sudoKind struct {
 	slots []sudoSlot
 }
 
-func hasUser(s *Server, n string) bool    { return s.users[n] != nil }
-func hasGroup(s *Server, n string) bool   { return s.groups[n] != nil }
-func hasHost(s *Server, n string) bool    { _, ok := s.hosts[n]; return ok }
-func hasSudoCmd(s *Server, n string) bool { _, ok := s.sudocmds[n]; return ok }
-func noSuch(*Server, string) bool         { return false } // host and command groups are not modelled
+func hasUser(s *Server, n string) bool      { return s.users[n] != nil }
+func hasGroup(s *Server, n string) bool     { return s.groups[n] != nil }
+func hasHost(s *Server, n string) bool      { _, ok := s.hosts[n]; return ok }
+func hasHostGroup(s *Server, n string) bool { return s.hostgroups[n] != nil }
+func hasSudoCmd(s *Server, n string) bool   { _, ok := s.sudocmds[n]; return ok }
+func noSuch(*Server, string) bool           { return false } // command groups are not modelled
 
 var (
 	sudoUsers = sudoKind{"memberuser", []sudoSlot{
@@ -38,7 +39,7 @@ var (
 	}}
 	sudoHosts = sudoKind{"memberhost", []sudoSlot{
 		{"host", func(r *sudoRec) *[]string { return &r.Hosts }, hasHost, "externalhost"},
-		{"hostgroup", func(r *sudoRec) *[]string { return &r.HostGroups }, noSuch, ""},
+		{"hostgroup", func(r *sudoRec) *[]string { return &r.HostGroups }, hasHostGroup, ""},
 	}}
 	sudoAllow = sudoKind{"memberallowcmd", []sudoSlot{
 		{"sudocmd", func(r *sudoRec) *[]string { return &r.AllowCommands }, hasSudoCmd, ""},

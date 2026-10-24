@@ -460,9 +460,9 @@
 //   - Q62: a service member call naming a missing member returns the
 //     service, completed 0 and failed.<attr>.<type> [[name, "no such
 //     entry"]], attr managedby for service_{add,remove}_host and
-//     ipaallowedtoperform_{read,write}_keys for the keytab calls. Host
-//     groups are not modelled, so every host group is missing.
-//     goipa.TestContractServiceMemberMissing.
+//     ipaallowedtoperform_{read,write}_keys for the keytab calls.
+//     goipa.TestContractServiceMemberMissing,
+//     TestService_KeytabEmptyHostGroup.
 //   - Q63: service_add_host of a host already managing the service fails
 //     that member ("This entry is already a member"); the host may be
 //     removed and added back. goipa.TestContractServiceManagedBy.
@@ -521,13 +521,14 @@
 //     external members, lower-cased and counted in completed: users and
 //     groups in externaluser, hosts in externalhost, run-as users and
 //     groups in ipasudorunasextuser and ipasudorunasextusergroup, run-as
-//     groups in ipasudorunasextgroup. Only host groups, commands and
-//     command groups fail with "no such entry"; host groups and command
-//     groups are not modelled, so each one fails. Removing a name that is
+//     groups in ipasudorunasextgroup. Only missing host groups, commands
+//     and command groups fail with "no such entry"; command groups are not
+//     modelled, so each one fails. Removing a name that is
 //     neither a member nor external, existing or not, is "This entry is not
 //     a member".
 //     goipa.TestContractSudoRuleExternalMembers,
-//     goipa.TestContractSudoRuleMemberMissing, TestSudoMember_External.
+//     goipa.TestContractSudoRuleMemberMissing, TestSudoMember_External,
+//     TestSudoMember_HostGroup.
 //   - Q82: sudorule_add_option of an option the rule has is 4002
 //     "This entry already exists" and changes nothing; sudorule_remove_option
 //     of one it lacks is 4026 "ipasudoopt does not contain '<option>'".

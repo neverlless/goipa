@@ -39,6 +39,19 @@ func TestSudoMember_External(t *testing.T) {
 	}
 }
 
+func TestSudoMember_HostGroup(t *testing.T) {
+	s, c := ruleServer(t)
+	s.AddHostGroup("empty", ipatest.HostGroup{})
+	res := rpc(t, c, "sudorule_add_host", []string{"s1"}, ipa.Options{"hostgroup": []string{"empty", "nosuch"}})
+	r := gjson.ParseBytes(res.Result.Raw)
+	if r.Get("completed").Int() != 1 || r.Get("result.memberhost_hostgroup").Raw != `["empty"]` {
+		t.Errorf("add = %s", res.Result.Raw)
+	}
+	if f := r.Get("failed.memberhost.hostgroup").Raw; f != `[["nosuch","no such entry"]]` {
+		t.Errorf("failed hostgroups = %s", f)
+	}
+}
+
 func TestSudoCmd_AddDel(t *testing.T) {
 	s := ipatest.NewServer(t)
 	c := s.ClientAs("admin")
