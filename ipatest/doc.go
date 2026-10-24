@@ -478,10 +478,9 @@
 //     per type, group or hostgroup; another type is 3009 ValidationError
 //     "invalid 'type': must be one of 'group', 'hostgroup'". show and del of
 //     a missing rule are 4001 "<cn>: Automember rule not found", a second
-//     add is 4002, and add of a group rule needs the group (4001 `group
-//     "<cn>" not found`). Host groups are not modelled, so a hostgroup rule
-//     needs no target and is never applied. show and find print dn without
-//     all; find's summary is "<n> rules matched".
+//     add is 4002, and add needs the target group or host group (4001
+//     `<type> "<cn>" not found`). A hostgroup rule is never applied. show
+//     and find print dn without all; find's summary is "<n> rules matched".
 //     goipa.TestContractAutomemberRule, goipa.TestContractAutomemberMissing,
 //     goipa.TestContractAutomemberHostGroup.
 //   - Q111: automember_add_condition and _remove_condition on a missing rule
@@ -505,9 +504,11 @@
 //     goipa.TestContractAutomemberDefaultGroup.
 //   - Q113: automember_default_group_show answers automemberdefaultgroup as
 //     the group's DN in a list, or the string "No default (fallback) group
-//     set". _set of a missing group is 4001 `group "<cn>" not found`, of the
-//     current one 4202 EmptyModlist; _remove with none set is 4001 "No
-//     default (fallback) group set". goipa.TestContractAutomemberDefaultGroup.
+//     set". _set of a missing group or host group is 4001 `<type> "<cn>"
+//     not found`, of the current one 4202 EmptyModlist; _remove with none
+//     set is 4001 "No default (fallback) group set".
+//     goipa.TestContractAutomemberDefaultGroup,
+//     goipa.TestContractAutomemberHostGroup.
 //   - Q114: automember_del deletes the rules named before the first missing
 //     one, then fails with 4001. goipa.TestContractAutomemberMissing.
 //   - Q80: sudorule_enable and sudorule_disable succeed with {"result":

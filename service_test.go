@@ -6,6 +6,7 @@ package ipa_test
 
 import (
 	"errors"
+	"reflect"
 	"slices"
 	"testing"
 
@@ -98,5 +99,21 @@ func TestService_DisableForeignCertBefore413(t *testing.T) {
 	}
 	if svc, err := c.ServiceShow(testSvc); err != nil || len(svc.Certificates) != 1 || svc.Certificates[0][2] != 3 {
 		t.Fatalf("show: %v, %+v", err, svc)
+	}
+}
+
+func TestService_KeytabEmptyHostGroup(t *testing.T) {
+	s, c := newFake(t)
+	s.AddHostGroup("empty", ipatest.HostGroup{})
+	if _, err := c.ServiceAdd(testSvc, false); err != nil {
+		t.Fatal(err)
+	}
+	svc, err := c.ServiceAllowRetrieveKeytab(testSvc, ipa.KeytabAccess{HostGroups: []string{"empty"}})
+	if err != nil || !reflect.DeepEqual(svc.KeytabRetrieve.HostGroups, []string{"empty"}) {
+		t.Fatalf("allow empty hostgroup = %+v, %v", svc, err)
+	}
+	var me *ipa.MemberError
+	if _, err = c.ServiceAllowCreateKeytab(testSvc, ipa.KeytabAccess{HostGroups: []string{"nosuch"}}); !errors.As(err, &me) || me.Failures[0].Message != "no such entry" {
+		t.Errorf("allow missing hostgroup: %v", err)
 	}
 }

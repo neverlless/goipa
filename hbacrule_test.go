@@ -5,6 +5,7 @@
 package ipa_test
 
 import (
+	"errors"
 	"reflect"
 	"testing"
 
@@ -72,5 +73,19 @@ func TestHBACRuleShow_FakeRule(t *testing.T) {
 	}
 	if got, err = c.HBACRuleRemoveHost("r", nil, []string{"web"}); err != nil || got.HostGroups != nil {
 		t.Errorf("remove hostgroup = %+v, %v", got, err)
+	}
+}
+
+func TestHBACRuleAddHost_EmptyHostGroup(t *testing.T) {
+	s, c := newFake(t)
+	s.AddHostGroup("empty", ipatest.HostGroup{})
+	s.AddHBACRule("r", ipatest.HBACRule{})
+	got, err := c.HBACRuleAddHost("r", nil, []string{"empty"})
+	if err != nil || !reflect.DeepEqual(got.HostGroups, []string{"empty"}) {
+		t.Fatalf("add empty hostgroup = %+v, %v", got, err)
+	}
+	var me *ipa.MemberError
+	if _, err = c.HBACRuleAddHost("r", nil, []string{"nosuch"}); !errors.As(err, &me) || me.Failures[0].Message != "no such entry" {
+		t.Errorf("add missing hostgroup: %v", err)
 	}
 }

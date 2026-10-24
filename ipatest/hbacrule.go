@@ -84,15 +84,7 @@ func hbacMembers(part string, add bool) builtin {
 			cat = r.HostCategory
 			lists = [2]list{
 				{"host", func(n string) bool { _, ok := s.hosts[n]; return ok }, &r.Hosts},
-				// shortcut: a host group exists while some host is in it; use the host group store once there is one.
-				{"hostgroup", func(n string) bool {
-					for _, h := range s.hosts {
-						if slices.Contains(h.HostGroups, n) {
-							return true
-						}
-					}
-					return false
-				}, &r.HostGroups},
+				{"hostgroup", func(n string) bool { return s.hostgroups[n] != nil }, &r.HostGroups},
 			}
 		default:
 			cat = r.ServiceCategory

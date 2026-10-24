@@ -200,11 +200,10 @@ func serviceMembers(attr string, add bool, lists func(*serviceRec) map[string]*[
 			return nil, err
 		}
 		exists := map[string]func(string) bool{
-			"user":  func(n string) bool { return s.users[n] != nil },
-			"group": func(n string) bool { return s.groups[n] != nil },
-			"host":  func(n string) bool { _, ok := s.hosts[n]; return ok },
-			// shortcut: no host group model on this branch, so every host group is missing; upgrade when hostgroups land.
-			"hostgroup": func(string) bool { return false },
+			"user":      func(n string) bool { return s.users[n] != nil },
+			"group":     func(n string) bool { return s.groups[n] != nil },
+			"host":      func(n string) bool { _, ok := s.hosts[n]; return ok },
+			"hostgroup": func(n string) bool { return s.hostgroups[n] != nil },
 		}
 		failed := map[string][][]string{}
 		completed := 0

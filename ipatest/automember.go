@@ -16,9 +16,8 @@ import (
 )
 
 const (
-	inclusiveRE     = "automemberinclusiveregex"
-	exclusiveRE     = "automemberexclusiveregex"
-	hostgroupBaseDN = "cn=hostgroups,cn=accounts,dc=test,dc=local"
+	inclusiveRE = "automemberinclusiveregex"
+	exclusiveRE = "automemberexclusiveregex"
 )
 
 // amRule is an automember rule; conditions are stored as "key=regex".
@@ -47,7 +46,7 @@ func amType(c Call) (string, *ipa.IpaError) {
 
 func targetDN(typ, cn string) string {
 	if typ == "hostgroup" {
-		return "cn=" + cn + "," + hostgroupBaseDN
+		return "cn=" + cn + "," + hostGroupBaseDN
 	}
 	return "cn=" + cn + "," + groupBaseDN
 }
@@ -138,12 +137,19 @@ func automemberAdd(s *Server, c Call) (any, *ipa.IpaError) {
 	if s.amRules[typ][cn] != nil {
 		return nil, &ipa.IpaError{Code: ipa.CodeDuplicateEntry, Message: fmt.Sprintf("Automember rule with name %q already exists", cn)}
 	}
-	if typ == "group" && s.groups[cn] == nil { // host groups are not modelled (Q110)
-		return nil, notFoundQuoted(cn, "group")
+	if !s.amTargetExists(typ, cn) {
+		return nil, notFoundQuoted(cn, typ)
 	}
 	r := &amRule{description: str(c.Options["description"])}
 	s.amRules[typ][cn] = r
 	return entry(cn, renderRule(typ, cn, r, true, true), fmt.Sprintf("Added automember rule %q", cn)), nil
+}
+
+func (s *Server) amTargetExists(typ, cn string) bool {
+	if typ == "hostgroup" {
+		return s.hostgroups[cn] != nil
+	}
+	return s.groups[cn] != nil
 }
 
 // notFoundQuoted is FreeIPA's `<object> "<name>" not found`.
@@ -260,8 +266,8 @@ func defaultGroupSet(s *Server, c Call) (any, *ipa.IpaError) {
 	switch {
 	case g == "":
 		return nil, required("automemberdefaultgroup")
-	case typ == "group" && s.groups[g] == nil:
-		return nil, notFoundQuoted(g, "group")
+	case !s.amTargetExists(typ, g):
+		return nil, notFoundQuoted(g, typ)
 	case s.amDefs[typ] == g:
 		return nil, &ipa.IpaError{Code: ipa.CodeEmptyModlist, Message: "no modifications to be performed"}
 	}

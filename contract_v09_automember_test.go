@@ -203,14 +203,14 @@ func TestContractAutomemberDefaultGroup(t *testing.T) {
 }
 
 // TestContractAutomemberHostGroup pins Q110: a hostgroup rule's lifecycle.
-// The fake has no hostgroups, so there the rule's target is not created.
 func TestContractAutomemberHostGroup(t *testing.T) {
 	forEachBackend(t, func(t *testing.T, b backend) {
 		cn := "gh" + randHex(t, 4)
-		if b.name != "ipatest" {
-			mustRPC(t, b.admin, "hostgroup_add", []string{cn}, nil)
-			t.Cleanup(func() { _, _ = b.admin.RPC("hostgroup_del", []string{cn}, nil) })
-		}
+		_, err := b.admin.AutomemberAdd(ipa.AutomemberHostGroup, cn, "")
+		wantIs(t, err, ipa.ErrNotFound)
+		wantIs(t, b.admin.AutomemberSetDefaultGroup(ipa.AutomemberHostGroup, cn), ipa.ErrNotFound)
+		mustRPC(t, b.admin, "hostgroup_add", []string{cn}, nil)
+		t.Cleanup(func() { _, _ = b.admin.RPC("hostgroup_del", []string{cn}, nil) })
 		if _, err := b.admin.AutomemberAdd(ipa.AutomemberHostGroup, cn, ""); err != nil {
 			t.Fatal(err)
 		}
