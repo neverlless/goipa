@@ -13,20 +13,20 @@ existing exported identifiers keep their signatures).
   result object with `Has`, `Str`, `Strs`, `Bool`, `Int`, `Time`, `Bytes`,
   `DN` and `Raw` accessors that read FreeIPA's attribute lists,
   `__datetime__` and `__base64__` values
-- `FindEntries` and `ErrTruncated`: a `*_find` that reports a result
-  truncated by the server's size limit instead of returning it silently
+- `FindEntries(ctx, c, method, args, opts, sizelimit)` and `ErrTruncated`:
+  a `*_find` that reports a result truncated by the server's size limit
+  instead of returning it silently
 - `ServerVersion` and `ErrNotSupported`: passkey calls (FreeIPA 4.11) and
   `SubIDFind`/`SubIDGenerate` (4.9.7) fail before sending when the known
   server is older
-- `Modify`: `setattr`/`addattr`/`delattr` updates of single attributes on
-  any object
-- `Batch`: several commands in one round trip with per-command results and
-  errors
-
-### Changed
-
-- `ServerVersion` is recorded from every response; it is empty until the
-  first one
+- `Modify(command, keys...)`: `setattr`/`addattr`/`delattr` updates of
+  single attributes on any object, nested ones included
+- `Batch`: several commands in one round trip with per-command results;
+  `BatchResult.Err` is an `error` holding a bare `*IpaError`
+- `CodeConversion` (3008) and `CodeOnlyOneValueAllowed` (4207)
+- `ipatest`: `SetVersion`, `sizelimit` truncation on `user_find`,
+  `group_find` and `host_find`, `setattr`/`addattr`/`delattr` on `user_mod`
+  and `stageuser_mod` (including `OnlyOneValueAllowed`), and `batch`
 
 ## [v0.6.0] - 2026-10-24
 

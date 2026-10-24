@@ -169,19 +169,18 @@ command just as safe to call.
       struct, and an `Entry` type with `Str`, `Strs`, `Bool`, `Int`,
       `Time` and `DN` accessors that understand FreeIPA's attribute lists,
       `__datetime__` and `__base64__` values, so no caller parses gjson by hand
-- [x] Server version awareness: `ServerVersion` from the first response
-      (the envelope carries it), and typed calls for features newer than
-      the server (passkeys 4.11, sub-IDs 4.9.7, password-quality credits
-      4.13) return `ErrNotSupported` instead of a confusing server error
+- [x] Server version awareness: `ServerVersion` from the last successful
+      response; passkeys (4.11) and sub-IDs (4.9.7) return `ErrNotSupported`
+      when the server is older; password-quality credits read as zero on
+      older servers
 - [x] Attribute-level updates for any object: `c.Modify(command,
-      pkey).Set(attr, v).Add(attr, v).Del(attr, v).Run(ctx)` over FreeIPA's
+      keys...).Set(attr, v).Add(attr, v).Del(attr, v).Run(ctx)` over FreeIPA's
       `setattr`/`addattr`/`delattr`, so a single field changes without the
       read-modify-write that `UserMod` needs today
 - [x] `batch` support: several commands in one round trip, with per-command
       results and errors
-- [x] Paging helpers for `*_find`: report `Truncated` as an error option or
-      iterate with an explicit `sizelimit`, so large directories don't
-      silently return 100 entries
+- [x] `FindEntries` reports a truncated `*_find` as `ErrTruncated` (FreeIPA
+      has no offset paging)
 
 Accept: any FreeIPA command can be called with typed decoding; truncated
 finds are reported; batch and attribute updates work on FreeIPA 4.9, 4.12

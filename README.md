@@ -65,8 +65,8 @@ tokens.
 - `FindEntries` returns `ErrTruncated` when the server cut a search short
 - `Modify` changes single attributes (`setattr`/`addattr`/`delattr`) on any
   object; `Batch` sends several commands in one round trip
-- `ServerVersion`; calls for features newer than the server return
-  `ErrNotSupported`
+- `ServerVersion`; passkey and sub-ID calls return `ErrNotSupported` when the
+  server is known to be older than FreeIPA 4.11 and 4.9.7
 - [`ipatest`](https://pkg.go.dev/github.com/neverlless/goipa/ipatest), a fake
   FreeIPA server for your own tests
 
