@@ -170,19 +170,20 @@
 //     TestHostShow_NotFound.
 //   - Q28: stage users live in their own store, with dn
 //     uid=<uid>,cn=staged users,cn=accounts,cn=provisioning,dc=test,dc=local,
-//     nsaccountlock always true, no uidnumber and no memberof_*.
+//     nsaccountlock always true, no memberof_*, and [unverified] no uidnumber
+//     until activation.
 //     stageuser_find leaves out userclass unless all is true, as Q1.
 //     TestContractStageFindUserclassNeedsAll, TestContractStageUserLifecycle.
 //   - Q29: stageuser_add without givenname or sn is 3007; a duplicate stage
 //     uid is 4002 `stage user with name "<uid>" already exists`; active
 //     users are not checked. stageuser_del has the user_del shape; a missing
-//     entry is 4001 "<uid>: stage user not found". TestStageUserAdd_Required,
-//     TestContractStageUserLifecycle.
+//     entry is 4001 "<uid>: stage user not found"; it ignores preserve.
+//     TestStageUserAdd_Required, TestStageUserDuplicateAndDelete.
 //   - Q30: stageuser_activate moves the record to the active users with a
 //     fresh uidnumber and answers with the active entry (all attributes),
 //     summary "Stage user <uid> activated". If the active uid exists it is
 //     4002 `active user with name "<uid>" already exists` and the stage entry
-//     stays. TestContractStageActivateSummary, TestContractStageUserLifecycle.
+//     stays. TestContractStageActivateSummary, TestStageUserDuplicateAndDelete.
 //
 // A response's version is the server release, 4.13.4, and its principal is
 // <uid>@TEST.LOCAL. An error a HandlerFunc returns without a Name gets the

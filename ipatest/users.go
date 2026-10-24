@@ -349,13 +349,13 @@ func (s *Server) userArgIn(stage bool, c Call) (string, *userRec, *ipa.IpaError)
 	}
 	r := s.store(stage)[uid]
 	if r == nil {
-		return "", nil, notFound(uid, kind(stage))
+		return "", nil, notFound(uid, userObject(stage))
 	}
 	return uid, r, nil
 }
 
-// kind names the entry type in messages.
-func kind(stage bool) string {
+// userObject names the entry type in messages.
+func userObject(stage bool) string {
 	if stage {
 		return "stage user"
 	}
@@ -450,7 +450,7 @@ func (s *Server) userAdd(stage bool, c Call) (any, *ipa.IpaError) {
 		return nil, err
 	}
 	if s.store(stage)[uid] != nil { // Q10, Q29
-		return nil, &ipa.IpaError{Code: ipa.CodeDuplicateEntry, Message: fmt.Sprintf("%s with name %q already exists", kind(stage), uid)}
+		return nil, &ipa.IpaError{Code: ipa.CodeDuplicateEntry, Message: fmt.Sprintf("%s with name %q already exists", userObject(stage), uid)}
 	}
 	if v, ok := c.Options["homedirectory"]; ok && str(v) == "" { // Q19
 		return nil, &ipa.IpaError{Code: 4205, Name: "ObjectclassViolation", Message: `missing attribute "homeDirectory" required by object class "posixAccount"`}
@@ -464,7 +464,7 @@ func (s *Server) userAdd(stage bool, c Call) (any, *ipa.IpaError) {
 		return nil, required("sn")
 	}
 	rec := s.putUser(stage, uid, u).withRandom(s, c, uid)
-	return entry(uid, rec, fmt.Sprintf("Added %s %q", kind(stage), uid)), nil
+	return entry(uid, rec, fmt.Sprintf("Added %s %q", userObject(stage), uid)), nil
 }
 
 func userMod(stage bool) builtin {
@@ -490,7 +490,7 @@ func (s *Server) userMod(stage bool, c Call) (any, *ipa.IpaError) {
 	}
 	r.User = next
 	rec := r.withRandom(s, c, uid)
-	return entry(uid, rec, fmt.Sprintf("Modified %s %q", kind(stage), uid)), nil
+	return entry(uid, rec, fmt.Sprintf("Modified %s %q", userObject(stage), uid)), nil
 }
 
 func userDel(stage bool) builtin {
@@ -503,7 +503,7 @@ func (s *Server) userDel(stage bool, c Call) (any, *ipa.IpaError) {
 	for _, uid := range c.Args {
 		if users[uid] == nil {
 			if !flag(c, "continue") {
-				return nil, notFound(uid, kind(stage))
+				return nil, notFound(uid, userObject(stage))
 			}
 			failed = append(failed, uid)
 		} else {
@@ -511,11 +511,13 @@ func (s *Server) userDel(stage bool, c Call) (any, *ipa.IpaError) {
 		}
 	}
 	for _, uid := range deleted {
-		for _, g := range s.groups { // referential integrity, also when preserved
-			g.Members = slices.DeleteFunc(g.Members, func(m string) bool { return m == uid })
-			g.ManagerUsers = slices.DeleteFunc(g.ManagerUsers, func(m string) bool { return m == uid })
+		if !stage {
+			for _, g := range s.groups { // referential integrity, also when preserved
+				g.Members = slices.DeleteFunc(g.Members, func(m string) bool { return m == uid })
+				g.ManagerUsers = slices.DeleteFunc(g.ManagerUsers, func(m string) bool { return m == uid })
+			}
 		}
-		if flag(c, "preserve") {
+		if !stage && flag(c, "preserve") {
 			users[uid].Preserved, users[uid].Locked = true, true
 		} else {
 			delete(users, uid)
@@ -530,7 +532,7 @@ func (s *Server) userDel(stage bool, c Call) (any, *ipa.IpaError) {
 	return map[string]any{
 		"result":  map[string]any{"failed": failed},
 		"value":   deleted,
-		"summary": fmt.Sprintf("Deleted %s %q", kind(stage), strings.Join(deleted, ",")),
+		"summary": fmt.Sprintf("Deleted %s %q", userObject(stage), strings.Join(deleted, ",")),
 	}, nil
 }
 
