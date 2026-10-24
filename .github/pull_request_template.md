@@ -12,4 +12,5 @@
 - [ ] `gofmt -l .` is empty and `go vet ./...` passes
 - [ ] No change to the signature of an existing exported identifier
 - [ ] New FreeIPA calls checked against the server schema, doc comment names the command and privilege
+- [ ] New exported methods have a `…Context` twin
 - [ ] `CHANGELOG.md` updated under `[Unreleased]` if behavior or API changed
