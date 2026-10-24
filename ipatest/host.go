@@ -139,14 +139,29 @@ func hostAdd(s *Server, c Call) (any, *ipa.IpaError) {
 }
 
 func hostDel(s *Server, c Call) (any, *ipa.IpaError) {
-	for _, fqdn := range c.Args {
-		if _, ok := s.hosts[fqdn]; !ok {
+	deleted := make([]string, len(c.Args))
+	for i, fqdn := range c.Args {
+		deleted[i] = strings.ToLower(fqdn)
+		if _, ok := s.hosts[deleted[i]]; !ok {
 			return nil, notFound(fqdn, "host")
 		}
 	}
-	deleted := append([]string{}, c.Args...)
 	for _, fqdn := range deleted {
 		delete(s.hosts, fqdn)
+		for _, g := range s.hostgroups {
+			g.Hosts = dropName(g.Hosts, fqdn)
+		}
+		for _, r := range s.hbac {
+			r.Hosts = dropName(r.Hosts, fqdn)
+		}
+		for _, r := range s.sudo {
+			r.Hosts = dropName(r.Hosts, fqdn)
+		}
+		for _, v := range s.services {
+			v.ManagedBy = dropName(v.ManagedBy, fqdn)
+			v.KeytabRetrieve.Hosts = dropName(v.KeytabRetrieve.Hosts, fqdn)
+			v.KeytabCreate.Hosts = dropName(v.KeytabCreate.Hosts, fqdn)
+		}
 	}
 	return map[string]any{
 		"result":  map[string]any{"failed": []string{}},

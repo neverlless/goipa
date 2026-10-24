@@ -7,6 +7,7 @@ package ipa_test
 import (
 	"errors"
 	"slices"
+	"strings"
 	"testing"
 
 	"github.com/neverlless/goipa"
@@ -127,6 +128,30 @@ func TestContractHostGroupManagers(t *testing.T) {
 		g, err = b.admin.HostGroupRemoveMemberManager(cn, []string{uid}, nil)
 		if err != nil || len(g.ManagerUsers) != 0 {
 			t.Fatalf("after remove g = %v, err = %v", g, err)
+		}
+	})
+}
+
+// TestContractHostGroupMixedCase pins Q51's case rule: the name keeps its
+// case, and find's criteria match it case-insensitively.
+func TestContractHostGroupMixedCase(t *testing.T) {
+	forEachBackend(t, func(t *testing.T, b backend) {
+		cn := "GoipaMixed" + randHex(t, 4)
+		t.Cleanup(func() { _ = b.admin.HostGroupDelete(cn) })
+		added, err := b.admin.HostGroupAdd(&ipa.HostGroup{Name: cn})
+		if err != nil {
+			t.Fatal(err)
+		}
+		g, err := b.admin.HostGroupShow(cn)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if added.Name != cn || g.Name != cn {
+			t.Errorf("added %q, shown %q, want %q", added.Name, g.Name, cn)
+		}
+		res := mustRPC(t, b.admin, "hostgroup_find", []string{strings.ToLower(cn)}, nil)
+		if res.Result.Count != 1 {
+			t.Errorf("find %q: %d matches, want 1", strings.ToLower(cn), res.Result.Count)
 		}
 	})
 }

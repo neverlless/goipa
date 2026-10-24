@@ -43,6 +43,7 @@ func stageUserActivate(s *Server, c Call) (any, *ipa.IpaError) {
 	delete(s.stage, uid)
 	rec := s.putUser(false, uid, u)
 	rec.uuid = r.uuid
+	s.applyAutomember(uid)
 	return entry(uid, rec.render(s, uid, false, true), fmt.Sprintf("Stage user %s activated", uid)), nil
 }
 

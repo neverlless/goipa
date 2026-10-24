@@ -106,3 +106,20 @@ func TestContractRoleMembers(t *testing.T) {
 		wantIs(t, err, ipa.ErrNotFound)
 	})
 }
+
+// TestContractRBACPlainUser pins Q122: the RBAC read permissions are bound
+// to the RBAC Readers privilege, so a plain user sees no roles, privileges
+// or permissions.
+func TestContractRBACPlainUser(t *testing.T) {
+	forEachBackend(t, func(t *testing.T, b backend) {
+		plain := mustLogin(t, b, newUserWithPassword(t, b, goodPW), goodPW)
+		_, err := plain.RoleShow(builtinRole)
+		wantIs(t, err, ipa.ErrNotFound)
+		_, err = plain.PermissionShow(builtinPermission)
+		wantIs(t, err, ipa.ErrNotFound)
+		roles, err := plain.RoleFind(nil)
+		if err != nil || len(roles) != 0 {
+			t.Errorf("RoleFind = %d roles, %v; want none", len(roles), err)
+		}
+	})
+}

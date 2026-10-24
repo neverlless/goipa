@@ -172,7 +172,7 @@ func hostGroupFind(s *Server, c Call) (any, *ipa.IpaError) {
 	}
 	var cns []string
 	for cn, g := range s.hostgroups {
-		if needle != "" && !strings.Contains(cn, needle) && !strings.Contains(strings.ToLower(g.Description), needle) {
+		if needle != "" && !strings.Contains(strings.ToLower(cn), needle) && !strings.Contains(strings.ToLower(g.Description), needle) {
 			continue
 		}
 		if !matches(c, "cn", cn) || !matches(c, "description", g.Description) {
@@ -201,6 +201,12 @@ func hostGroupAdd(s *Server, c Call) (any, *ipa.IpaError) {
 	return entry(cn, s.renderHostGroup(cn, g, true, flag(c, "all")), fmt.Sprintf("Added hostgroup %q", cn)), nil
 }
 
+// dropName removes n from l in place, as a deleted entry leaves the member
+// lists that named it.
+func dropName(l []string, n string) []string {
+	return slices.DeleteFunc(l, func(m string) bool { return m == n })
+}
+
 func hostGroupDel(s *Server, c Call) (any, *ipa.IpaError) {
 	for _, cn := range c.Args {
 		if s.hostgroups[cn] == nil {
@@ -208,19 +214,26 @@ func hostGroupDel(s *Server, c Call) (any, *ipa.IpaError) {
 		}
 	}
 	deleted := slices.Clone(c.Args)
-	drop := func(l []string, cn string) []string {
-		return slices.DeleteFunc(l, func(n string) bool { return n == cn })
-	}
 	for _, cn := range deleted {
 		delete(s.hostgroups, cn)
 		for _, g := range s.hostgroups {
-			g.HostGroups = drop(g.HostGroups, cn)
+			g.HostGroups = dropName(g.HostGroups, cn)
 		}
 		for fqdn, h := range s.hosts {
 			if slices.Contains(h.HostGroups, cn) {
-				h.HostGroups = drop(slices.Clone(h.HostGroups), cn)
+				h.HostGroups = dropName(slices.Clone(h.HostGroups), cn)
 				s.hosts[fqdn] = h
 			}
+		}
+		for _, r := range s.hbac {
+			r.HostGroups = dropName(r.HostGroups, cn)
+		}
+		for _, r := range s.sudo {
+			r.HostGroups = dropName(r.HostGroups, cn)
+		}
+		for _, v := range s.services {
+			v.KeytabRetrieve.HostGroups = dropName(v.KeytabRetrieve.HostGroups, cn)
+			v.KeytabCreate.HostGroups = dropName(v.KeytabCreate.HostGroups, cn)
 		}
 	}
 	if deleted == nil {

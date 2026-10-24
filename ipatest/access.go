@@ -255,6 +255,7 @@ func (s *Server) hbactest(c Call) (any, *ipa.IpaError) {
 	}
 	if _, ok := s.hosts[host]; ok {
 		hostGroups = s.hostGroupsOf(host)
+		hostGroups = append(hostGroups, s.hostGroupAncestors(hostGroups)...)
 	}
 	hit := func(cat string, direct []string, name string, indirect []string, ids ...string) bool {
 		return cat == "all" || slices.Contains(direct, name) || slices.ContainsFunc(indirect, func(g string) bool { return slices.Contains(ids, g) })

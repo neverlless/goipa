@@ -148,7 +148,7 @@ func rbacShow[T any](kind string, recs map[string]*T, render func(*T, string, bo
 			return nil, err
 		}
 		r := recs[cn]
-		if r == nil {
+		if r == nil || !s.isAdmin(c.User) { // Q122: the read permissions are privilege-bound
 			return nil, notFound(cn, kind)
 		}
 		all := flag(c, "all")
@@ -171,6 +171,9 @@ func rbacFind[T any](recs map[string]*T, desc, typ func(*T) string, render func(
 		}
 		var cns []string
 		for cn, r := range recs {
+			if !s.isAdmin(c.User) { // Q122
+				break
+			}
 			d := desc(r)
 			if needle != "" && !strings.Contains(strings.ToLower(cn), needle) && !strings.Contains(strings.ToLower(d), needle) {
 				continue

@@ -64,3 +64,23 @@ func TestAutomember_DefaultGroupNotPreferredOverRule(t *testing.T) {
 		t.Errorf("ruled %v, fallback %v", ruled.Members, fallback.Members)
 	}
 }
+
+func TestAutomember_StageUserActivate(t *testing.T) {
+	s, c := newFake(t)
+	s.AddGroup("fallback", ipatest.Group{})
+	if err := c.AutomemberSetDefaultGroup(ipa.AutomemberGroup, "fallback"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := c.StageUserAdd(&ipa.User{Username: "carol", First: "Carol", Last: "C"}); err != nil {
+		t.Fatal(err)
+	}
+	if g, _ := s.Group("fallback"); len(g.Members) != 0 {
+		t.Fatalf("staged user already in %v", g.Members)
+	}
+	if _, err := c.StageUserActivate("carol"); err != nil {
+		t.Fatal(err)
+	}
+	if g, _ := s.Group("fallback"); !slices.Equal(g.Members, []string{"carol"}) {
+		t.Errorf("fallback members = %v", g.Members)
+	}
+}

@@ -119,3 +119,53 @@ func TestHostGroupMembers_Fake(t *testing.T) {
 		t.Errorf("hg = %+v", hg)
 	}
 }
+
+func TestHostDelete_DropsReferences(t *testing.T) {
+	s, c := newFake(t)
+	h := "web1.test.local"
+	s.AddHost(h, ipatest.Host{})
+	s.AddHostGroup("web", ipatest.HostGroup{Hosts: []string{h}})
+	s.AddHBACRule("r", ipatest.HBACRule{Hosts: []string{h}})
+	s.AddSudoRule("s", ipatest.SudoRule{Hosts: []string{h}})
+	s.AddService("HTTP/ipa.test.local", ipatest.Service{ManagedBy: []string{"ipa.test.local", h},
+		KeytabRetrieve: ipa.KeytabAccess{Hosts: []string{h}}, KeytabCreate: ipa.KeytabAccess{Hosts: []string{h}}})
+	if _, err := c.RPC("host_del", []string{"WEB1.test.local"}, nil); err != nil {
+		t.Fatal(err)
+	}
+	if g, err := c.HostGroupShow("web"); err != nil || len(g.Hosts) != 0 {
+		t.Errorf("host group = %+v, %v", g, err)
+	}
+	if r, err := c.HBACRuleShow("r"); err != nil || len(r.Hosts) != 0 {
+		t.Errorf("hbac rule = %+v, %v", r, err)
+	}
+	if r, err := c.SudoRuleShow("s"); err != nil || len(r.Hosts) != 0 {
+		t.Errorf("sudo rule = %+v, %v", r, err)
+	}
+	svc, err := c.ServiceShow("HTTP/ipa.test.local")
+	if err != nil || !reflect.DeepEqual(svc.ManagedBy, []string{"ipa.test.local"}) ||
+		len(svc.KeytabRetrieve.Hosts) != 0 || len(svc.KeytabCreate.Hosts) != 0 {
+		t.Errorf("service = %+v, %v", svc, err)
+	}
+}
+
+func TestHostGroupDelete_DropsRuleAndKeytabReferences(t *testing.T) {
+	s, c := newFake(t)
+	s.AddHostGroup("web", ipatest.HostGroup{})
+	s.AddHBACRule("r", ipatest.HBACRule{HostGroups: []string{"web"}})
+	s.AddSudoRule("s", ipatest.SudoRule{HostGroups: []string{"web"}})
+	s.AddService("HTTP/ipa.test.local", ipatest.Service{ManagedBy: []string{"ipa.test.local"},
+		KeytabRetrieve: ipa.KeytabAccess{HostGroups: []string{"web"}}, KeytabCreate: ipa.KeytabAccess{HostGroups: []string{"web"}}})
+	if err := c.HostGroupDelete("web"); err != nil {
+		t.Fatal(err)
+	}
+	if r, err := c.HBACRuleShow("r"); err != nil || len(r.HostGroups) != 0 {
+		t.Errorf("hbac rule = %+v, %v", r, err)
+	}
+	if r, err := c.SudoRuleShow("s"); err != nil || len(r.HostGroups) != 0 {
+		t.Errorf("sudo rule = %+v, %v", r, err)
+	}
+	svc, err := c.ServiceShow("HTTP/ipa.test.local")
+	if err != nil || len(svc.KeytabRetrieve.HostGroups) != 0 || len(svc.KeytabCreate.HostGroups) != 0 {
+		t.Errorf("service = %+v, %v", svc, err)
+	}
+}

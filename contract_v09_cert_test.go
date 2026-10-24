@@ -148,3 +148,19 @@ func TestContractCertRequestWrongCN(t *testing.T) {
 		wantCertCode(t, err, ipa.CodeValidation)
 	})
 }
+
+// TestContractCertShowPlainUser pins Q95: a user who manages no principal of
+// the certificate may not read it.
+func TestContractCertShowPlainUser(t *testing.T) {
+	forEachBackend(t, func(t *testing.T, b backend) {
+		fqdn := newCertHost(t, b)
+		cert, err := b.admin.CertRequest("host/"+fqdn, csrFor(t, fqdn))
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Cleanup(func() { _ = b.admin.CertRevoke(cert.SerialNumber, 4) })
+		plain := mustLogin(t, b, newUserWithPassword(t, b, goodPW), goodPW)
+		_, err = plain.CertShow(cert.SerialNumber)
+		wantCertCode(t, err, ipa.CodeACI)
+	})
+}

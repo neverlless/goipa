@@ -192,6 +192,10 @@ func certShow(s *Server, c Call) (any, *ipa.IpaError) {
 	if err != nil {
 		return nil, err
 	}
+	// shortcut: only host certificates exist here and no plain user manages a host, so every non-admin is refused (Q95); check the subject once user certificates are modelled.
+	if !s.isAdmin(c.User) {
+		return nil, &ipa.IpaError{Code: ipa.CodeACI, Message: "Insufficient access: not allowed to perform operation: retrieve certificate"}
+	}
 	return entry("", renderCert(r), ""), nil
 }
 

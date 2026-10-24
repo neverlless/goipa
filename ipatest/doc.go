@@ -26,10 +26,11 @@
 // # Auth model
 //
 // Every authenticated caller may run every command; ACIs are not evaluated
-// except the group member checks of Q24 and the pwpolicy_show check of Q32,
-// so where FreeIPA answers 2100
-// ACIError ipatest runs the command: an ordinary user deleting a missing OTP
-// token gets 4001 NotFound here and "2100 Insufficient access" from FreeIPA.
+// except the group member checks of Q24, the pwpolicy_show check of Q32, the
+// cert_show check of Q95 and the RBAC reads of Q122, so where FreeIPA
+// answers 2100 ACIError ipatest runs the command: an ordinary user deleting a
+// missing OTP token gets 4001 NotFound here and "2100 Insufficient access"
+// from FreeIPA.
 // OTP codes are not checked. A caller is authenticated by a session from
 // Session, ClientAs or a login, or, on /ipa/json, by SetNegotiateUser.
 //
@@ -247,9 +248,9 @@
 //     false, summary "Unresolved rules in --rules", error the unknown names,
 //     matched and notmatched null. A rule matches when its user, host and
 //     service parts all do: category all, the name listed, or a group of the
-//     user (nested ones included) or a direct hostgroup of the host listed;
-//     host groups are not expanded through nesting, service groups not at
-//     all. An unknown user or host just has no groups.
+//     user or a host group of the host (nested ones included) listed;
+//     service groups are not expanded. An unknown user or host just has no
+//     groups.
 //     TestContractHBACTest, TestHBACTest_*.
 //   - Q36: user_add_passkey and user_remove_passkey take one mapping,
 //     passkey:<id>,<key>[,<userid>]; id and key must be standard base64 and
@@ -333,18 +334,25 @@
 //     HostGroup.Hosts, as R2 for users; host_show's memberof_hostgroup lists
 //     it and removing the host clears both. hbactest sees the union too. A
 //     missing host group is 4001 "<cn>: host group not found"; hostgroup_del
-//     drops the group from other host groups and hosts. Member problems
-//     (no such entry, already a member, not a member, the group itself,
-//     Insufficient access for callers that are neither admins nor member
-//     managers) come back in failed under member.{host,hostgroup} or
-//     membermanager.{user,group}, as U3. TestContractHostGroupLifecycle,
-//     TestContractHostGroupMemberMissing, TestContractHostGroupManagers,
-//     TestHostGroupMembers_Fake, TestHostGroupDelete_DropsReferences.
+//     drops the group from other host groups, hosts, HBAC and sudo rules and
+//     service keytab access, and host_del (case-insensitive) drops the host
+//     from host groups, HBAC and sudo rules and service managedby and
+//     keytab access. Member problems (no such entry, already a member, not
+//     a member, the group itself, Insufficient access for callers that are
+//     neither admins nor member managers) come back in failed under
+//     member.{host,hostgroup} or membermanager.{user,group}, as U3.
+//     TestContractHostGroupLifecycle, TestContractHostGroupMemberMissing,
+//     TestContractHostGroupManagers, TestHostGroupMembers_Fake,
+//     TestHostGroupDelete_DropsReferences,
+//     goipa.TestHostDelete_DropsReferences,
+//     goipa.TestHostGroupDelete_DropsRuleAndKeytabReferences.
 //   - Q51: a host in a nested host group is in the parent's
 //     memberindirect_host, not member_host, and host_show lists the parent
 //     in memberofindirect_hostgroup; a nested group's own nested groups are
-//     memberindirect_hostgroup. Host group names are not lower-cased.
-//     TestContractHostGroupMembers, TestHostGroupShow.
+//     memberindirect_hostgroup. Host group names are not lower-cased;
+//     hostgroup_find's criteria match them case-insensitively.
+//     TestContractHostGroupMembers, TestHostGroupShow,
+//     goipa.TestContractHostGroupMixedCase.
 //   - Q90: cert_request signs the CSR with an in-memory CA (ECDSA P-256,
 //     "CN=Certificate Authority,O=TEST.LOCAL", created on first use) for an
 //     existing host principal host/<fqdn>[@REALM] only; the subject is
@@ -366,6 +374,10 @@
 //     other key is 4301 CertificateOperationError "Certificate operation
 //     cannot be completed: Key Type RSA Not Matched".
 //     goipa.TestContractCertRequestECDSA.
+//   - Q95: cert_show by a caller who is neither uid admin nor in admins is
+//     2100 ACIError: FreeIPA needs Retrieve Certificates from the CA or a
+//     host principal named in the subject, and no plain user is either.
+//     goipa.TestContractCertShowPlainUser.
 //   - Q70: hbacrule_add stores description and the user, host and service
 //     categories; hbacrule_show of a missing rule is 4001 "<cn>: HBAC rule
 //     not found" and shows members unless no_members is true.
@@ -388,7 +400,8 @@
 //     checked. goipa.TestContractHBACRuleCategoryConflict.
 //   - Q74: the HBAC services and service groups are FreeIPA's defaults
 //     (sshd, login, sudo, ... and Sudo, ftp) and cannot be changed; a host
-//     group exists while some host is in it. goipa.TestContractHBACRuleMembers,
+//     group exists when the host group store has it (AddHostGroup,
+//     hostgroup_add). goipa.TestContractHBACRuleMembers,
 //     goipa.TestContractHBACRuleWithTest.
 //   - Q100: dnszone_add makes the name absolute and answers FreeIPA's
 //     defaults: active, dynamic update off, idnssoamname the server
@@ -433,6 +446,11 @@
 //     sysaccount}, sysaccount only from 4.13 on in FreeIPA but always here.
 //     Only users, groups and hosts can be added; other kinds fail as "no
 //     such entry". goipa.TestContractRoleMembers.
+//   - Q122: System: Read Roles, Read Privileges and Read Permissions are
+//     bound to the RBAC Readers privilege, so to a caller who is neither uid
+//     admin nor in admins role_show, privilege_show and permission_show are
+//     4001 and the finds match nothing (roles are not evaluated).
+//     goipa.TestContractRBACPlainUser.
 //   - Q130: a *_show or *_find command that is neither modelled nor
 //     overridden with Handle answers, as its result, the response recorded
 //     from a real FreeIPA (ipatest/replay, see SetReplay and NewRecorder)
@@ -442,7 +460,11 @@
 //     905 and an unknown option 3005; beyond that options and arguments are
 //     not looked at, so the answer is the same for every call; batch entries
 //     are answered the same way. Other commands are never replayed, so an
-//     unmodelled write stays 905 instead of faking a change.
+//     unmodelled write stays 905 instead of faking a change. The shipped
+//     recordings come from the integration servers, realm EXAMPLE.TEST and
+//     base dc=example,dc=test, while the model answers TEST.LOCAL and
+//     dc=test,dc=local, so names and DNs in a replayed answer do not match
+//     modelled ones.
 //     TestReplay_Precedence, TestReplay_PicksRelease, TestReplay_Disabled,
 //     TestReplay_InBatch, TestReplay_IgnoresWrites,
 //     TestReplay_CatalogueChecked, TestRecorder_SkipsWrites.
@@ -462,7 +484,7 @@
 //     entry"]], attr managedby for service_{add,remove}_host and
 //     ipaallowedtoperform_{read,write}_keys for the keytab calls.
 //     goipa.TestContractServiceMemberMissing,
-//     TestService_KeytabEmptyHostGroup.
+//     goipa.TestService_KeytabEmptyHostGroup.
 //   - Q63: service_add_host of a host already managing the service fails
 //     that member ("This entry is already a member"); the host may be
 //     removed and added back. goipa.TestContractServiceManagedBy.
@@ -496,15 +518,16 @@
 //     not a valid attribute."). goipa.TestContractAutomemberRule,
 //     goipa.TestContractAutomemberRemoveCondition,
 //     goipa.TestContractAutomemberMissing.
-//   - Q112: user_add (not stageuser_add) and automember_rebuild of type
-//     group put a user into every group whose rule has an inclusive
-//     condition that matches and no exclusive one that does, or into the
-//     default group when no rule matches. Conditions match uid and the
-//     attributes User stores under their LDAP names (givenname, sn, title,
-//     mail, ...); others never match. Regexes are Go RE2, not the PCRE of
-//     389-ds. Rebuild only adds. goipa.TestContractAutomemberRule,
-//     goipa.TestContractAutomemberRebuild,
-//     goipa.TestContractAutomemberDefaultGroup.
+//   - Q112: user_add, stageuser_activate (not stageuser_add) and
+//     automember_rebuild of type group put a user into every group whose
+//     rule has an inclusive condition that matches and no exclusive one
+//     that does, or into the default group when no rule matches.
+//     Conditions match uid and the attributes User stores under their LDAP
+//     names (givenname, sn, title, mail, ...); others never match. Regexes
+//     are Go RE2, not the PCRE of 389-ds. Rebuild only adds.
+//     goipa.TestContractAutomemberRule, goipa.TestContractAutomemberRebuild,
+//     goipa.TestContractAutomemberDefaultGroup,
+//     goipa.TestAutomember_StageUserActivate.
 //   - Q113: automember_default_group_show answers automemberdefaultgroup as
 //     the group's DN in a list, or the string "No default (fallback) group
 //     set". _set of a missing group or host group is 4001 `<type> "<cn>"
