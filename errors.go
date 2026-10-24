@@ -18,6 +18,7 @@ const (
 	CodeCommand              = 905
 	CodeReferer              = 911
 	CodeACI                  = 2100
+	CodeOption               = 3005
 	CodeRequirement          = 3007
 	CodeValidation           = 3009
 	CodeNotFound             = 4001
@@ -71,6 +72,10 @@ var (
 
 	// ErrInvalidPassword is returned when a password is invalid
 	ErrInvalidPassword = errors.New("invalid current password")
+
+	// ErrInvalidCredentials is returned by SyncOTPToken when FreeIPA rejects
+	// the user, password or codes (X-IPA-TokenSync-Result: invalid-credentials).
+	ErrInvalidCredentials = errors.New("invalid user, password or OTP codes")
 
 	// ErrExpiredPassword is returned when a password is expired
 	ErrExpiredPassword = errors.New("password expired")

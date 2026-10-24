@@ -1,0 +1,51 @@
+// Copyright 2026 goipa Authors. All rights reserved.
+// Use of this source code is governed by a BSD style
+// license that can be found in the LICENSE file.
+
+package ipa
+
+import (
+	"fmt"
+	"testing"
+
+	"github.com/tidwall/gjson"
+)
+
+func TestBoolAttr(t *testing.T) {
+	for _, tc := range []struct {
+		json string
+		want bool
+	}{
+		{`{"f":true}`, true},
+		{`{"f":[true]}`, true},
+		{`{"f":"TRUE"}`, true},
+		{`{"f":["TRUE"]}`, true},
+		{`{"f":["true"]}`, true},
+		{`{"f":false}`, false},
+		{`{"f":[false]}`, false},
+		{`{"f":["FALSE"]}`, false},
+		{`{"f":[]}`, false},
+		{`{}`, false},
+	} {
+		if got := boolAttr(gjson.Parse(tc.json), "f"); got != tc.want {
+			t.Errorf("%s: got %v", tc.json, got)
+		}
+	}
+}
+
+func TestStrList(t *testing.T) {
+	for _, tc := range []struct {
+		json string
+		want []string
+	}{
+		{`{"f":["a","b"]}`, []string{"a", "b"}},
+		{`{"f":"a"}`, []string{"a"}},
+		{`{"f":null}`, nil},
+		{`{"f":[]}`, nil},
+		{`{}`, nil},
+	} {
+		if got := strList(gjson.Parse(tc.json), "f"); fmt.Sprint(got) != fmt.Sprint(tc.want) || (got == nil) != (tc.want == nil) {
+			t.Errorf("%s: got %#v", tc.json, got)
+		}
+	}
+}

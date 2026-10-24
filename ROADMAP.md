@@ -32,8 +32,8 @@ to influence them.
       unchecked request and SPNEGO errors
 - [x] `go test ./...` runs without a server; CI with race detector,
       staticcheck, gosec, govulncheck; Dependabot
-- [ ] Tag v0.1.0 (only this tag: upstream v0.0.x tags carry the old module path)
-- [ ] Offer co-maintainership or upstreaming to ubccr/goipa in an issue
+- [x] Tag v0.1.0 (only this tag: upstream v0.0.x tags carry the old module path)
+- [x] Offer co-maintainership or upstreaming to ubccr/goipa in an issue (ubccr/goipa#19)
 
 ## v0.2.0 — Core: RPC, errors, context
 
@@ -125,13 +125,13 @@ three FreeIPA versions.
 
 ## v0.5.0 — Account lifecycle and access
 
-- [ ] Stage users: add, show, find, mod, activate, delete
-- [ ] Lockout: `UserStatus` (per-replica counters), `UserUnlock`,
+- [x] Stage users: add, show, find, mod, activate, delete
+- [x] Lockout: `UserStatus` (per-replica counters), `UserUnlock`,
       `PwPolicyShow` including the FreeIPA 4.13 password-quality credits
-- [ ] Subordinate IDs: `SubIDFind`, `SubIDGenerate`
-- [ ] HBAC and sudo: `HBACRuleFind`, `SudoRuleFind`, `HBACTest`
-- [ ] Passkeys: `UserAddPasskey`, `UserRemovePasskey`
-- [ ] OTP token sync (`/ipa/session/sync_token`; ubccr/goipa#2 by
+- [x] Subordinate IDs: `SubIDFind`, `SubIDGenerate`
+- [x] HBAC and sudo: `HBACRuleFind`, `SudoRuleFind`, `HBACTest`
+- [x] Passkeys: `UserAddPasskey`, `UserRemovePasskey`
+- [x] OTP token sync (`/ipa/session/sync_token`; ubccr/goipa#2 by
       @farzandalaee)
 
 Accept: an application can manage these without `RPC`; each call has a doc

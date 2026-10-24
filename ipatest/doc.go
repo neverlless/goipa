@@ -26,7 +26,8 @@
 // # Auth model
 //
 // Every authenticated caller may run every command; ACIs are not evaluated
-// except the group member checks of Q24, so where FreeIPA answers 2100
+// except the group member checks of Q24 and the pwpolicy_show check of Q32,
+// so where FreeIPA answers 2100
 // ACIError ipatest runs the command: an ordinary user deleting a missing OTP
 // token gets 4001 NotFound here and "2100 Insufficient access" from FreeIPA.
 // OTP codes are not checked. A caller is authenticated by a session from
@@ -114,10 +115,11 @@
 //     summary}; user_find returns {result: [...], count, truncated,
 //     summary}. TestHandleWholeResultObject, TestUserAddModDel,
 //     goipa.TestContractResultShapes.
-//   - Q19: user_add with an explicit empty homedirectory fails with 4205
-//     ObjectclassViolation, as "" means no value and homeDirectory is
-//     required by posixAccount; leaving the option out gets /home/<uid>.
-//     TestUserAddEmptyHomeDir, goipa.TestContractUserAddDefaults.
+//   - Q19: user_add, user_mod and stageuser_mod with an explicit empty
+//     homedirectory fail with 4205 ObjectclassViolation, as "" means no value
+//     and homeDirectory is required by posixAccount; leaving the option out
+//     gets /home/<uid> on add and keeps the value on mod.
+//     TestUserAddEmptyHomeDir, TestUserModEmptyHomeDir, goipa.TestContractUserAddDefaults.
 //   - Q20: group_show returns members unless no_members is true (all
 //     overrides it); group_find returns them only with no_members false or
 //     all true. Empty member lists are left out; gidnumber only on POSIX
@@ -130,9 +132,12 @@
 //     changes nothing fails with 4202; a missing group is 4001
 //     "<cn>: group not found". TestGroupAddModDel, TestGroupShow_NotFound.
 //   - Q22: group_del returns {result: {failed: []}, value: [cns], summary}
-//     and drops the group from other groups and from users. user_del drops
-//     the user from every group's members and managers, preserved or not.
-//     TestGroupDel_Shape, TestUserDel_LeavesGroups.
+//     and drops the group from other groups, from users, from the groups of
+//     HBAC and sudo rules, and its password policy. user_del drops the user
+//     from every group's members and managers and from the users of HBAC and
+//     sudo rules, preserved or not.
+//     TestGroupDel_Shape, TestUserDel_LeavesGroups, TestUserDel_LeavesRules,
+//     TestGroupDel_LeavesRulesAndPolicy.
 //   - Q23: group_{add,remove}_member and the _member_manager commands report
 //     per-member problems ("This entry is already a member", "This entry is
 //     not a member", "no such entry") in failed, next to result, as
@@ -168,6 +173,99 @@
 //     already holds its own host, ipa.test.local, with a keytab.
 //     TestHostFind_HidesMembersByDefault, TestHostShow_Shape,
 //     TestHostShow_NotFound.
+//   - Q28: stage users live in their own store, with dn
+//     uid=<uid>,cn=staged users,cn=accounts,cn=provisioning,dc=test,dc=local,
+//     nsaccountlock always true, no memberof_*, and uidnumber and gidnumber
+//     ["-1"] (the DNA magic value stageuser_add.pre_callback sets) until
+//     activation.
+//     stageuser_find leaves out userclass unless all is true, as Q1.
+//     TestContractStageFindUserclassNeedsAll, TestContractStageUserLifecycle.
+//   - Q29: stageuser_add without givenname or sn is 3007; a duplicate stage
+//     uid is 4002 `stage user with name "<uid>" already exists`; active
+//     users are not checked. stageuser_del has the user_del shape; a missing
+//     entry is 4001 "<uid>: stage user not found"; it ignores preserve.
+//     TestStageUserAdd_Required, TestStageUserDuplicateAndDelete.
+//   - Q30: stageuser_activate moves the record to the active users with a
+//     fresh uidnumber and answers with the active entry (all attributes),
+//     summary "Stage user <uid> activated". If the active uid exists it is
+//     4002 `active user with name "<uid>" already exists` and the stage entry
+//     stays. TestContractStageActivateSummary, TestStageUserDuplicateAndDelete.
+//   - Q31: user_status answers one entry for ipa.test.local: server and now
+//     are scalars, krblastfailedauth is ["N/A"] or
+//     [{"__datetime__": "YYYYmmddHHMMSSZ"}] for the last wrong password
+//     (User.LastFailedLogin), krbloginfailedcount is the scalar "0"
+//     until a login fails and ["n"] afterwards, as on a real IPA. The summary
+//     is "Account disabled: True|False"; a missing user is 4001. user_unlock
+//     zeroes the counter. TestContractUserStatusAndUnlock, TestUserStatus_*.
+//   - Q32: New seeds global_policy with FreeIPA's defaults (90 days, 1 hour,
+//     minlength 8, 6 failures, 60 s interval, 600 s lockout, grace limit -1).
+//     pwpolicy_show without cn is the global policy; option user resolves the
+//     lowest cospriority among the user's groups, nested ones included, else
+//     global (4001 for a missing user, "<cn>: password policy not found" for
+//     an unknown cn). Numbers are one-element string lists in wire units. In
+//     global_policy the krb* attributes, the credits and the two checks
+//     (["TRUE"]/["FALSE"]) are always present; a group policy has
+//     cospriority, passwordgracelimit (-1 unless set) and only the attributes
+//     that were set; zero optional ones are omitted.
+//     A caller who is neither uid admin nor a member of admins gets 4001
+//     `<cn or None>: password policy not found` (the ACI hides the entry;
+//     also for option user), not 2100. With option user the answer has no
+//     cospriority, as pwpolicy_show asks add_cospriority for a cn of None.
+//     pwpolicy_add needs an existing
+//     group (4001) and cospriority (3007); login_password and change_password
+//     use the global MaxFailures (0 disables lockout) and MinLength.
+//     pwpolicy_show takes only all, raw, rights, user and version; any other
+//     option is 3005 OptionError "Unknown option: <name>".
+//     TestContractPwPolicyGlobal, TestUserPwPolicy_Resolution,
+//     TestPwPolicy_AddDelAndLoginUseGlobal, TestPwPolicyShow_UnknownOption,
+//     TestPwPolicyShow_GroupOmitsUnset, TestUserPwPolicy_OmitsCospriority,
+//     TestPwPolicyShow_HiddenFromPlainUser, TestContractPwPolicyPlainUser.
+//   - Q33: sub-ID ranges start at 2147483648 and advance by 65536 (uid and gid
+//     equal). subid_find filters by ipaowner, ipauniqueid, ipasubuidnumber and
+//     description; values are lists of strings, plus dn
+//     ipauniqueid=<id>,cn=subids,cn=accounts,dc=test,dc=local and objectclass.
+//     subid_generate takes the owner from ipaowner, else the caller; an unknown
+//     owner is 4001 "<owner>: user not found"; a second range is 4002
+//     `Subordinate id with with name "<id>" or for user "<owner>" already
+//     exists.` (FreeIPA's typo). A non-preserving user_del drops the range.
+//     TestContractSubIDGenerate, TestSubID_FindAndUserDelete.
+//   - Q34: New seeds the HBAC rule allow_all (description "Allow all users to
+//     access any host from any host", user, host and service category all),
+//     as every FreeIPA has. hbacrule_find and sudorule_find hide members
+//     unless all is true or no_members is false (as Q1/U1); ipaenabledflag
+//     is ["TRUE"]/["FALSE"], categories are one-element lists, sudoorder a
+//     one-element string list. dn is ipaUniqueID=<uuid>,cn=hbac,... and
+//     ipaUniqueID=<uuid>,cn=sudorules,cn=sudo,...
+//     TestHBACRuleFind_AllFields, TestSudoRuleFind_AllFields,
+//     TestRuleFindMembersVisibility, TestRuleFindFilters,
+//     TestRuleAddUserFailures.
+//   - Q35: hbactest needs user, targethost and service (3007 otherwise) and
+//     answers with no result key: value, summary "Access granted: True|False",
+//     and matched, notmatched, error and warning as lists or null. The rules
+//     are the enabled ones, or those named in rules, which are evaluated even
+//     when disabled. If a name in rules is unknown nothing is evaluated: value
+//     false, summary "Unresolved rules in --rules", error the unknown names,
+//     matched and notmatched null. A rule matches when its user, host and
+//     service parts all do: category all, the name listed, or a group of the
+//     user (nested ones included) or a direct hostgroup of the host listed;
+//     host groups are not expanded through nesting, service groups not at
+//     all. An unknown user or host just has no groups.
+//     TestContractHBACTest, TestHBACTest_*.
+//   - Q36: user_add_passkey and user_remove_passkey take one mapping,
+//     passkey:<id>,<key>[,<userid>]; id and key must be standard base64 and
+//     the key a PKIX public key, else 3009 `invalid 'passkey': …`. A duplicate
+//     is 4038 `'ipapasskey' already contains '<mapping>'`, an absent one on
+//     remove 4026 `'ipapasskey' does not contain '<mapping>'`. The answer
+//     holds uid and ipapasskey. Any caller may manage any user's mappings.
+//     TestPasskeyCommands, TestContractPasskeys.
+//   - Q37: /ipa/session/sync_token answers HTTP 400 with an HTML body when
+//     user, password, first_code or second_code is missing. Otherwise it is
+//     200 with X-IPA-TokenSync-Result invalid-credentials (unknown user, no
+//     password or a different one, no enabled token of the user, or none with
+//     the given token UUID, or a code that is not Digits digits) or ok. Codes
+//     are not checked against a secret. The Referer check of the form
+//     endpoints applies; SyncOTPToken sends one. TestContractSyncTokenResults,
+//     TestSyncOTPToken.
 //
 // A response's version is the server release, 4.13.4, and its principal is
 // <uid>@TEST.LOCAL. An error a HandlerFunc returns without a Name gets the
@@ -175,9 +273,11 @@
 //
 // # Not modelled
 //
-// Stage users, lockout status and unlock, password policy, subordinate IDs,
-// HBAC and sudo rules, hbactest and passkey management (planned for v0.5).
-// Until then, Handle is the way to reach them. Kerberos, LDAP search
-// filters, size limits, replication and HTTP fault injection are left out;
-// wrap HTTPClient's transport for the latter.
+// Of HBAC and sudo rule management, only find, add, del and the member and
+// option calls the tests need; Handle is the way to reach the rest, as for
+// config_*, subid_show, stageuser_add_passkey and stageuser_remove_passkey.
+// Stage user passwords are not modelled: userpassword is ignored and random
+// behaves as for active users. Kerberos, LDAP search filters, size limits,
+// replication and HTTP fault injection are left out; wrap HTTPClient's
+// transport for the latter.
 package ipatest

@@ -20,10 +20,9 @@ import (
 )
 
 const (
-	firstID      = 1000000 // first uidnumber, as FreeIPA's default ID range
-	maxFailures  = 6       // krbpwdmaxfailure
-	minPwdLength = 8       // krbpwdminlength
-	baseDN       = "cn=users,cn=accounts,dc=test,dc=local"
+	firstID     = 1000000 // first uidnumber, as FreeIPA's default ID range
+	baseDN      = "cn=users,cn=accounts,dc=test,dc=local"
+	stageBaseDN = "cn=staged users,cn=accounts,cn=provisioning,dc=test,dc=local"
 )
 
 // User is a user account of the fake server.
@@ -53,14 +52,16 @@ type User struct {
 	Title             string
 	OrgUnit           string
 	FailedLogins      int
+	LastFailedLogin   time.Time // krblastfailedauth, set by a wrong password
 	PasswdExpire      time.Time // krbpasswordexpiration; non-zero and not after now = expired
 }
 
 // userRec is a stored user plus the attributes the server assigns.
 type userRec struct {
 	User
-	id   int
-	uuid string
+	id    int // 0 = none yet: a stage user has no uidnumber until activated
+	uuid  string
+	stage bool
 }
 
 // clone also turns empty slices into nil, so Q11's DeepEqual sees
@@ -86,11 +87,19 @@ func cloneStrs(s []string) []string {
 func (s *Server) AddUser(uid string, u User) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.putUser(uid, u)
+	s.putUser(false, uid, u)
+}
+
+// store is the active or the stage user map.
+func (s *Server) store(stage bool) map[string]*userRec {
+	if stage {
+		return s.stage
+	}
+	return s.users
 }
 
 // putUser needs s.mu held. A replaced user keeps its ids.
-func (s *Server) putUser(uid string, u User) *userRec {
+func (s *Server) putUser(stage bool, uid string, u User) *userRec {
 	u = u.clone()
 	def := func(p *string, v string) {
 		if *p == "" {
@@ -105,11 +114,17 @@ func (s *Server) putUser(uid string, u User) *userRec {
 	def(&u.Last, "User")
 	def(&u.HomeDir, "/home/"+uid)
 	def(&u.Shell, "/bin/sh")
-	r := s.users[uid]
+	r := s.store(stage)[uid]
 	if r == nil {
-		s.nextID++
-		r = &userRec{id: s.nextID, uuid: newUUID()}
-		s.users[uid] = r
+		r = &userRec{uuid: newUUID(), stage: stage}
+		if !stage {
+			s.nextID++
+			r.id = s.nextID
+		}
+		s.store(stage)[uid] = r
+	}
+	if stage {
+		u.Locked = true
 	}
 	r.User = u
 	return r
@@ -161,17 +176,25 @@ func randomPassword() string {
 // attributes are lists, nsaccountlock, has_password, has_keytab, preserved
 // and randompassword are scalars, datetimes are {"__datetime__": ...}.
 func (r *userRec) render(s *Server, uid string, find, all bool) map[string]any {
+	dn := "uid=" + uid + "," + baseDN
+	if r.stage {
+		dn = "uid=" + uid + "," + stageBaseDN
+	}
 	out := map[string]any{
-		"dn":               "uid=" + uid + "," + baseDN,
+		"dn":               dn,
 		"uid":              []string{uid},
 		"krbprincipalname": []string{uid + "@" + realm},
-		"uidnumber":        []string{strconv.Itoa(r.id)},
-		"gidnumber":        []string{strconv.Itoa(r.id)},
 		"ipauniqueid":      []string{r.uuid},
 		"nsaccountlock":    r.Locked,
 		"has_password":     r.Password != "",
 		"has_keytab":       false,
 		"preserved":        r.Preserved,
+	}
+	if r.id != 0 {
+		out["uidnumber"], out["gidnumber"] = []string{strconv.Itoa(r.id)}, []string{strconv.Itoa(r.id)}
+	}
+	if r.stage { // DNA magic value, set by stageuser_add.pre_callback; the DNA plugin skips staged users
+		out["uidnumber"], out["gidnumber"] = []string{"-1"}, []string{"-1"}
 	}
 	for k, v := range map[string][]string{
 		"givenname":       {r.First},
@@ -201,6 +224,9 @@ func (r *userRec) render(s *Server, uid string, find, all bool) map[string]any {
 				out[k] = []string{v}
 			}
 		}
+	}
+	if r.stage {
+		return out
 	}
 	direct := s.userGroups(uid, r)
 	indirect := s.ancestors(direct)
@@ -313,17 +339,29 @@ func uidArg(c Call) (string, *ipa.IpaError) {
 	return c.Args[0], nil
 }
 
-// userArg looks up the user c names.
+// userArg looks up the active user c names.
 func (s *Server) userArg(c Call) (string, *userRec, *ipa.IpaError) {
+	return s.userArgIn(false, c)
+}
+
+func (s *Server) userArgIn(stage bool, c Call) (string, *userRec, *ipa.IpaError) {
 	uid, err := uidArg(c)
 	if err != nil {
 		return "", nil, err
 	}
-	r := s.users[uid]
+	r := s.store(stage)[uid]
 	if r == nil {
-		return "", nil, notFound(uid, "user")
+		return "", nil, notFound(uid, userObject(stage))
 	}
 	return uid, r, nil
+}
+
+// userObject names the entry type in messages.
+func userObject(stage bool) string {
+	if stage {
+		return "stage user"
+	}
+	return "user"
 }
 
 const pwdMaxLife = 90 * 24 * time.Hour // krbmaxpwdlife
@@ -345,22 +383,30 @@ func (r *userRec) withRandom(s *Server, c Call, uid string) map[string]any {
 	return rec
 }
 
-func userShow(s *Server, c Call) (any, *ipa.IpaError) {
-	uid, r, err := s.userArg(c)
+func userShow(stage bool) builtin {
+	return func(s *Server, c Call) (any, *ipa.IpaError) { return s.userShow(stage, c) }
+}
+
+func (s *Server) userShow(stage bool, c Call) (any, *ipa.IpaError) {
+	uid, r, err := s.userArgIn(stage, c)
 	if err != nil {
 		return nil, err
 	}
 	return entry(uid, r.render(s, uid, false, flag(c, "all")), ""), nil
 }
 
-func userFind(s *Server, c Call) (any, *ipa.IpaError) {
+func userFind(stage bool) builtin {
+	return func(s *Server, c Call) (any, *ipa.IpaError) { return s.userFind(stage, c) }
+}
+
+func (s *Server) userFind(stage bool, c Call) (any, *ipa.IpaError) {
 	needle := ""
 	if len(c.Args) > 0 {
 		needle = strings.ToLower(c.Args[0])
 	}
 	all := flag(c, "all")
 	var uids []string
-	for uid, r := range s.users {
+	for uid, r := range s.store(stage) {
 		if r.Preserved != flag(c, "preserved") {
 			continue
 		}
@@ -377,8 +423,8 @@ func userFind(s *Server, c Call) (any, *ipa.IpaError) {
 	sort.Strings(uids)
 	recs := make([]map[string]any, 0, len(uids))
 	for _, uid := range uids {
-		rec := s.users[uid].render(s, uid, true, all)
-		if !all { // Q1
+		rec := s.store(stage)[uid].render(s, uid, true, all)
+		if !all { // Q1, Q28
 			delete(rec, "userclass")
 		}
 		recs = append(recs, rec)
@@ -396,16 +442,20 @@ func matchesAny(c Call, opt string, have []string) bool {
 	return !ok || slices.Contains(have, str(v))
 }
 
-func userAdd(s *Server, c Call) (any, *ipa.IpaError) {
+func userAdd(stage bool) builtin {
+	return func(s *Server, c Call) (any, *ipa.IpaError) { return s.userAdd(stage, c) }
+}
+
+func (s *Server) userAdd(stage bool, c Call) (any, *ipa.IpaError) {
 	uid, err := uidArg(c)
 	if err != nil {
 		return nil, err
 	}
-	if s.users[uid] != nil { // Q10
-		return nil, &ipa.IpaError{Code: ipa.CodeDuplicateEntry, Message: fmt.Sprintf("user with name %q already exists", uid)}
+	if s.store(stage)[uid] != nil { // Q10, Q29
+		return nil, &ipa.IpaError{Code: ipa.CodeDuplicateEntry, Message: fmt.Sprintf("%s with name %q already exists", userObject(stage), uid)}
 	}
-	if v, ok := c.Options["homedirectory"]; ok && str(v) == "" { // Q19
-		return nil, &ipa.IpaError{Code: 4205, Name: "ObjectclassViolation", Message: `missing attribute "homeDirectory" required by object class "posixAccount"`}
+	if err := emptyHomeDir(c); err != nil {
+		return nil, err
 	}
 	var u User
 	u.apply(c.Options)
@@ -415,13 +465,28 @@ func userAdd(s *Server, c Call) (any, *ipa.IpaError) {
 	if u.Last == "" {
 		return nil, required("sn")
 	}
-	rec := s.putUser(uid, u).withRandom(s, c, uid)
-	return entry(uid, rec, fmt.Sprintf("Added user %q", uid)), nil
+	rec := s.putUser(stage, uid, u).withRandom(s, c, uid)
+	return entry(uid, rec, fmt.Sprintf("Added %s %q", userObject(stage), uid)), nil
 }
 
-func userMod(s *Server, c Call) (any, *ipa.IpaError) {
-	uid, r, err := s.userArg(c)
+func userMod(stage bool) builtin {
+	return func(s *Server, c Call) (any, *ipa.IpaError) { return s.userMod(stage, c) }
+}
+
+// emptyHomeDir is Q19: "" means no value and posixAccount requires one.
+func emptyHomeDir(c Call) *ipa.IpaError {
+	if v, ok := c.Options["homedirectory"]; ok && str(v) == "" {
+		return &ipa.IpaError{Code: 4205, Name: "ObjectclassViolation", Message: `missing attribute "homeDirectory" required by object class "posixAccount"`}
+	}
+	return nil
+}
+
+func (s *Server) userMod(stage bool, c Call) (any, *ipa.IpaError) {
+	uid, r, err := s.userArgIn(stage, c)
 	if err != nil {
+		return nil, err
+	}
+	if err := emptyHomeDir(c); err != nil {
 		return nil, err
 	}
 	next := r.User.clone()
@@ -438,15 +503,20 @@ func userMod(s *Server, c Call) (any, *ipa.IpaError) {
 	}
 	r.User = next
 	rec := r.withRandom(s, c, uid)
-	return entry(uid, rec, fmt.Sprintf("Modified user %q", uid)), nil
+	return entry(uid, rec, fmt.Sprintf("Modified %s %q", userObject(stage), uid)), nil
 }
 
-func userDel(s *Server, c Call) (any, *ipa.IpaError) {
+func userDel(stage bool) builtin {
+	return func(s *Server, c Call) (any, *ipa.IpaError) { return s.userDel(stage, c) }
+}
+
+func (s *Server) userDel(stage bool, c Call) (any, *ipa.IpaError) {
+	users := s.store(stage)
 	var deleted, failed []string
 	for _, uid := range c.Args {
-		if s.users[uid] == nil {
+		if users[uid] == nil {
 			if !flag(c, "continue") {
-				return nil, notFound(uid, "user")
+				return nil, notFound(uid, userObject(stage))
 			}
 			failed = append(failed, uid)
 		} else {
@@ -454,14 +524,20 @@ func userDel(s *Server, c Call) (any, *ipa.IpaError) {
 		}
 	}
 	for _, uid := range deleted {
-		for _, g := range s.groups { // referential integrity, also when preserved
-			g.Members = slices.DeleteFunc(g.Members, func(m string) bool { return m == uid })
-			g.ManagerUsers = slices.DeleteFunc(g.ManagerUsers, func(m string) bool { return m == uid })
+		if !stage {
+			for _, g := range s.groups { // referential integrity, also when preserved
+				g.Members = slices.DeleteFunc(g.Members, func(m string) bool { return m == uid })
+				g.ManagerUsers = slices.DeleteFunc(g.ManagerUsers, func(m string) bool { return m == uid })
+			}
+			s.dropFromRules(uid, false)
 		}
-		if flag(c, "preserve") {
-			s.users[uid].Preserved, s.users[uid].Locked = true, true
+		if !stage && flag(c, "preserve") {
+			users[uid].Preserved, users[uid].Locked = true, true
 		} else {
-			delete(s.users, uid)
+			delete(users, uid)
+			if !stage {
+				delete(s.subids, uid) // Q33
+			}
 		}
 	}
 	if failed == nil {
@@ -473,7 +549,7 @@ func userDel(s *Server, c Call) (any, *ipa.IpaError) {
 	return map[string]any{
 		"result":  map[string]any{"failed": failed},
 		"value":   deleted,
-		"summary": fmt.Sprintf("Deleted user %q", strings.Join(deleted, ",")),
+		"summary": fmt.Sprintf("Deleted %s %q", userObject(stage), strings.Join(deleted, ",")),
 	}, nil
 }
 
@@ -530,10 +606,11 @@ func loginPassword(s *Server, w http.ResponseWriter, r *http.Request) {
 	switch {
 	case u == nil || u.Password == "":
 		reject("invalid-password")
-	case u.Locked || u.Preserved || u.FailedLogins >= maxFailures: // Q6
+	case u.Locked || u.Preserved || (s.pwpol[globalPolicy].MaxFailures > 0 && u.FailedLogins >= s.pwpol[globalPolicy].MaxFailures): // Q6, Q32
 		reject("user-locked")
 	case u.Password != pw:
 		u.FailedLogins++
+		u.LastFailedLogin = time.Now()
 		reject("invalid-password")
 	case !u.PasswdExpire.IsZero() && !u.PasswdExpire.After(time.Now()): // Q5
 		reject("password-expired")
@@ -550,7 +627,7 @@ func changePassword(s *Server, w http.ResponseWriter, r *http.Request) {
 	switch {
 	case u == nil || u.Password == "" || u.Password != r.FormValue("old_password"):
 		result = "invalid-password"
-	case len(newPw) < minPwdLength:
+	case len(newPw) < s.pwpol[globalPolicy].MinLength:
 		result = "policy-error"
 		w.Header().Set("X-IPA-Pwchange-Policy-Error", "Constraint violation: Password is too short")
 	default:
@@ -559,12 +636,42 @@ func changePassword(s *Server, w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("X-IPA-Pwchange-Result", result)
 }
 
+func syncToken(s *Server, w http.ResponseWriter, r *http.Request) {
+	for _, k := range []string{"user", "password", "first_code", "second_code"} {
+		if r.FormValue(k) == "" {
+			http.Error(w, "<html><body>Bad Request</body></html>", http.StatusBadRequest)
+			return
+		}
+	}
+	uid, c1, c2 := r.FormValue("user"), r.FormValue("first_code"), r.FormValue("second_code")
+	u := s.users[uid]
+	ok := false
+	if u != nil && u.Password != "" && u.Password == r.FormValue("password") {
+		for _, t := range s.tokens {
+			if t.Owner == uid && !t.Disabled && (r.FormValue("token") == "" || t.UUID == r.FormValue("token")) &&
+				len(c1) == t.Digits && len(c2) == t.Digits && isDigits(c1) && isDigits(c2) {
+				ok = true
+			}
+		}
+	}
+	result := "ok"
+	if !ok {
+		result = "invalid-credentials"
+	}
+	w.Header().Set("X-IPA-TokenSync-Result", result)
+}
+
+func isDigits(v string) bool {
+	return strings.Trim(v, "0123456789") == ""
+}
+
 func init() {
-	builtins["user_show"] = userShow
-	builtins["user_find"] = userFind
-	builtins["user_add"] = userAdd
-	builtins["user_mod"] = userMod
-	builtins["user_del"] = userDel
+	forms["/ipa/session/sync_token"] = syncToken
+	builtins["user_show"] = userShow(false)
+	builtins["user_find"] = userFind(false)
+	builtins["user_add"] = userAdd(false)
+	builtins["user_mod"] = userMod(false)
+	builtins["user_del"] = userDel(false)
 	builtins["user_disable"] = setLocked(true)
 	builtins["user_enable"] = setLocked(false)
 	builtins["passwd"] = passwd

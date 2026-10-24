@@ -32,6 +32,7 @@ var errorNames = map[int]string{
 	ipa.CodeCommand:              "CommandError",
 	ipa.CodeReferer:              "RefererError",
 	ipa.CodeACI:                  "ACIError",
+	ipa.CodeOption:               "OptionError",
 	ipa.CodeRequirement:          "RequirementError",
 	ipa.CodeValidation:           "ValidationError",
 	ipa.CodeNotFound:             "NotFound",
@@ -96,8 +97,13 @@ type Server struct {
 	calls     []Call
 	handlers  map[string]HandlerFunc
 	users     map[string]*userRec
+	stage     map[string]*userRec
 	groups    map[string]*groupRec
 	hosts     map[string]Host
+	subids    map[string]SubID // by owner uid
+	hbac      map[string]*hbacRec
+	sudo      map[string]*sudoRec
+	pwpol     map[string]PwPolicy
 	tokens    []*OTPToken
 	nextID    int // last uidnumber handed out
 	nextGID   int // last gidnumber handed out
@@ -119,8 +125,13 @@ func New() *Server {
 		expired:  map[string]bool{},
 		handlers: map[string]HandlerFunc{},
 		users:    map[string]*userRec{},
+		stage:    map[string]*userRec{},
 		groups:   map[string]*groupRec{},
 		hosts:    map[string]Host{serverFQDN: {HasKeytab: true}},
+		subids:   map[string]SubID{},
+		hbac:     seedAllowAll(),
+		sudo:     map[string]*sudoRec{},
+		pwpol:    seedPwPolicies(),
 		nextID:   firstID - 1,
 		nextGID:  firstID - 1,
 	}

@@ -25,6 +25,14 @@ func twinCalls() []twinCall {
 			_, err := c.RPCContext(ctx, "ping", nil, nil)
 			return err
 		}},
+		{"PwPolicyShowContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.PwPolicyShowContext(ctx, "")
+			return err
+		}},
+		{"UserPwPolicyContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.UserPwPolicyContext(ctx, "bob")
+			return err
+		}},
 		{"PingContext", func(ctx context.Context, c *ipa.Client) error {
 			_, err := c.PingContext(ctx)
 			return err
@@ -40,6 +48,13 @@ func twinCalls() []twinCall {
 			_, err := c.UserFindContext(ctx, nil)
 			return err
 		}},
+		{"UserStatusContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.UserStatusContext(ctx, "bob")
+			return err
+		}},
+		{"UserUnlockContext", func(ctx context.Context, c *ipa.Client) error {
+			return c.UserUnlockContext(ctx, "bob")
+		}},
 		{"ResetPasswordContext", func(ctx context.Context, c *ipa.Client) error {
 			_, err := c.ResetPasswordContext(ctx, "bob")
 			return err
@@ -49,6 +64,9 @@ func twinCalls() []twinCall {
 		}},
 		{"SetPasswordContext", func(ctx context.Context, c *ipa.Client) error {
 			return c.SetPasswordContext(ctx, "bob", "old", "new", "")
+		}},
+		{"SyncOTPTokenContext", func(ctx context.Context, c *ipa.Client) error {
+			return c.SyncOTPTokenContext(ctx, "bob", "pw", "123456", "654321", "")
 		}},
 		{"SetAuthTypesContext", func(ctx context.Context, c *ipa.Client) error {
 			return c.SetAuthTypesContext(ctx, "bob", []string{"otp"})
@@ -133,6 +151,55 @@ func twinCalls() []twinCall {
 		{"HostFindContext", func(ctx context.Context, c *ipa.Client) error {
 			_, err := c.HostFindContext(ctx, nil)
 			return err
+		}},
+		{"HBACRuleFindContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.HBACRuleFindContext(ctx, nil)
+			return err
+		}},
+		{"HBACTestContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.HBACTestContext(ctx, "bob", "h.test.local", "sshd")
+			return err
+		}},
+		{"SudoRuleFindContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.SudoRuleFindContext(ctx, nil)
+			return err
+		}},
+		{"StageUserAddContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.StageUserAddContext(ctx, &ipa.User{Username: "bob"})
+			return err
+		}},
+		{"StageUserShowContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.StageUserShowContext(ctx, "bob")
+			return err
+		}},
+		{"StageUserFindContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.StageUserFindContext(ctx, nil)
+			return err
+		}},
+		{"StageUserModContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.StageUserModContext(ctx, &ipa.User{Username: "bob"})
+			return err
+		}},
+		{"SubIDFindContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.SubIDFindContext(ctx, nil)
+			return err
+		}},
+		{"SubIDGenerateContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.SubIDGenerateContext(ctx, "bob")
+			return err
+		}},
+		{"StageUserActivateContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.StageUserActivateContext(ctx, "bob")
+			return err
+		}},
+		{"StageUserDeleteContext", func(ctx context.Context, c *ipa.Client) error {
+			return c.StageUserDeleteContext(ctx, "bob")
+		}},
+		{"UserAddPasskeyContext", func(ctx context.Context, c *ipa.Client) error {
+			return c.UserAddPasskeyContext(ctx, "bob", testPasskey)
+		}},
+		{"UserRemovePasskeyContext", func(ctx context.Context, c *ipa.Client) error {
+			return c.UserRemovePasskeyContext(ctx, "bob", testPasskey)
 		}},
 	}
 }

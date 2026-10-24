@@ -241,6 +241,7 @@ func TestUserAddModDel(t *testing.T) {
 	}
 	u.Email = "heisenberg@example.com"
 	u.SSHAuthKeys = nil
+	u.HomeDir = rec.HomeDir // UserMod is read-modify-write
 	if _, err := c.UserMod(u); err != nil {
 		t.Fatal(err)
 	}
@@ -296,6 +297,22 @@ func TestUserAddEmptyHomeDir(t *testing.T) {
 	_, err := c.RPC("user_add", []string{"x"}, ipa.Options{"givenname": "X", "sn": "Y", "homedirectory": ""})
 	if ipaCode(t, err) != 4205 {
 		t.Errorf("empty homedirectory: %v", err)
+	}
+}
+
+func TestUserModEmptyHomeDir(t *testing.T) {
+	s := ipatest.NewServer(t)
+	s.AddUser("jesse", ipatest.User{})
+	s.AddStageUser("sam", ipatest.User{})
+	c := s.ClientAs("admin")
+	for _, cmd := range []struct{ name, uid string }{{"user_mod", "jesse"}, {"stageuser_mod", "sam"}} {
+		_, err := c.RPC(cmd.name, []string{cmd.uid}, ipa.Options{"homedirectory": ""})
+		if ipaCode(t, err) != 4205 {
+			t.Errorf("%s with empty homedirectory: %v", cmd.name, err)
+		}
+	}
+	if u, _ := s.User("jesse"); u.HomeDir != "/home/jesse" {
+		t.Errorf("HomeDir = %q after the failed mod", u.HomeDir)
 	}
 }
 
@@ -475,5 +492,76 @@ func TestUserFind_MatchesAllMails(t *testing.T) {
 	res := rpc(t, c, "user_find", []string{"d2@"}, nil)
 	if res.Result.Count != 1 {
 		t.Errorf("needle: Count = %d", res.Result.Count)
+	}
+}
+
+func TestStageUserSeedAndActivate(t *testing.T) {
+	s := ipatest.NewServer(t)
+	s.AddStageUser("sam", ipatest.User{Category: "staff"})
+	u, ok := s.StageUser("sam")
+	if !ok || !u.Locked || u.Email != "sam@example.com" {
+		t.Fatalf("StageUser = %+v, %v", u, ok)
+	}
+	if _, ok := s.User("sam"); ok {
+		t.Fatal("stage user is active")
+	}
+	if _, err := s.ClientAs("admin").StageUserActivate("sam"); err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := s.StageUser("sam"); ok {
+		t.Error("stage entry kept")
+	}
+	if a, ok := s.User("sam"); !ok || a.Locked || a.Category != "staff" {
+		t.Errorf("User = %+v, %v", a, ok)
+	}
+}
+
+func TestStageUserDuplicateAndDelete(t *testing.T) {
+	s := ipatest.NewServer(t)
+	c := s.ClientAs("admin")
+	s.AddGroup("g", ipatest.Group{Members: []string{"x"}})
+	s.AddUser("x", ipatest.User{})
+	s.AddStageUser("x", ipatest.User{})
+
+	_, err := c.StageUserAdd(&ipa.User{Username: "x", First: "A", Last: "B"})
+	var ie *ipa.IpaError
+	if !errors.As(err, &ie) || ie.Code != ipa.CodeDuplicateEntry || ie.Message != `stage user with name "x" already exists` {
+		t.Errorf("duplicate = %v", err)
+	}
+
+	res, err := c.RPC("stageuser_del", []string{"x"}, ipa.Options{"preserve": true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(res.Result.Data) != `{"failed":[]}` {
+		t.Errorf("result = %s", res.Result.Data)
+	}
+	if v, ok := res.Result.Value.([]any); !ok || len(v) != 1 || v[0] != "x" {
+		t.Errorf("value = %v", res.Result.Value)
+	}
+	if res.Result.Summary != `Deleted stage user "x"` {
+		t.Errorf("summary = %q", res.Result.Summary)
+	}
+	if _, ok := s.StageUser("x"); ok {
+		t.Error("stage entry kept (preserve must be ignored)")
+	}
+	if u, ok := s.User("x"); !ok || u.Preserved {
+		t.Errorf("active user changed: %+v, %v", u, ok)
+	}
+	if u, err := c.UserShow("x"); err != nil || !u.HasGroup("g") {
+		t.Errorf("active x lost its group membership: %+v, %v", u, err)
+	}
+
+	err = c.StageUserDelete("x")
+	if !errors.As(err, &ie) || ie.Code != ipa.CodeNotFound || ie.Message != "x: stage user not found" {
+		t.Errorf("missing = %v", err)
+	}
+
+	s.AddStageUser("y", ipatest.User{})
+	if _, err := c.StageUserActivate("y"); err != nil {
+		t.Fatal(err)
+	}
+	if u, err := c.UserShow("y"); err != nil || u.Uid == "" {
+		t.Errorf("uidnumber after activate: %+v, %v", u, err)
 	}
 }

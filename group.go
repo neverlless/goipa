@@ -30,12 +30,26 @@ type Group struct {
 }
 
 func strList(res gjson.Result, path string) []string {
+	v := res.Get(path)
+	if v.Type == gjson.Null {
+		return nil
+	}
 	var out []string
-	res.Get(path).ForEach(func(_, v gjson.Result) bool {
+	v.ForEach(func(_, v gjson.Result) bool {
 		out = append(out, v.String())
 		return true
 	})
 	return out
+}
+
+// boolAttr reads a boolean FreeIPA attribute: true, [true], "TRUE" or
+// ["TRUE"], case-insensitive.
+func boolAttr(res gjson.Result, key string) bool {
+	v := res.Get(key)
+	if v.IsArray() {
+		v = v.Get("0")
+	}
+	return v.Bool() || strings.EqualFold(v.String(), "true")
 }
 
 func (g *Group) fromJSON(raw []byte) error {

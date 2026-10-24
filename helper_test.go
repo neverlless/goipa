@@ -72,3 +72,15 @@ func envelope(result string) string {
 func errorBody(code int, name, message string) string {
 	return fmt.Sprintf(`{"result":null,"error":{"code":%d,"message":%q,"name":%q,"data":{"reason":%q}},"id":0,"principal":"admin@EXAMPLE.COM","version":"4.13.4"}`, code, message, name, message)
 }
+
+// testPasskey is a valid mapping: FreeIPA requires the credential id to be
+// base64 too ("invalid id" otherwise), and the key a P-256 SubjectPublicKeyInfo.
+const testPasskey = "passkey:Z29pcGEtdGVzdC1pZA==,MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEgJ0OGh7RCx0W7lUgaq4bbkS5+r9uuEXFc8lWWhNH0uphy0Xv4/2mTD9h4KbXWYcpr0bxLYvifagCSgDbVZZlcg=="
+
+func serverAtLeast(version string, major, minor int) bool {
+	var ma, mi int
+	if _, err := fmt.Sscanf(version, "%d.%d", &ma, &mi); err != nil {
+		return false
+	}
+	return ma > major || ma == major && mi >= minor
+}

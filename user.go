@@ -553,6 +553,18 @@ func (c *Client) UserAddWithPasswordContext(ctx context.Context, user *User, pas
 	return rec, nil
 }
 
+// nonEmpty drops empty values. FreeIPA reads "" as "no value", which on an
+// add drops its defaults: an empty homedirectory fails with 4205
+// ObjectclassViolation.
+func nonEmpty(o Options) Options {
+	for k, v := range o {
+		if s, ok := v.([]string); v == "" || ok && len(s) == 0 {
+			delete(o, k)
+		}
+	}
+	return o
+}
+
 // Add new user. If random is true a random password will be created for the
 // user. Note this requires "User Administrators" Privilege in FreeIPA.
 func (c *Client) UserAdd(user *User, random bool) (*User, error) {
@@ -565,14 +577,7 @@ func (c *Client) UserAddContext(ctx context.Context, user *User, random bool) (*
 		return nil, errors.New("username is required")
 	}
 
-	options := user.ToOptions()
-	// FreeIPA reads "" as "no value", which on user_add drops its defaults:
-	// an empty homedirectory fails with 4205 ObjectclassViolation.
-	for k, v := range options {
-		if s, ok := v.([]string); v == "" || ok && len(s) == 0 {
-			delete(options, k)
-		}
-	}
+	options := nonEmpty(user.ToOptions())
 
 	if random {
 		options["random"] = true
@@ -617,9 +622,12 @@ func (c *Client) UserDeleteContext(ctx context.Context, preserve, stopOnError bo
 	return nil
 }
 
-// Modify user. Currently only modifies a subset of user attributes: mail (all
-// values, see Emails), givenname, sn, homedirectory, loginshell, displayname,
-// ipasshpubkey, telephonenumber, and mobile
+// Modify user. It is read-modify-write: send a User from UserShow with the
+// changes, as every attribute ToOptions sends is set, an empty HomeDir
+// included (FreeIPA rejects that with 4205). Currently only modifies a
+// subset of user attributes: mail (all values, see Emails), givenname, sn,
+// homedirectory, loginshell, displayname, ipasshpubkey, telephonenumber, and
+// mobile
 func (c *Client) UserMod(user *User) (*User, error) {
 	return c.UserModContext(context.Background(), user)
 }
