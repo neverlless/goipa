@@ -429,7 +429,7 @@ func (s *Server) userFind(stage bool, c Call) (any, *ipa.IpaError) {
 		}
 		recs = append(recs, rec)
 	}
-	return list(recs), nil
+	return listLimited(c, recs), nil
 }
 
 func matches(c Call, opt, have string) bool {

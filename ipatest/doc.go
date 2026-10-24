@@ -276,6 +276,10 @@
 //     captured but is a deletion (the real-server leg of
 //     TestContractSessionLogoutGives401).
 //     TestContractSessionLogoutGives401, TestSessionLogout.
+//   - Q40: user_find, group_find and host_find honour sizelimit > 0: the
+//     first n entries in sorted order, truncated true and a
+//     SearchResultTruncated warning (code 13017). TestFindEntries_Truncated,
+//     TestContractFindTruncated.
 //
 // A response's version is the server release, 4.13.4 unless SetVersion
 // changes it, and its principal is
@@ -288,7 +292,7 @@
 // option calls the tests need; Handle is the way to reach the rest, as for
 // config_*, subid_show, stageuser_add_passkey and stageuser_remove_passkey.
 // Stage user passwords are not modelled: userpassword is ignored and random
-// behaves as for active users. Kerberos, LDAP search filters, size limits,
-// replication and HTTP fault injection are left out; wrap HTTPClient's
+// behaves as for active users. Kerberos, LDAP search filters, size limits on
+// other commands, replication and HTTP fault injection are left out; wrap HTTPClient's
 // transport for the latter.
 package ipatest

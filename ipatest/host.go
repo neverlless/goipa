@@ -112,7 +112,7 @@ func hostFind(s *Server, c Call) (any, *ipa.IpaError) {
 	for _, fqdn := range fqdns {
 		recs = append(recs, s.renderHost(fqdn, s.hosts[fqdn], members, all))
 	}
-	return list(recs), nil
+	return listLimited(c, recs), nil
 }
 
 func init() {
