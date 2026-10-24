@@ -280,6 +280,17 @@
 //     first n entries in sorted order, truncated true and a
 //     SearchResultTruncated warning (code 13017). TestFindEntries_Truncated,
 //     TestContractFindTruncated.
+//   - Q41: user_mod (and stageuser_mod) takes setattr, addattr and delattr
+//     for the attributes it models, mail included, applied in that order.
+//     setattr attr=v replaces and attr= clears; addattr of a value already
+//     present is 4038 AlreadyContainsValue "'attr' already contains 'v'";
+//     delattr of an absent value is 4026 AttrValueNotFound "'attr' does not
+//     contain 'v'"; an attribute the fake does not model is 3009 "invalid
+//     'attr': attribute not allowed". The real codes and messages of the
+//     last three are checked by TestContractModify; TestModify_Apply pins
+//     the fake. More than one value for a single-valued attribute (two
+//     setattr values, or addattr on a set one) is 4207 OnlyOneValueAllowed
+//     "attr: Only one value allowed.", TestModify_SingleValued.
 //
 // A response's version is the server release, 4.13.4 unless SetVersion
 // changes it, and its principal is
