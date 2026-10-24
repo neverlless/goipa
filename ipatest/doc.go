@@ -269,6 +269,11 @@
 //   - Q38: whoami answers {"object": "user", "command": "user_show/1",
 //     "arguments": [<caller uid>]} with no "result" key. TestWhoAmI,
 //     TestContractWhoAmI.
+//   - Q39: session_logout ends the caller's session, which then gets HTTP
+//     401 as after ExpireSession; its output is {"result": null}. The fake
+//     sends no logout cookie; FreeIPA is believed to answer with
+//     ipa_session=MagBearerToken= [unverified].
+//     TestContractSessionLogoutGives401, TestSessionLogout.
 //
 // A response's version is the server release, 4.13.4, and its principal is
 // <uid>@TEST.LOCAL. An error a HandlerFunc returns without a Name gets the

@@ -129,6 +129,12 @@ func (c *Client) RemoteLoginContext(ctx context.Context, uid, passwd string) err
 		return err
 	}
 
+	if c.relogin {
+		c.mu.Lock()
+		c.reloginUser, c.reloginPass = uid, passwd
+		c.mu.Unlock()
+	}
+
 	return nil
 }
 
@@ -152,6 +158,15 @@ func (c *Client) krbLogin(cl *client.Client) error {
 	}
 	c.setKrbClient(cl)
 	return nil
+}
+
+// dropRelogin forgets the stored credentials if they are still uid/passwd.
+func (c *Client) dropRelogin(uid, passwd string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.reloginUser == uid && c.reloginPass == passwd {
+		c.reloginUser, c.reloginPass = "", ""
+	}
 }
 
 // Login to FreeIPA using local kerberos login username and password
