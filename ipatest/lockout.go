@@ -18,11 +18,12 @@ func userStatus(s *Server, c Call) (any, *ipa.IpaError) {
 	if err != nil {
 		return nil, err
 	}
+	// The real server decodes the stored time into a datetime; "N/A" is unset.
 	when := func(t time.Time) any {
 		if t.IsZero() {
 			return []string{"N/A"}
 		}
-		return []string{t.UTC().Format(time.RFC3339)}
+		return []map[string]string{{"__datetime__": t.UTC().Format(ipa.IpaDatetimeFormat)}}
 	}
 	var count any = "0"
 	if r.FailedLogins != 0 {

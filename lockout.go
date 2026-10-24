@@ -25,7 +25,8 @@ type ReplicaStatus struct {
 	// FailedLogins is krbloginfailedcount.
 	FailedLogins int
 	// LastSuccess and LastFailure are krblastsuccessfulauth and
-	// krblastfailedauth; zero for "N/A".
+	// krblastfailedauth, read from FreeIPA's {"__datetime__": ...} form or an
+	// RFC 3339 string; zero for "N/A".
 	LastSuccess, LastFailure time.Time
 	// Now is the master's clock.
 	Now time.Time
@@ -41,8 +42,18 @@ func scalarOrFirst(res gjson.Result, key string) string {
 	return v.String()
 }
 
-func parseTime(s string) time.Time {
-	t, _ := time.Parse(time.RFC3339, s)
+// parseTime reads a time in either form: FreeIPA's {"__datetime__": ...}
+// (what real servers send for the Kerberos times), or an RFC 3339 string.
+// "N/A" and anything else unparsable is the zero time.
+func parseTime(res gjson.Result, key string) time.Time {
+	v := res.Get(key)
+	if v.IsArray() {
+		v = v.Get("0")
+	}
+	if dt := v.Get("__datetime__"); dt.Exists() {
+		return ParseDateTime(dt.String())
+	}
+	t, _ := time.Parse(time.RFC3339, v.String())
 	return t
 }
 
@@ -70,9 +81,9 @@ func (c *Client) UserStatusContext(ctx context.Context, username string) ([]*Rep
 			rs.Server, rs.Err = host, reason
 		} else {
 			rs.FailedLogins, _ = strconv.Atoi(scalarOrFirst(e, "krbloginfailedcount"))
-			rs.LastSuccess = parseTime(scalarOrFirst(e, "krblastsuccessfulauth"))
-			rs.LastFailure = parseTime(scalarOrFirst(e, "krblastfailedauth"))
-			rs.Now = parseTime(scalarOrFirst(e, "now"))
+			rs.LastSuccess = parseTime(e, "krblastsuccessfulauth")
+			rs.LastFailure = parseTime(e, "krblastfailedauth")
+			rs.Now = parseTime(e, "now")
 		}
 		out = append(out, rs)
 		return true
