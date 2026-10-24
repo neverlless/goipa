@@ -184,6 +184,15 @@
 //     summary "Stage user <uid> activated". If the active uid exists it is
 //     4002 `active user with name "<uid>" already exists` and the stage entry
 //     stays. TestContractStageActivateSummary, TestStageUserDuplicateAndDelete.
+//   - Q33: sub-ID ranges start at 2147483648 and advance by 65536 (uid and gid
+//     equal). subid_find filters by ipaowner, ipauniqueid, ipasubuidnumber and
+//     description; values are lists of strings, plus dn
+//     ipauniqueid=<id>,cn=subids,cn=accounts,dc=test,dc=local and objectclass.
+//     subid_generate takes the owner from ipaowner, else the caller; an unknown
+//     owner is 4001 "<owner>: user not found"; a second range is 4002
+//     `Subordinate id with with name "<id>" or for user "<owner>" already
+//     exists.` (FreeIPA's typo). A non-preserving user_del drops the range.
+//     TestContractSubIDGenerate, TestSubID_FindAndUserDelete.
 //
 // A response's version is the server release, 4.13.4, and its principal is
 // <uid>@TEST.LOCAL. An error a HandlerFunc returns without a Name gets the
@@ -191,7 +200,7 @@
 //
 // # Not modelled
 //
-// Lockout status and unlock, password policy, subordinate IDs,
+// Lockout status and unlock, password policy,
 // HBAC and sudo rules, hbactest and passkey management (planned for v0.5).
 // Until then, Handle is the way to reach them. Kerberos, LDAP search
 // filters, size limits, replication and HTTP fault injection are left out;

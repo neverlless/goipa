@@ -99,6 +99,7 @@ type Server struct {
 	stage     map[string]*userRec
 	groups    map[string]*groupRec
 	hosts     map[string]Host
+	subids    map[string]SubID // by owner uid
 	tokens    []*OTPToken
 	nextID    int // last uidnumber handed out
 	nextGID   int // last gidnumber handed out
@@ -123,6 +124,7 @@ func New() *Server {
 		stage:    map[string]*userRec{},
 		groups:   map[string]*groupRec{},
 		hosts:    map[string]Host{serverFQDN: {HasKeytab: true}},
+		subids:   map[string]SubID{},
 		nextID:   firstID - 1,
 		nextGID:  firstID - 1,
 	}

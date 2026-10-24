@@ -521,6 +521,9 @@ func (s *Server) userDel(stage bool, c Call) (any, *ipa.IpaError) {
 			users[uid].Preserved, users[uid].Locked = true, true
 		} else {
 			delete(users, uid)
+			if !stage {
+				delete(s.subids, uid) // Q33
+			}
 		}
 	}
 	if failed == nil {
