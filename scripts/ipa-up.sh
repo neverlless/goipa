@@ -32,7 +32,8 @@ up() {
     -p 443:443 -p 88:88/tcp -p 88:88/udp \
     -e PASSWORD="$pw" \
     "quay.io/freeipa/freeipa-server:$IMAGE" \
-    -U -r "$IPA_REALM" --no-ntp --no-ui-redirect --skip-mem-check >/dev/null
+    -U -r "$IPA_REALM" --no-ntp --no-ui-redirect --skip-mem-check \
+    --setup-dns --no-forwarders --no-reverse >/dev/null
 
   local ready=0 i
   for i in $(seq 1 90); do
