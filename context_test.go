@@ -40,6 +40,13 @@ func twinCalls() []twinCall {
 			_, err := c.UserFindContext(ctx, nil)
 			return err
 		}},
+		{"UserStatusContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.UserStatusContext(ctx, "bob")
+			return err
+		}},
+		{"UserUnlockContext", func(ctx context.Context, c *ipa.Client) error {
+			return c.UserUnlockContext(ctx, "bob")
+		}},
 		{"ResetPasswordContext", func(ctx context.Context, c *ipa.Client) error {
 			_, err := c.ResetPasswordContext(ctx, "bob")
 			return err
