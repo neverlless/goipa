@@ -120,6 +120,10 @@ var redactKeys = map[string]bool{
 	"uri":                  true, // otpauth:// URIs carry the OTP key
 	"ipatokenradiussecret": true,
 	"ipasecretkey":         true,
+	"ipaidpclientsecret":   true,
+	"ipanthash":            true,
+	"krbextradata":         true,
+	"sambantpassword":      true,
 }
 
 func redact(v any) any {
@@ -153,7 +157,8 @@ type recorder struct {
 // reports. A later call of the same method overwrites the file; other
 // commands, batch among them, are not recorded. The values of
 // randompassword, userpassword, krbprincipalkey, ipatokenotpkey, uri,
-// ipatokenradiussecret and ipasecretkey are replaced with "REDACTED" at any
+// ipatokenradiussecret, ipasecretkey, ipaidpclientsecret, ipanthash,
+// krbextradata and sambantpassword are replaced with "REDACTED" at any
 // depth. A nil next means http.DefaultTransport.
 //
 // Wrap a real server's transport with it to collect recordings for

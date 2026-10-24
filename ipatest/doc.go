@@ -434,15 +434,18 @@
 //     Only users, groups and hosts can be added; other kinds fail as "no
 //     such entry". goipa.TestContractRoleMembers.
 //   - Q130: a *_show or *_find command that is neither modelled nor
-//     overridden with Handle answers, as its result, the response recorded from a real FreeIPA
-//     (ipatest/replay, see SetReplay and NewRecorder) for the greatest
-//     recorded release not newer than the SetVersion one, else for the
-//     oldest; only without a recording is it 905. Options and arguments are
+//     overridden with Handle answers, as its result, the response recorded
+//     from a real FreeIPA (ipatest/replay, see SetReplay and NewRecorder)
+//     for the greatest recorded release not newer than the SetVersion one,
+//     else for the oldest; only without a recording is it 905. The catalogue
+//     check runs first, so a command newer than the SetVersion release is
+//     905 and an unknown option 3005; beyond that options and arguments are
 //     not looked at, so the answer is the same for every call; batch entries
 //     are answered the same way. Other commands are never replayed, so an
 //     unmodelled write stays 905 instead of faking a change.
 //     TestReplay_Precedence, TestReplay_PicksRelease, TestReplay_Disabled,
-//     TestReplay_InBatch, TestReplay_IgnoresWrites, TestRecorder_SkipsWrites.
+//     TestReplay_InBatch, TestReplay_IgnoresWrites,
+//     TestReplay_CatalogueChecked, TestRecorder_SkipsWrites.
 //   - Q60: service principals are stored and reported with the realm
 //     (krbcanonicalname and krbprincipalname "svc/host@TEST.LOCAL") and
 //     accepted without it. service_add needs the host to exist unless

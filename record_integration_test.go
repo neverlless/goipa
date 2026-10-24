@@ -28,7 +28,11 @@ func TestRecordShapes(t *testing.T) {
 			if !readOnly || slices.ContainsFunc(cmd.Args, func(p ipa.Param) bool { return p.Required }) {
 				continue
 			}
-			_, _ = c.RPC(cmd.Name, nil, nil) // a command the server lacks is simply not recorded
+			var o ipa.Options
+			if slices.ContainsFunc(cmd.Options, func(p ipa.Param) bool { return p.Name == "all" }) {
+				o = ipa.Options{"all": true} // as the typed calls send it
+			}
+			_, _ = c.RPC(cmd.Name, nil, o) // a command the server lacks is simply not recorded
 		}
 	}
 }

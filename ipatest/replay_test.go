@@ -99,11 +99,30 @@ func TestReplay_Disabled(t *testing.T) {
 
 func TestReplay_IgnoresWrites(t *testing.T) {
 	s := ipatest.NewServer(t)
-	s.SetReplay(fstest.MapFS{"4.13.4/hostgroup_add.json": recording("recorded")})
-	_, err := s.ClientAs("admin").RPC("hostgroup_add", []string{"hg"}, nil)
+	s.SetReplay(fstest.MapFS{"4.13.4/idview_add.json": recording("recorded")})
+	_, err := s.ClientAs("admin").RPC("idview_add", []string{"v"}, nil)
 	var ierr *ipa.IpaError
 	if !errors.As(err, &ierr) || ierr.Code != ipa.CodeCommand {
 		t.Fatalf("err = %#v, want 905", err)
+	}
+}
+
+func TestReplay_CatalogueChecked(t *testing.T) {
+	s := ipatest.NewServer(t)
+	s.SetReplay(fstest.MapFS{
+		"4.13.4/sysaccount_find.json": recording("recorded"),
+		"4.13.4/config_show.json":     recording("recorded"),
+	})
+	s.SetVersion("4.9.13")
+	c := s.ClientAs("admin")
+	_, err := c.RPC("sysaccount_find", nil, nil)
+	var ierr *ipa.IpaError
+	if !errors.As(err, &ierr) || ierr.Code != ipa.CodeCommand {
+		t.Errorf("command newer than the release: err = %#v, want 905", err)
+	}
+	_, err = c.RPC("config_show", nil, ipa.Options{"bogus": true})
+	if !errors.As(err, &ierr) || ierr.Code != ipa.CodeOption {
+		t.Errorf("unknown option: err = %#v, want 3005", err)
 	}
 }
 
@@ -266,5 +285,21 @@ func TestRecorder_RoundTrip(t *testing.T) {
 	}
 	if got := res.Result.Data; !strings.Contains(string(got), `"ipamaxusernamelength":["32"]`) {
 		t.Errorf("replayed %s", got)
+	}
+}
+
+func TestRecorder_RedactsHashesAndSecrets(t *testing.T) {
+	dir := t.TempDir()
+	envelope := `{"result":{"result":{"ipaidpclientsecret":["leak1"],"ipaNTHash":[{"__base64__":"leak2"}],` +
+		`"krbextradata":[{"__base64__":"leak3"}],"sambantpassword":["leak4"]},"value":"x","summary":"ok"},` +
+		`"error":null,"id":0,"principal":"admin@X","version":"4.12.2"}`
+	rt := ipatest.NewRecorder(fakeIPA(t, envelope), dir)
+	recordPost(t, rt, "/ipa/session/json", "idp_show")
+	b, err := os.ReadFile(filepath.Join(dir, "4.12.2", "idp_show.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if bytes.Contains(b, []byte("leak")) || bytes.Count(b, []byte("REDACTED")) != 4 {
+		t.Errorf("not redacted: %s", b)
 	}
 }

@@ -414,9 +414,9 @@ func decodeParams(c *Call, params []json.RawMessage) error {
 }
 
 // dispatch records c and runs it: a handler without the lock, else batch,
-// else a builtin under s.mu (both after catalogueCheck), else a recording
-// (Q130), else 905. args is
-// the raw params[0], which batch needs; custom reports that a handler ran.
+// else a builtin under s.mu, else a recording (Q130), else 905; all but a
+// handler after catalogueCheck. args is the raw params[0], which batch
+// needs; custom reports that a handler ran.
 func (s *Server) dispatch(c Call, args json.RawMessage) (result any, ierr *ipa.IpaError, custom bool) {
 	s.mu.Lock()
 	s.calls = append(s.calls, c.clone())
@@ -440,6 +440,9 @@ func (s *Server) dispatch(c Call, args json.RawMessage) (result any, ierr *ipa.I
 		result, ierr = b(s, c)
 		s.mu.Unlock()
 	default:
+		if ierr = catalogueCheck(c, version); ierr != nil {
+			break
+		}
 		if rec := replayed(replay, c.Method, version); rec != nil {
 			result = rec
 			break
