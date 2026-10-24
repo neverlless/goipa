@@ -5,8 +5,9 @@
 package ipa_test
 
 import (
+	"encoding/json"
+	"reflect"
 	"slices"
-	"strings"
 	"testing"
 
 	"github.com/neverlless/goipa"
@@ -86,7 +87,11 @@ func TestContractRoleMembers(t *testing.T) {
 		t.Cleanup(func() { _, _ = b.admin.RPC("role_del", []string{name}, nil) })
 		missing := "gtnosuch" + randHex(t, 4)
 		res := mustRPC(t, b.admin, "role_add_member", []string{name}, ipa.Options{"user": []string{uid, missing}})
-		if res.Result.Completed != 1 || !strings.Contains(string(res.Result.Failed), `"user":[["`+missing+`","no such entry"]]`) {
+		var failed struct{ Member struct{ User [][]string } }
+		if err := json.Unmarshal(res.Result.Failed, &failed); err != nil {
+			t.Fatal(err)
+		}
+		if res.Result.Completed != 1 || !reflect.DeepEqual(failed.Member.User, [][]string{{missing, "no such entry"}}) {
 			t.Errorf("completed %d, failed %s", res.Result.Completed, res.Result.Failed)
 		}
 		r, err := b.admin.RoleShow(name)
