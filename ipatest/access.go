@@ -33,7 +33,7 @@ type SudoRule struct {
 	UserCategory, HostCategory, CmdCategory, RunAsUserCategory, RunAsGroupCategory string
 	Users, Groups, Hosts, HostGroups                                               []string
 	AllowCommands, AllowCommandGroups, DenyCommands, DenyCommandGroups             []string
-	RunAsUsers, RunAsGroups                                                        []string
+	RunAsUsers, RunAsUserGroups, RunAsGroups                                       []string
 	Options                                                                        []string // ipasudoopt
 	Order                                                                          int      // sudoorder, 0 = unset
 }
@@ -46,6 +46,7 @@ type hbacRec struct {
 type sudoRec struct {
 	SudoRule
 	uuid string
+	ext  map[string]*[]string // external members by attribute, Q81
 }
 
 func (r HBACRule) clone() HBACRule {
@@ -57,7 +58,7 @@ func (r HBACRule) clone() HBACRule {
 
 func (r SudoRule) clone() SudoRule {
 	for _, p := range []*[]string{&r.Users, &r.Groups, &r.Hosts, &r.HostGroups, &r.AllowCommands, &r.AllowCommandGroups,
-		&r.DenyCommands, &r.DenyCommandGroups, &r.RunAsUsers, &r.RunAsGroups, &r.Options} {
+		&r.DenyCommands, &r.DenyCommandGroups, &r.RunAsUsers, &r.RunAsUserGroups, &r.RunAsGroups, &r.Options} {
 		*p = cloneStrs(*p)
 	}
 	return r
@@ -154,13 +155,18 @@ func (r *sudoRec) render(cn string, members, all bool) map[string]any {
 			"memberhost_host": r.Hosts, "memberhost_hostgroup": r.HostGroups,
 			"memberallowcmd_sudocmd": r.AllowCommands, "memberallowcmd_sudocmdgroup": r.AllowCommandGroups,
 			"memberdenycmd_sudocmd": r.DenyCommands, "memberdenycmd_sudocmdgroup": r.DenyCommandGroups,
-			"ipasudorunas_user": r.RunAsUsers, "ipasudorunasgroup_group": r.RunAsGroups,
+			"ipasudorunas_user": r.RunAsUsers, "ipasudorunas_group": r.RunAsUserGroups, "ipasudorunasgroup_group": r.RunAsGroups,
 		}, members, all, "ipaUniqueID="+r.uuid+",cn=sudorules,cn=sudo,dc=test,dc=local", "ipaassociation", "ipasudorule")
 	if len(r.Options) > 0 {
 		out["ipasudoopt"] = slices.Clone(r.Options)
 	}
 	if r.Order > 0 {
 		out["sudoorder"] = []string{strconv.Itoa(r.Order)}
+	}
+	for k, v := range r.ext {
+		if len(*v) > 0 {
+			out[k] = slices.Clone(*v)
+		}
 	}
 	return out
 }
@@ -354,7 +360,10 @@ func init() {
 	}
 	builtins["sudorule_add"] = func(s *Server, c Call) (any, *ipa.IpaError) {
 		return ruleAdd("sudo rule", s.sudo, c, func(c Call) *sudoRec {
-			r := &sudoRec{SudoRule: SudoRule{Description: str(c.Options["description"])}, uuid: newUUID()}
+			r := &sudoRec{SudoRule: SudoRule{Description: str(c.Options["description"]),
+				UserCategory: str(c.Options["usercategory"]), HostCategory: str(c.Options["hostcategory"]),
+				CmdCategory: str(c.Options["cmdcategory"]), RunAsUserCategory: str(c.Options["ipasudorunasusercategory"]),
+				RunAsGroupCategory: str(c.Options["ipasudorunasgroupcategory"])}, uuid: newUUID()}
 			r.Order, _ = strconv.Atoi(fmt.Sprint(c.Options["sudoorder"]))
 			return r
 		}, (*sudoRec).render)
@@ -365,10 +374,7 @@ func init() {
 		return ruleAddUser(s, s.hbac, "HBAC rule", c,
 			func(r *hbacRec) *[]string { return &r.Users }, func(r *hbacRec) *[]string { return &r.Groups }, (*hbacRec).render)
 	}
-	builtins["sudorule_add_user"] = func(s *Server, c Call) (any, *ipa.IpaError) {
-		return ruleAddUser(s, s.sudo, "sudo rule", c,
-			func(r *sudoRec) *[]string { return &r.Users }, func(r *sudoRec) *[]string { return &r.Groups }, (*sudoRec).render)
-	}
+	builtins["sudorule_add_user"] = sudoMember(true, sudoUsers)
 	builtins["sudorule_add_option"] = func(s *Server, c Call) (any, *ipa.IpaError) {
 		cn, err := ruleName(c)
 		if err != nil {
@@ -378,13 +384,16 @@ func init() {
 		if r == nil {
 			return nil, notFound(cn, "sudo rule")
 		}
-		opt := str(c.Options["ipasudoopt"])
-		if opt == "" {
+		opts := strs(c.Options["ipasudoopt"])
+		if len(opts) == 0 {
 			return nil, required("ipasudoopt")
 		}
-		if !slices.Contains(r.Options, opt) {
-			r.Options = append(r.Options, opt)
+		for _, opt := range opts {
+			if slices.Contains(r.Options, opt) {
+				return nil, &ipa.IpaError{Code: ipa.CodeDuplicateEntry, Message: "This entry already exists"} // Q82
+			}
 		}
-		return entry(cn, r.render(cn, false, flag(c, "all")), fmt.Sprintf("Added option %q to Sudo Rule %q", opt, cn)), nil
+		r.Options = append(r.Options, opts...)
+		return entry(cn, r.render(cn, !flag(c, "no_members"), flag(c, "all")), fmt.Sprintf("Added option %q to Sudo Rule %q", strings.Join(opts, ","), cn)), nil
 	}
 }

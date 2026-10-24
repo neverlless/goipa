@@ -328,6 +328,25 @@
 //     command '<name>'", as Q14. Q44 and Q45 follow the ipa command
 //     catalogue and skip Handle overrides. TestServer_CommandNewerThanVersion,
 //     TestServer_HandleBypassesCatalogue.
+//   - Q80: sudorule_enable and sudorule_disable succeed with {"result":
+//     true} whatever the rule's state, so a second call is no error (FreeIPA
+//     swallows EmptyModlist). goipa.TestContractSudoRuleEnableTwice.
+//   - Q81: the sudo rule member calls keep names FreeIPA does not know as
+//     external members, lower-cased and counted in completed: users and
+//     groups in externaluser, hosts in externalhost, run-as users and
+//     groups in ipasudorunasextuser and ipasudorunasextusergroup, run-as
+//     groups in ipasudorunasextgroup. Only host groups, commands and
+//     command groups fail with "no such entry"; host groups and command
+//     groups are not modelled, so each one fails. Removing a name that is
+//     neither a member nor external is "no such entry".
+//     goipa.TestContractSudoRuleExternalMembers,
+//     goipa.TestContractSudoRuleMemberMissing, TestSudoMember_External.
+//   - Q82: sudorule_add_option of an option the rule has is 4002
+//     "This entry already exists" and changes nothing; sudorule_remove_option
+//     of one it lacks is 4026 "ipasudoopt does not contain '<option>'".
+//     sudocmd_add and sudocmd_del keep only the command and its description;
+//     FreeIPA's refusal to delete a command a rule uses is not modelled.
+//     goipa.TestContractSudoRuleOptions, TestSudoCmd_AddDel.
 //
 // A response's version is the server release, 4.13.4 unless SetVersion
 // changes it, and its principal is

@@ -95,7 +95,7 @@ func TestRuleFindFilters(t *testing.T) {
 func TestRuleAddUserFailures(t *testing.T) {
 	s, c := ruleServer(t)
 	s.AddGroup("devs", ipatest.Group{})
-	for _, m := range []string{"hbacrule_add_user", "sudorule_add_user"} {
+	for _, m := range []string{"hbacrule_add_user"} { // sudo: TestSudoMember_External
 		cn := m[:1] + "1" // alice is already a member
 		res := rpc(t, c, m, []string{cn}, ipa.Options{
 			"user": []string{"alice", "ghost"}, "group": []string{"devs", "nogroup"},

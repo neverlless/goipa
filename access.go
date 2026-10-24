@@ -28,7 +28,12 @@ type HBACRule struct {
 	Services, ServiceGroups []string
 }
 
-// SudoRule is a sudo rule.
+// SudoRule is a sudo rule. Its description, order and categories change
+// through Modify("sudorule_mod", name). FreeIPA keeps users, groups, hosts
+// and run-as users and groups it does not know as external members
+// (externaluser, externalhost, ipasudorunasextuser, ipasudorunasextusergroup,
+// ipasudorunasextgroup), which SudoRule does not carry; adding such a name
+// succeeds without a *MemberError.
 type SudoRule struct {
 	// cn, description
 	Name, Description string
@@ -45,6 +50,8 @@ type SudoRule struct {
 	AllowCommands, AllowCommandGroups, DenyCommands, DenyCommandGroups []string
 	// ipasudorunas_user, ipasudorunasgroup_group
 	RunAsUsers, RunAsGroups []string
+	// ipasudorunas_group: groups whose members the commands may run as
+	RunAsUserGroups []string
 	// ipasudoopt
 	Options []string
 	// sudoorder
@@ -89,30 +96,33 @@ func (c *Client) SudoRuleFind(options Options) ([]*SudoRule, error) {
 
 // SudoRuleFindContext is like SudoRuleFind but bounds the request with ctx.
 func (c *Client) SudoRuleFindContext(ctx context.Context, options Options) ([]*SudoRule, error) {
-	return findRules(ctx, c, "sudorule_find", options, func(r gjson.Result) *SudoRule {
-		return &SudoRule{
-			Name:               r.Get("cn.0").String(),
-			Description:        r.Get("description.0").String(),
-			Enabled:            boolAttr(r, "ipaenabledflag"),
-			UserCategory:       r.Get("usercategory.0").String(),
-			HostCategory:       r.Get("hostcategory.0").String(),
-			CmdCategory:        r.Get("cmdcategory.0").String(),
-			RunAsUserCategory:  r.Get("ipasudorunasusercategory.0").String(),
-			RunAsGroupCategory: r.Get("ipasudorunasgroupcategory.0").String(),
-			Users:              strList(r, "memberuser_user"),
-			Groups:             strList(r, "memberuser_group"),
-			Hosts:              strList(r, "memberhost_host"),
-			HostGroups:         strList(r, "memberhost_hostgroup"),
-			AllowCommands:      strList(r, "memberallowcmd_sudocmd"),
-			AllowCommandGroups: strList(r, "memberallowcmd_sudocmdgroup"),
-			DenyCommands:       strList(r, "memberdenycmd_sudocmd"),
-			DenyCommandGroups:  strList(r, "memberdenycmd_sudocmdgroup"),
-			RunAsUsers:         strList(r, "ipasudorunas_user"),
-			RunAsGroups:        strList(r, "ipasudorunasgroup_group"),
-			Options:            strList(r, "ipasudoopt"),
-			Order:              int(r.Get("sudoorder.0").Int()),
-		}
-	})
+	return findRules(ctx, c, "sudorule_find", options, parseSudoRule)
+}
+
+func parseSudoRule(r gjson.Result) *SudoRule {
+	return &SudoRule{
+		Name:               r.Get("cn.0").String(),
+		Description:        r.Get("description.0").String(),
+		Enabled:            boolAttr(r, "ipaenabledflag"),
+		UserCategory:       r.Get("usercategory.0").String(),
+		HostCategory:       r.Get("hostcategory.0").String(),
+		CmdCategory:        r.Get("cmdcategory.0").String(),
+		RunAsUserCategory:  r.Get("ipasudorunasusercategory.0").String(),
+		RunAsGroupCategory: r.Get("ipasudorunasgroupcategory.0").String(),
+		Users:              strList(r, "memberuser_user"),
+		Groups:             strList(r, "memberuser_group"),
+		Hosts:              strList(r, "memberhost_host"),
+		HostGroups:         strList(r, "memberhost_hostgroup"),
+		AllowCommands:      strList(r, "memberallowcmd_sudocmd"),
+		AllowCommandGroups: strList(r, "memberallowcmd_sudocmdgroup"),
+		DenyCommands:       strList(r, "memberdenycmd_sudocmd"),
+		DenyCommandGroups:  strList(r, "memberdenycmd_sudocmdgroup"),
+		RunAsUsers:         strList(r, "ipasudorunas_user"),
+		RunAsUserGroups:    strList(r, "ipasudorunas_group"),
+		RunAsGroups:        strList(r, "ipasudorunasgroup_group"),
+		Options:            strList(r, "ipasudoopt"),
+		Order:              int(r.Get("sudoorder.0").Int()),
+	}
 }
 
 func findRules[T any](ctx context.Context, c *Client, method string, options Options, parse func(gjson.Result) *T) ([]*T, error) {
