@@ -30,7 +30,8 @@ tokens.
   `LoginWithKeytabData`), Kerberos credential cache (`LoginFromCCache`,
   `LoginFromCCacheData`), or a saved session ID
   (`NewDefaultClientWithSession`); see [Which login to use](#which-login-to-use)
-- Expired sessions are recovered automatically; `WhoAmI`
+- Kerberos clients recover expired sessions; password re-login is opt-in
+  (`WithPasswordRelogin`); `WhoAmI`
 - Reads the host, realm and CA from `/etc/ipa/default.conf` and
   `/etc/ipa/ca.crt` on enrolled machines, or takes them explicitly
   (`New` with `With*` options, `NewClient`, `NewClientCustomHttp`)
@@ -138,9 +139,10 @@ When a session expires (HTTP 401), the call is retried once:
   fresh session, it is reused.
 - `RemoteLogin` clients get `ErrUnauthorized` and the session is cleared,
   unless the client was created with `WithPasswordRelogin`. Then goipa
-  logs in again with the password it kept in process memory and retries. A
-  password FreeIPA rejects is forgotten, so it is not tried again. This needs
-  sticky sessions (the default).
+  logs in again with the password it kept in process memory and retries;
+  goroutines that hit the 401 together share one login. A password FreeIPA
+  rejects is forgotten, so it is not tried again, and `ClearSession` forgets
+  it too. This needs sticky sessions (the default).
 - A client restored from a saved session ID has neither, so it gets
   `ErrUnauthorized`.
 

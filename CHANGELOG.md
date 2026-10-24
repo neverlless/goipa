@@ -11,9 +11,7 @@ existing exported identifiers keep their signatures).
 
 - `New(opts ...Option) (*Client, error)` with `WithHost`, `WithRealm`,
   `WithCACert`, `WithHTTPClient`, `WithKrb5Config`, `WithKrb5ConfigData` and
-  `WithPasswordRelogin`. The old constructors are unchanged
-- `/etc/ipa/default.conf` and `/etc/ipa/ca.crt` are read when the first
-  client is created, not at import
+  `WithPasswordRelogin`. The old constructors keep their signatures
 - `LoginWithKeytabData`, `LoginFromCCacheData` and in-memory Kerberos
   configuration (`WithKrb5ConfigData`; idea from sitnikovv's fork), for
   containers and secret stores
@@ -21,9 +19,21 @@ existing exported identifiers keep their signatures).
 - Expired sessions are recovered: Kerberos clients retry once through
   SPNEGO; with `WithPasswordRelogin`, `RemoteLogin` clients log in again
   and retry once (a password FreeIPA rejects is forgotten; needs sticky
-  sessions). Other clients get `ErrUnauthorized` and the session is cleared
+  sessions; concurrent 401s cost one login). Other clients get
+  `ErrUnauthorized` and the session is cleared
 - `ipatest.Server.CACert`, and `whoami` and `session_logout` in `ipatest`
 - "Which login to use" guide in the README and package documentation
+
+### Changed
+
+- A 401 on a session request now clears the session (it was kept)
+- Clients with a Kerberos login, old constructors included, retry once
+  through SPNEGO after a 401
+- `NewDefaultClient*`, `NewClient` and `New` read `/etc/ipa` on first use
+  instead of at import; `NewClientCustomHttp` never reads it
+- `ClearSession` also forgets the credentials kept by `WithPasswordRelogin`
+- An `ipa_session=MagBearerToken=` cookie (FreeIPA's logout cookie) clears
+  the session instead of being stored
 
 ## [v0.5.0] - 2026-10-24
 
