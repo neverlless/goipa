@@ -2,15 +2,43 @@
   "count": 3,
   "result": [
     {
+      "cn": [
+        "Administrator"
+      ],
       "dn": "uid=admin,cn=users,cn=accounts,dc=example,dc=test",
+      "gecos": [
+        "Administrator"
+      ],
       "gidnumber": [
-        "145400000"
+        "975800000"
       ],
       "homedirectory": [
         "/home/admin"
       ],
+      "ipantsecurityidentifier": [
+        "S-1-5-21-1709458961-2960347720-945749174-500"
+      ],
+      "ipauniqueid": [
+        "56dba240-cfe6-11f1-a146-d28f5ba35ce1"
+      ],
       "krbcanonicalname": [
         "admin@EXAMPLE.TEST"
+      ],
+      "krbextradata": "REDACTED",
+      "krblastadminunlock": [
+        {
+          "__datetime__": "20261024201000Z"
+        }
+      ],
+      "krblastpwdchange": [
+        {
+          "__datetime__": "20261024201000Z"
+        }
+      ],
+      "krbpasswordexpiration": [
+        {
+          "__datetime__": "20270122201000Z"
+        }
       ],
       "krbprincipalname": [
         "admin@EXAMPLE.TEST",
@@ -19,7 +47,24 @@
       "loginshell": [
         "/bin/bash"
       ],
+      "memberof_group": [
+        "admins",
+        "trust admins"
+      ],
       "nsaccountlock": false,
+      "objectclass": [
+        "top",
+        "person",
+        "posixaccount",
+        "krbprincipalaux",
+        "krbticketpolicyaux",
+        "inetuser",
+        "ipaobject",
+        "ipasshuser",
+        "ipaSshGroupOfPubKeys",
+        "ipaNTUserAttrs"
+      ],
+      "preserved": false,
       "sn": [
         "Administrator"
       ],
@@ -27,13 +72,22 @@
         "admin"
       ],
       "uidnumber": [
-        "145400000"
+        "975800000"
       ]
     },
     {
+      "cn": [
+        "Go Svc"
+      ],
+      "displayname": [
+        "Go Svc"
+      ],
       "dn": "uid=goipa-svc,cn=users,cn=accounts,dc=example,dc=test",
+      "gecos": [
+        "Go Svc"
+      ],
       "gidnumber": [
-        "145400003"
+        "975800003"
       ],
       "givenname": [
         "Go"
@@ -41,8 +95,23 @@
       "homedirectory": [
         "/home/goipa-svc"
       ],
+      "initials": [
+        "GS"
+      ],
+      "ipantsecurityidentifier": [
+        "S-1-5-21-1709458961-2960347720-945749174-1003"
+      ],
+      "ipauniqueid": [
+        "eb5bd250-cfe6-11f1-abc2-d28f5ba35ce1"
+      ],
       "krbcanonicalname": [
         "goipa-svc@EXAMPLE.TEST"
+      ],
+      "krbextradata": "REDACTED",
+      "krblastpwdchange": [
+        {
+          "__datetime__": "20261024201012Z"
+        }
       ],
       "krbprincipalname": [
         "goipa-svc@EXAMPLE.TEST"
@@ -53,7 +122,29 @@
       "mail": [
         "goipa-svc@example.test"
       ],
+      "memberof_group": [
+        "ipausers"
+      ],
+      "mepmanagedentry": [
+        "cn=goipa-svc,cn=groups,cn=accounts,dc=example,dc=test"
+      ],
       "nsaccountlock": false,
+      "objectclass": [
+        "top",
+        "person",
+        "organizationalperson",
+        "inetorgperson",
+        "inetuser",
+        "posixaccount",
+        "krbprincipalaux",
+        "krbticketpolicyaux",
+        "ipaobject",
+        "ipasshuser",
+        "ipaSshGroupOfPubKeys",
+        "mepOriginEntry",
+        "ipantuserattrs"
+      ],
+      "preserved": false,
       "sn": [
         "Svc"
       ],
@@ -61,41 +152,100 @@
         "goipa-svc"
       ],
       "uidnumber": [
-        "145400003"
+        "975800003"
       ]
     },
     {
-      "dn": "uid=jast3787,cn=users,cn=accounts,dc=example,dc=test",
+      "cn": [
+        "Cassandre Aufderhar"
+      ],
+      "displayname": [
+        "Cassandre Aufderhar"
+      ],
+      "dn": "uid=mayert1974,cn=users,cn=accounts,dc=example,dc=test",
+      "gecos": [
+        "Cassandre Aufderhar"
+      ],
       "gidnumber": [
-        "145400067"
+        "975800087"
       ],
       "givenname": [
-        "Travis"
+        "Cassandre"
       ],
       "homedirectory": [
-        "/home/jast3787"
+        "/home/mayert1974"
+      ],
+      "initials": [
+        "CA"
+      ],
+      "ipantsecurityidentifier": [
+        "S-1-5-21-1709458961-2960347720-945749174-1087"
+      ],
+      "ipauniqueid": [
+        "17bc9c4e-cfe7-11f1-8aa5-d28f5ba35ce1"
       ],
       "krbcanonicalname": [
-        "jast3787@EXAMPLE.TEST"
+        "mayert1974@EXAMPLE.TEST"
+      ],
+      "krbextradata": "REDACTED",
+      "krblastfailedauth": [
+        {
+          "__datetime__": "20261024201127Z"
+        }
+      ],
+      "krblastpwdchange": [
+        {
+          "__datetime__": "20261024201127Z"
+        }
+      ],
+      "krbloginfailedcount": [
+        "1"
+      ],
+      "krbpasswordexpiration": [
+        {
+          "__datetime__": "20270122201127Z"
+        }
       ],
       "krbprincipalname": [
-        "jast3787@EXAMPLE.TEST"
+        "mayert1974@EXAMPLE.TEST"
       ],
       "loginshell": [
         "/bin/sh"
       ],
       "mail": [
-        "jast3787@example.test"
+        "mayert1974@example.test"
+      ],
+      "memberof_group": [
+        "ipausers"
+      ],
+      "mepmanagedentry": [
+        "cn=mayert1974,cn=groups,cn=accounts,dc=example,dc=test"
       ],
       "nsaccountlock": false,
+      "objectclass": [
+        "top",
+        "person",
+        "organizationalperson",
+        "inetorgperson",
+        "inetuser",
+        "posixaccount",
+        "krbprincipalaux",
+        "krbticketpolicyaux",
+        "ipaobject",
+        "ipasshuser",
+        "ipaSshGroupOfPubKeys",
+        "mepOriginEntry",
+        "ipantuserattrs"
+      ],
+      "preserved": false,
       "sn": [
-        "Rosenbaum"
+        "Aufderhar"
       ],
       "uid": [
-        "jast3787"
+        "mayert1974"
       ],
       "uidnumber": [
-        "145400067"
+        "975800087"
       ]
     }
   ],

@@ -1,0 +1,52 @@
+{
+  "result": {
+    "dn": "krbprincipalname=goipa3e5e6957/ipa.example.test@EXAMPLE.TEST,cn=services,cn=accounts,dc=example,dc=test",
+    "has_keytab": false,
+    "ipakrbokasdelegate": false,
+    "ipakrboktoauthasdelegate": false,
+    "ipakrbprincipalalias": [
+      "goipa3e5e6957/ipa.example.test@EXAMPLE.TEST"
+    ],
+    "ipakrbrequirespreauth": true,
+    "ipauniqueid": [
+      "cc28ebc0-cfe6-11f1-b820-4ad5c53010b5"
+    ],
+    "issuer": "CN=goipa contract test",
+    "krbcanonicalname": [
+      "goipa3e5e6957/ipa.example.test@EXAMPLE.TEST"
+    ],
+    "krbprincipalname": [
+      "goipa3e5e6957/ipa.example.test@EXAMPLE.TEST"
+    ],
+    "krbpwdpolicyreference": [
+      "cn=Default Service Password Policy,cn=services,cn=accounts,dc=example,dc=test"
+    ],
+    "managedby_host": [
+      "ipa.example.test"
+    ],
+    "objectclass": [
+      "krbprincipal",
+      "krbprincipalaux",
+      "krbticketpolicyaux",
+      "ipaobject",
+      "ipaservice",
+      "pkiuser",
+      "ipakrbprincipal",
+      "top"
+    ],
+    "serial_number": "1792872560031572094",
+    "serial_number_hex": "0x18E19018243A207E",
+    "sha1_fingerprint": "1b:e8:24:a4:9d:29:56:6d:df:c2:f5:49:87:ed:4d:bb:79:be:4d:2c",
+    "sha256_fingerprint": "aa:97:07:12:f9:06:ff:4d:ff:14:e4:38:ae:f4:c2:cb:33:c4:b9:b3:7e:02:2e:6c:4e:b4:7a:ac:8d:71:27:fe",
+    "subject": "CN=goipa contract test",
+    "usercertificate": [
+      {
+        "__base64__": "MIIBTzCB96ADAgECAggY4ZAYJDogfjAKBggqhkjOPQQDAjAeMRwwGgYDVQQDExNnb2lwYSBjb250cmFjdCB0ZXN0MB4XDTI2MTAyNDE5MDkyMFoXDTI2MTAyNDIxMDkyMFowHjEcMBoGA1UEAxMTZ29pcGEgY29udHJhY3QgdGVzdDBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABJsBKcrn9SAFBNS8XiA/SqrOzBMjY4+jS+QCzTvMhwfgdZTa4RECo4A+dX7veZVVdkI00d4NiMjA8mU4xgtJJsmjHzAdMBsGA1UdEQQUMBKCEGlwYS5leGFtcGxlLnRlc3QwCgYIKoZIzj0EAwIDRwAwRAIgLx+46Tsf3pn8/kNuW681xHWO6fxFCrnu0jckUqMJxHICICdOV2J/hmxFXPxaU7gcwX1wgyRF+I5DMQnjTzGYLSmJ"
+      }
+    ],
+    "valid_not_after": "Sat Oct 24 21:09:20 2026 UTC",
+    "valid_not_before": "Sat Oct 24 19:09:20 2026 UTC"
+  },
+  "summary": null,
+  "value": "goipa3e5e6957/ipa.example.test@EXAMPLE.TEST"
+}

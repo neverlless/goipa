@@ -2,18 +2,28 @@
   "count": 2,
   "result": [
     {
+      "accessruletype": [
+        "allow"
+      ],
       "cn": [
         "allow_all"
       ],
       "description": [
         "Allow all users to access any host from any host"
       ],
-      "dn": "ipaUniqueID=4d01909c-cfdf-11f1-8d8b-66f7b5c167e5,cn=hbac,dc=example,dc=test",
+      "dn": "ipaUniqueID=5248041c-cfe6-11f1-8ef3-be1d3b1abf25,cn=hbac,dc=example,dc=test",
       "hostcategory": [
         "all"
       ],
       "ipaenabledflag": [
         true
+      ],
+      "ipauniqueid": [
+        "5248041c-cfe6-11f1-8ef3-be1d3b1abf25"
+      ],
+      "objectclass": [
+        "ipaassociation",
+        "ipahbacrule"
       ],
       "servicecategory": [
         "all"
@@ -23,18 +33,31 @@
       ]
     },
     {
+      "accessruletype": [
+        "allow"
+      ],
       "cn": [
         "allow_systemd-user"
       ],
       "description": [
         "Allow pam_systemd to run user@.service to create a system user session"
       ],
-      "dn": "ipaUniqueID=4d023b82-cfdf-11f1-bdb2-66f7b5c167e5,cn=hbac,dc=example,dc=test",
+      "dn": "ipaUniqueID=5249079a-cfe6-11f1-9525-be1d3b1abf25,cn=hbac,dc=example,dc=test",
       "hostcategory": [
         "all"
       ],
       "ipaenabledflag": [
         true
+      ],
+      "ipauniqueid": [
+        "5249079a-cfe6-11f1-9525-be1d3b1abf25"
+      ],
+      "memberservice_hbacsvc": [
+        "systemd-user"
+      ],
+      "objectclass": [
+        "ipaassociation",
+        "ipahbacrule"
       ],
       "usercategory": [
         "all"

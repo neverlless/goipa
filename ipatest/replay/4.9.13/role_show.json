@@ -1,0 +1,21 @@
+{
+  "result": {
+    "cn": [
+      "gtr6166902f"
+    ],
+    "description": [
+      "contract"
+    ],
+    "dn": "cn=gtr6166902f,cn=roles,cn=accounts,dc=example,dc=test",
+    "member_user": [
+      "gt77f2af9f"
+    ],
+    "objectclass": [
+      "groupofnames",
+      "nestedgroup",
+      "top"
+    ]
+  },
+  "summary": null,
+  "value": "gtr6166902f"
+}

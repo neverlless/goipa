@@ -5,7 +5,11 @@
       "cn": [
         "default"
       ],
-      "dn": "cn=default,cn=automount,dc=example,dc=test"
+      "dn": "cn=default,cn=automount,dc=example,dc=test",
+      "objectclass": [
+        "nsContainer",
+        "top"
+      ]
     }
   ],
   "summary": "1 automount location matched",

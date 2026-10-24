@@ -2,12 +2,36 @@
   "count": 1,
   "result": [
     {
-      "dn": "ipatokenuniqueid=082f6811-6813-4387-a848-cee401ffd36b,cn=otp,dc=example,dc=test",
+      "dn": "ipatokenuniqueid=26252774-2065-427a-a641-4da17849e578,cn=otp,dc=example,dc=test",
+      "ipatokenotpalgorithm": [
+        "sha1"
+      ],
+      "ipatokenotpdigits": [
+        "6"
+      ],
+      "ipatokenotpkey": "REDACTED",
       "ipatokenowner": [
-        "jast3787"
+        "mayert1974"
+      ],
+      "ipatokentotpclockoffset": [
+        "360"
+      ],
+      "ipatokentotptimestep": [
+        "30"
+      ],
+      "ipatokentotpwatermark": [
+        "59762434"
       ],
       "ipatokenuniqueid": [
-        "082f6811-6813-4387-a848-cee401ffd36b"
+        "26252774-2065-427a-a641-4da17849e578"
+      ],
+      "managedby_user": [
+        "mayert1974"
+      ],
+      "objectclass": [
+        "ipatoken",
+        "ipatokentotp",
+        "top"
       ],
       "type": "TOTP"
     }

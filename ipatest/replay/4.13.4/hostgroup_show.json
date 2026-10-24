@@ -1,0 +1,30 @@
+{
+  "result": {
+    "cn": [
+      "hg9538d947"
+    ],
+    "dn": "cn=hg9538d947,cn=hostgroups,cn=accounts,dc=example,dc=test",
+    "ipauniqueid": [
+      "0c31e1cc-cfe7-11f1-96a5-d28f5ba35ce1"
+    ],
+    "member_hostgroup": [
+      "hgd73b9cd9"
+    ],
+    "memberindirect_host": [
+      "ipa.example.test"
+    ],
+    "mepmanagedentry": [
+      "cn=hg9538d947,cn=ng,cn=alt,dc=example,dc=test"
+    ],
+    "objectclass": [
+      "ipaobject",
+      "ipahostgroup",
+      "nestedGroup",
+      "groupOfNames",
+      "top",
+      "mepOriginEntry"
+    ]
+  },
+  "summary": null,
+  "value": "hg9538d947"
+}

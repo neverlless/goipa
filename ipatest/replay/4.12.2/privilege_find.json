@@ -8,7 +8,15 @@
       "description": [
         "System accounts able to access trust information"
       ],
-      "dn": "cn=ADTrust Agents,cn=privileges,cn=pbac,dc=example,dc=test"
+      "dn": "cn=ADTrust Agents,cn=privileges,cn=pbac,dc=example,dc=test",
+      "memberof_permission": [
+        "System: Read system trust accounts"
+      ],
+      "objectclass": [
+        "top",
+        "groupofnames",
+        "nestedgroup"
+      ]
     },
     {
       "cn": [
@@ -17,7 +25,16 @@
       "description": [
         "Read Automember definitions"
       ],
-      "dn": "cn=Automember Readers,cn=privileges,cn=pbac,dc=example,dc=test"
+      "dn": "cn=Automember Readers,cn=privileges,cn=pbac,dc=example,dc=test",
+      "memberof_permission": [
+        "System: Read Automember Definitions",
+        "System: Read Automember Rules"
+      ],
+      "objectclass": [
+        "nestedgroup",
+        "groupofnames",
+        "top"
+      ]
     },
     {
       "cn": [
@@ -26,7 +43,18 @@
       "description": [
         "Automember Task Administrator"
       ],
-      "dn": "cn=Automember Task Administrator,cn=privileges,cn=pbac,dc=example,dc=test"
+      "dn": "cn=Automember Task Administrator,cn=privileges,cn=pbac,dc=example,dc=test",
+      "memberof_permission": [
+        "Add Automember Rebuild Membership Task",
+        "System: Read Automember Definitions",
+        "System: Read Automember Rules",
+        "System: Read Automember Tasks"
+      ],
+      "objectclass": [
+        "nestedgroup",
+        "groupofnames",
+        "top"
+      ]
     },
     {
       "cn": [
@@ -35,7 +63,25 @@
       "description": [
         "Automount Administrators"
       ],
-      "dn": "cn=Automount Administrators,cn=privileges,cn=pbac,dc=example,dc=test"
+      "dn": "cn=Automount Administrators,cn=privileges,cn=pbac,dc=example,dc=test",
+      "member_role": [
+        "IT Specialist"
+      ],
+      "memberof_permission": [
+        "System: Add Automount Keys",
+        "System: Modify Automount Keys",
+        "System: Remove Automount Keys",
+        "System: Add Automount Locations",
+        "System: Remove Automount Locations",
+        "System: Add Automount Maps",
+        "System: Modify Automount Maps",
+        "System: Remove Automount Maps"
+      ],
+      "objectclass": [
+        "top",
+        "groupofnames",
+        "nestedgroup"
+      ]
     },
     {
       "cn": [
@@ -44,7 +90,24 @@
       "description": [
         "CA Administrator"
       ],
-      "dn": "cn=CA Administrator,cn=privileges,cn=pbac,dc=example,dc=test"
+      "dn": "cn=CA Administrator,cn=privileges,cn=pbac,dc=example,dc=test",
+      "memberof_permission": [
+        "System: Add CA",
+        "System: Delete CA",
+        "System: Modify CA",
+        "System: Add CA ACL",
+        "System: Delete CA ACL",
+        "System: Manage CA ACL Membership",
+        "System: Modify CA ACL",
+        "System: Delete Certificate Profile",
+        "System: Import Certificate Profile",
+        "System: Modify Certificate Profile"
+      ],
+      "objectclass": [
+        "nestedgroup",
+        "groupofnames",
+        "top"
+      ]
     },
     {
       "cn": [
@@ -53,7 +116,27 @@
       "description": [
         "Certificate Administrators"
       ],
-      "dn": "cn=Certificate Administrators,cn=privileges,cn=pbac,dc=example,dc=test"
+      "dn": "cn=Certificate Administrators,cn=privileges,cn=pbac,dc=example,dc=test",
+      "memberof_permission": [
+        "Retrieve Certificates from the CA",
+        "Request Certificate",
+        "Request Certificates from a different host",
+        "Get Certificates status from the CA",
+        "Revoke Certificate",
+        "Certificate Remove Hold",
+        "Request Certificate ignoring CA ACLs",
+        "System: Add CA Certificate For Renewal",
+        "System: Add Certificate Store Entry",
+        "System: Modify CA Certificate",
+        "System: Modify CA Certificate For Renewal",
+        "System: Modify Certificate Store Entry",
+        "System: Remove Certificate Store Entry"
+      ],
+      "objectclass": [
+        "top",
+        "groupofnames",
+        "nestedgroup"
+      ]
     },
     {
       "cn": [
@@ -62,7 +145,19 @@
       "description": [
         "Certificate Identity Mapping Administrators"
       ],
-      "dn": "cn=Certificate Identity Mapping Administrators,cn=privileges,cn=pbac,dc=example,dc=test"
+      "dn": "cn=Certificate Identity Mapping Administrators,cn=privileges,cn=pbac,dc=example,dc=test",
+      "memberof_permission": [
+        "System: Modify Certmap Configuration",
+        "System: Add Certmap Rules",
+        "System: Delete Certmap Rules",
+        "System: Modify Certmap Rules",
+        "System: Manage User Certificate Mappings"
+      ],
+      "objectclass": [
+        "top",
+        "groupofnames",
+        "nestedgroup"
+      ]
     },
     {
       "cn": [
@@ -71,7 +166,25 @@
       "description": [
         "Role administration"
       ],
-      "dn": "cn=Delegation Administrator,cn=privileges,cn=pbac,dc=example,dc=test"
+      "dn": "cn=Delegation Administrator,cn=privileges,cn=pbac,dc=example,dc=test",
+      "member_role": [
+        "Security Architect"
+      ],
+      "memberof_permission": [
+        "System: Modify Privilege Membership",
+        "System: Add Privileges",
+        "System: Modify Privileges",
+        "System: Remove Privileges",
+        "System: Add Roles",
+        "System: Modify Role Membership",
+        "System: Modify Roles",
+        "System: Remove Roles"
+      ],
+      "objectclass": [
+        "top",
+        "groupofnames",
+        "nestedgroup"
+      ]
     },
     {
       "cn": [
@@ -80,7 +193,30 @@
       "description": [
         "DNS Administrators"
       ],
-      "dn": "cn=DNS Administrators,cn=privileges,cn=pbac,dc=example,dc=test"
+      "dn": "cn=DNS Administrators,cn=privileges,cn=pbac,dc=example,dc=test",
+      "memberof_permission": [
+        "System: Read DNS Configuration",
+        "System: Write DNS Configuration",
+        "System: Modify DNS Servers Configuration",
+        "System: Read DNS Servers Configuration",
+        "System: Add DNS Entries",
+        "System: Read DNS Entries",
+        "System: Read DNSSEC metadata",
+        "System: Remove DNS Entries",
+        "System: Update DNS Entries",
+        "System: Add IPA Locations",
+        "System: Modify IPA Locations",
+        "System: Read IPA Locations",
+        "System: Remove IPA Locations",
+        "System: Modify Realm Domains",
+        "System: Read Locations of IPA Servers",
+        "System: Read Status of Services on IPA Servers"
+      ],
+      "objectclass": [
+        "top",
+        "groupofnames",
+        "nestedgroup"
+      ]
     },
     {
       "cn": [
@@ -89,7 +225,23 @@
       "description": [
         "DNS Servers"
       ],
-      "dn": "cn=DNS Servers,cn=privileges,cn=pbac,dc=example,dc=test"
+      "dn": "cn=DNS Servers,cn=privileges,cn=pbac,dc=example,dc=test",
+      "memberof_permission": [
+        "System: Read DNS Configuration",
+        "System: Write DNS Configuration",
+        "System: Read DNS Servers Configuration",
+        "System: Add DNS Entries",
+        "System: Manage DNSSEC keys",
+        "System: Manage DNSSEC metadata",
+        "System: Read DNS Entries",
+        "System: Remove DNS Entries",
+        "System: Update DNS Entries"
+      ],
+      "objectclass": [
+        "top",
+        "groupofnames",
+        "nestedgroup"
+      ]
     },
     {
       "cn": [
@@ -98,7 +250,18 @@
       "description": [
         "External IdP server Administrators"
       ],
-      "dn": "cn=External IdP server Administrators,cn=privileges,cn=pbac,dc=example,dc=test"
+      "dn": "cn=External IdP server Administrators,cn=privileges,cn=pbac,dc=example,dc=test",
+      "memberof_permission": [
+        "System: Add External IdP server",
+        "System: Delete External IdP server",
+        "System: Modify External IdP server",
+        "System: Read External IdP server"
+      ],
+      "objectclass": [
+        "top",
+        "groupofnames",
+        "nestedgroup"
+      ]
     },
     {
       "cn": [
@@ -107,7 +270,22 @@
       "description": [
         "Group Administrators"
       ],
-      "dn": "cn=Group Administrators,cn=privileges,cn=pbac,dc=example,dc=test"
+      "dn": "cn=Group Administrators,cn=privileges,cn=pbac,dc=example,dc=test",
+      "member_role": [
+        "User Administrator"
+      ],
+      "memberof_permission": [
+        "System: Add Groups",
+        "System: Modify External Group Membership",
+        "System: Modify Group Membership",
+        "System: Modify Groups",
+        "System: Remove Groups"
+      ],
+      "objectclass": [
+        "top",
+        "groupofnames",
+        "nestedgroup"
+      ]
     },
     {
       "cn": [
@@ -116,7 +294,26 @@
       "description": [
         "HBAC Administrator"
       ],
-      "dn": "cn=HBAC Administrator,cn=privileges,cn=pbac,dc=example,dc=test"
+      "dn": "cn=HBAC Administrator,cn=privileges,cn=pbac,dc=example,dc=test",
+      "member_role": [
+        "IT Security Specialist"
+      ],
+      "memberof_permission": [
+        "System: Add HBAC Rule",
+        "System: Delete HBAC Rule",
+        "System: Manage HBAC Rule Membership",
+        "System: Modify HBAC Rule",
+        "System: Add HBAC Services",
+        "System: Delete HBAC Services",
+        "System: Add HBAC Service Groups",
+        "System: Delete HBAC Service Groups",
+        "System: Manage HBAC Service Group Membership"
+      ],
+      "objectclass": [
+        "nestedgroup",
+        "groupofnames",
+        "top"
+      ]
     },
     {
       "cn": [
@@ -125,7 +322,35 @@
       "description": [
         "Host Administrators"
       ],
-      "dn": "cn=Host Administrators,cn=privileges,cn=pbac,dc=example,dc=test"
+      "dn": "cn=Host Administrators,cn=privileges,cn=pbac,dc=example,dc=test",
+      "member_role": [
+        "IT Specialist"
+      ],
+      "memberof_permission": [
+        "Retrieve Certificates from the CA",
+        "Revoke Certificate",
+        "System: Add Hosts",
+        "System: Add krbPrincipalName to a Host",
+        "System: Enroll a Host",
+        "System: Manage Host Certificates",
+        "System: Manage Host Enrollment Password",
+        "System: Manage Host Keytab",
+        "System: Manage Host Keytab Permissions",
+        "System: Manage Host Principals",
+        "System: Manage Host Resource Delegation",
+        "System: Manage Host SSH Public Keys",
+        "System: Modify Hosts",
+        "System: Remove Hosts",
+        "System: Manage Service Keytab",
+        "System: Manage Service Keytab Permissions",
+        "System: Manage Service Resource Delegation",
+        "System: Manage Service Resource Delegation Permissions"
+      ],
+      "objectclass": [
+        "top",
+        "groupofnames",
+        "nestedgroup"
+      ]
     },
     {
       "cn": [
@@ -134,7 +359,23 @@
       "description": [
         "Host Enrollment"
       ],
-      "dn": "cn=Host Enrollment,cn=privileges,cn=pbac,dc=example,dc=test"
+      "dn": "cn=Host Enrollment,cn=privileges,cn=pbac,dc=example,dc=test",
+      "member_role": [
+        "Enrollment Administrator"
+      ],
+      "memberof_permission": [
+        "System: Add krbPrincipalName to a Host",
+        "System: Enroll a Host",
+        "System: Manage Host Certificates",
+        "System: Manage Host Enrollment Password",
+        "System: Manage Host Keytab",
+        "System: Manage Host Principals"
+      ],
+      "objectclass": [
+        "top",
+        "groupofnames",
+        "nestedgroup"
+      ]
     },
     {
       "cn": [
@@ -143,7 +384,21 @@
       "description": [
         "Host Group Administrators"
       ],
-      "dn": "cn=Host Group Administrators,cn=privileges,cn=pbac,dc=example,dc=test"
+      "dn": "cn=Host Group Administrators,cn=privileges,cn=pbac,dc=example,dc=test",
+      "member_role": [
+        "IT Specialist"
+      ],
+      "memberof_permission": [
+        "System: Add Hostgroups",
+        "System: Modify Hostgroup Membership",
+        "System: Modify Hostgroups",
+        "System: Remove Hostgroups"
+      ],
+      "objectclass": [
+        "top",
+        "groupofnames",
+        "nestedgroup"
+      ]
     },
     {
       "cn": [
@@ -152,7 +407,15 @@
       "description": [
         "Read list of IPA masters"
       ],
-      "dn": "cn=IPA Masters Readers,cn=privileges,cn=pbac,dc=example,dc=test"
+      "dn": "cn=IPA Masters Readers,cn=privileges,cn=pbac,dc=example,dc=test",
+      "memberof_permission": [
+        "System: Read IPA Masters"
+      ],
+      "objectclass": [
+        "nestedgroup",
+        "groupofnames",
+        "top"
+      ]
     },
     {
       "cn": [
@@ -161,7 +424,16 @@
       "description": [
         "Read global and per-user Kerberos ticket policy"
       ],
-      "dn": "cn=Kerberos Ticket Policy Readers,cn=privileges,cn=pbac,dc=example,dc=test"
+      "dn": "cn=Kerberos Ticket Policy Readers,cn=privileges,cn=pbac,dc=example,dc=test",
+      "memberof_permission": [
+        "System: Read Default Kerberos Ticket Policy",
+        "System: Read User Kerberos Ticket Policy"
+      ],
+      "objectclass": [
+        "nestedgroup",
+        "groupofnames",
+        "top"
+      ]
     },
     {
       "cn": [
@@ -170,7 +442,19 @@
       "description": [
         "Modify Group membership"
       ],
-      "dn": "cn=Modify Group membership,cn=privileges,cn=pbac,dc=example,dc=test"
+      "dn": "cn=Modify Group membership,cn=privileges,cn=pbac,dc=example,dc=test",
+      "member_role": [
+        "helpdesk"
+      ],
+      "memberof_permission": [
+        "System: Modify External Group Membership",
+        "System: Modify Group Membership"
+      ],
+      "objectclass": [
+        "top",
+        "groupofnames",
+        "nestedgroup"
+      ]
     },
     {
       "cn": [
@@ -179,7 +463,21 @@
       "description": [
         "Modify Users and Reset passwords"
       ],
-      "dn": "cn=Modify Users and Reset passwords,cn=privileges,cn=pbac,dc=example,dc=test"
+      "dn": "cn=Modify Users and Reset passwords,cn=privileges,cn=pbac,dc=example,dc=test",
+      "member_role": [
+        "helpdesk"
+      ],
+      "memberof_permission": [
+        "System: Change User password",
+        "System: Manage User Certificates",
+        "System: Manage User Principals",
+        "System: Modify Users"
+      ],
+      "objectclass": [
+        "top",
+        "groupofnames",
+        "nestedgroup"
+      ]
     },
     {
       "cn": [
@@ -188,7 +486,21 @@
       "description": [
         "Netgroups Administrators"
       ],
-      "dn": "cn=Netgroups Administrators,cn=privileges,cn=pbac,dc=example,dc=test"
+      "dn": "cn=Netgroups Administrators,cn=privileges,cn=pbac,dc=example,dc=test",
+      "member_role": [
+        "IT Security Specialist"
+      ],
+      "memberof_permission": [
+        "System: Add Netgroups",
+        "System: Modify Netgroup Membership",
+        "System: Modify Netgroups",
+        "System: Remove Netgroups"
+      ],
+      "objectclass": [
+        "top",
+        "groupofnames",
+        "nestedgroup"
+      ]
     },
     {
       "cn": [
@@ -197,7 +509,16 @@
       "description": [
         "Passkey Administrators"
       ],
-      "dn": "cn=Passkey Administrators,cn=privileges,cn=pbac,dc=example,dc=test"
+      "dn": "cn=Passkey Administrators,cn=privileges,cn=pbac,dc=example,dc=test",
+      "memberof_permission": [
+        "System: Modify Passkey Configuration",
+        "System: Manage Passkey Mappings"
+      ],
+      "objectclass": [
+        "top",
+        "groupofnames",
+        "nestedgroup"
+      ]
     },
     {
       "cn": [
@@ -206,7 +527,17 @@
       "description": [
         "PassSync Service"
       ],
-      "dn": "cn=PassSync Service,cn=privileges,cn=pbac,dc=example,dc=test"
+      "dn": "cn=PassSync Service,cn=privileges,cn=pbac,dc=example,dc=test",
+      "memberof_permission": [
+        "System: Change Admin User password",
+        "System: Change User password",
+        "System: Read User NT Attributes"
+      ],
+      "objectclass": [
+        "nestedgroup",
+        "groupofnames",
+        "top"
+      ]
     },
     {
       "cn": [
@@ -215,7 +546,25 @@
       "description": [
         "Password Policy Administrator"
       ],
-      "dn": "cn=Password Policy Administrator,cn=privileges,cn=pbac,dc=example,dc=test"
+      "dn": "cn=Password Policy Administrator,cn=privileges,cn=pbac,dc=example,dc=test",
+      "member_role": [
+        "Security Architect"
+      ],
+      "memberof_permission": [
+        "System: Add Group Password Policy costemplate",
+        "System: Delete Group Password Policy costemplate",
+        "System: Modify Group Password Policy costemplate",
+        "System: Read Group Password Policy costemplate",
+        "System: Add Group Password Policy",
+        "System: Delete Group Password Policy",
+        "System: Modify Group Password Policy",
+        "System: Read Group Password Policy"
+      ],
+      "objectclass": [
+        "nestedgroup",
+        "groupofnames",
+        "top"
+      ]
     },
     {
       "cn": [
@@ -224,7 +573,16 @@
       "description": [
         "Read password policies"
       ],
-      "dn": "cn=Password Policy Readers,cn=privileges,cn=pbac,dc=example,dc=test"
+      "dn": "cn=Password Policy Readers,cn=privileges,cn=pbac,dc=example,dc=test",
+      "memberof_permission": [
+        "System: Read Group Password Policy costemplate",
+        "System: Read Group Password Policy"
+      ],
+      "objectclass": [
+        "nestedgroup",
+        "groupofnames",
+        "top"
+      ]
     },
     {
       "cn": [
@@ -233,7 +591,18 @@
       "description": [
         "Read roles, privileges, permissions and ACIs"
       ],
-      "dn": "cn=RBAC Readers,cn=privileges,cn=pbac,dc=example,dc=test"
+      "dn": "cn=RBAC Readers,cn=privileges,cn=pbac,dc=example,dc=test",
+      "memberof_permission": [
+        "System: Read ACIs",
+        "System: Read Permissions",
+        "System: Read Privileges",
+        "System: Read Roles"
+      ],
+      "objectclass": [
+        "nestedgroup",
+        "groupofnames",
+        "top"
+      ]
     },
     {
       "cn": [
@@ -242,7 +611,34 @@
       "description": [
         "Replication Administrators"
       ],
-      "dn": "cn=Replication Administrators,cn=privileges,cn=pbac,dc=example,dc=test"
+      "dn": "cn=Replication Administrators,cn=privileges,cn=pbac,dc=example,dc=test",
+      "member_role": [
+        "Security Architect"
+      ],
+      "memberof_permission": [
+        "Add Replication Agreements",
+        "Modify Replication Agreements",
+        "Read Replication Agreements",
+        "Remove Replication Agreements",
+        "Modify DNA Range",
+        "Read PassSync Managers Configuration",
+        "Read Replication Changelog Configuration",
+        "Write Replication Changelog Configuration",
+        "Modify PassSync Managers Configuration",
+        "Read LDBM Database Configuration",
+        "Add Configuration Sub-Entries",
+        "Read DNA Range",
+        "Read domain level",
+        "System: Add Topology Segments",
+        "System: Modify Topology Segments",
+        "System: Read Topology Segments",
+        "System: Remove Topology Segments"
+      ],
+      "objectclass": [
+        "top",
+        "groupofnames",
+        "nestedgroup"
+      ]
     },
     {
       "cn": [
@@ -251,7 +647,17 @@
       "description": [
         "SELinux User Map Administrators"
       ],
-      "dn": "cn=SELinux User Map Administrators,cn=privileges,cn=pbac,dc=example,dc=test"
+      "dn": "cn=SELinux User Map Administrators,cn=privileges,cn=pbac,dc=example,dc=test",
+      "memberof_permission": [
+        "System: Add SELinux User Maps",
+        "System: Modify SELinux User Maps",
+        "System: Remove SELinux User Maps"
+      ],
+      "objectclass": [
+        "top",
+        "groupofnames",
+        "nestedgroup"
+      ]
     },
     {
       "cn": [
@@ -260,7 +666,29 @@
       "description": [
         "Service Administrators"
       ],
-      "dn": "cn=Service Administrators,cn=privileges,cn=pbac,dc=example,dc=test"
+      "dn": "cn=Service Administrators,cn=privileges,cn=pbac,dc=example,dc=test",
+      "member_role": [
+        "IT Specialist"
+      ],
+      "memberof_permission": [
+        "System: Add Services",
+        "System: Manage Service Keytab",
+        "System: Manage Service Keytab Permissions",
+        "System: Manage Service Principals",
+        "System: Manage Service Resource Delegation",
+        "System: Manage Service Resource Delegation Permissions",
+        "System: Modify Services",
+        "System: Remove Services",
+        "System: Add Service Delegations",
+        "System: Modify Service Delegation Membership",
+        "System: Read Service Delegations",
+        "System: Remove Service Delegations"
+      ],
+      "objectclass": [
+        "top",
+        "groupofnames",
+        "nestedgroup"
+      ]
     },
     {
       "cn": [
@@ -269,7 +697,30 @@
       "description": [
         "Stage User Administrators"
       ],
-      "dn": "cn=Stage User Administrators,cn=privileges,cn=pbac,dc=example,dc=test"
+      "dn": "cn=Stage User Administrators,cn=privileges,cn=pbac,dc=example,dc=test",
+      "member_role": [
+        "User Administrator"
+      ],
+      "memberof_permission": [
+        "System: Read Radius Servers",
+        "System: Add Stage User",
+        "System: Modify Preserved Users",
+        "System: Modify Stage User",
+        "System: Modify User RDN",
+        "System: Preserve User",
+        "System: Read Preserved Users",
+        "System: Read Stage User password",
+        "System: Read Stage Users",
+        "System: Remove Stage User",
+        "System: Remove preserved User",
+        "System: Reset Preserved User password",
+        "System: Undelete User"
+      ],
+      "objectclass": [
+        "top",
+        "groupofnames",
+        "nestedgroup"
+      ]
     },
     {
       "cn": [
@@ -278,7 +729,15 @@
       "description": [
         "Stage User Provisioning"
       ],
-      "dn": "cn=Stage User Provisioning,cn=privileges,cn=pbac,dc=example,dc=test"
+      "dn": "cn=Stage User Provisioning,cn=privileges,cn=pbac,dc=example,dc=test",
+      "memberof_permission": [
+        "System: Add Stage User"
+      ],
+      "objectclass": [
+        "top",
+        "groupofnames",
+        "nestedgroup"
+      ]
     },
     {
       "cn": [
@@ -287,7 +746,18 @@
       "description": [
         "Subordinate ID Administrators"
       ],
-      "dn": "cn=Subordinate ID Administrators,cn=privileges,cn=pbac,dc=example,dc=test"
+      "dn": "cn=Subordinate ID Administrators,cn=privileges,cn=pbac,dc=example,dc=test",
+      "member_role": [
+        "User Administrator"
+      ],
+      "memberof_permission": [
+        "Manage subordinate ID"
+      ],
+      "objectclass": [
+        "top",
+        "groupofnames",
+        "nestedgroup"
+      ]
     },
     {
       "cn": [
@@ -296,7 +766,18 @@
       "description": [
         "Subordinate ID Selfservice User"
       ],
-      "dn": "cn=Subordinate ID Selfservice Users,cn=privileges,cn=pbac,dc=example,dc=test"
+      "dn": "cn=Subordinate ID Selfservice Users,cn=privileges,cn=pbac,dc=example,dc=test",
+      "member_role": [
+        "Subordinate ID Selfservice User"
+      ],
+      "memberof_permission": [
+        "Self-service subordinate ID"
+      ],
+      "objectclass": [
+        "top",
+        "groupofnames",
+        "nestedgroup"
+      ]
     },
     {
       "cn": [
@@ -305,7 +786,27 @@
       "description": [
         "Sudo Administrator"
       ],
-      "dn": "cn=Sudo Administrator,cn=privileges,cn=pbac,dc=example,dc=test"
+      "dn": "cn=Sudo Administrator,cn=privileges,cn=pbac,dc=example,dc=test",
+      "member_role": [
+        "IT Security Specialist"
+      ],
+      "memberof_permission": [
+        "System: Add Sudo Command",
+        "System: Delete Sudo Command",
+        "System: Modify Sudo Command",
+        "System: Add Sudo Command Group",
+        "System: Delete Sudo Command Group",
+        "System: Manage Sudo Command Group Membership",
+        "System: Modify Sudo Command Group",
+        "System: Add Sudo rule",
+        "System: Delete Sudo rule",
+        "System: Modify Sudo rule"
+      ],
+      "objectclass": [
+        "nestedgroup",
+        "groupofnames",
+        "top"
+      ]
     },
     {
       "cn": [
@@ -314,7 +815,31 @@
       "description": [
         "User Administrators"
       ],
-      "dn": "cn=User Administrators,cn=privileges,cn=pbac,dc=example,dc=test"
+      "dn": "cn=User Administrators,cn=privileges,cn=pbac,dc=example,dc=test",
+      "member_role": [
+        "User Administrator"
+      ],
+      "memberof_permission": [
+        "System: Read Radius Servers",
+        "System: Manage Subordinate Ids",
+        "System: Remove Subordinate Ids",
+        "System: Add User to default group",
+        "System: Add Users",
+        "System: Change User password",
+        "System: Manage User Certificates",
+        "System: Manage User Principals",
+        "System: Manage User SSH Public Keys",
+        "System: Modify Users",
+        "System: Read UPG Definition",
+        "System: Read User Kerberos Login Attributes",
+        "System: Remove Users",
+        "System: Unlock User"
+      ],
+      "objectclass": [
+        "top",
+        "groupofnames",
+        "nestedgroup"
+      ]
     },
     {
       "cn": [
@@ -323,7 +848,25 @@
       "description": [
         "Vault Administrators"
       ],
-      "dn": "cn=Vault Administrators,cn=privileges,cn=pbac,dc=example,dc=test"
+      "dn": "cn=Vault Administrators,cn=privileges,cn=pbac,dc=example,dc=test",
+      "memberof_permission": [
+        "System: Add Vaults",
+        "System: Delete Vaults",
+        "System: Manage Vault Membership",
+        "System: Manage Vault Ownership",
+        "System: Modify Vaults",
+        "System: Read Vaults",
+        "System: Add Vault Containers",
+        "System: Delete Vault Containers",
+        "System: Manage Vault Container Ownership",
+        "System: Modify Vault Containers",
+        "System: Read Vault Containers"
+      ],
+      "objectclass": [
+        "nestedgroup",
+        "groupofnames",
+        "top"
+      ]
     },
     {
       "cn": [
@@ -332,7 +875,18 @@
       "description": [
         "Write IPA Configuration"
       ],
-      "dn": "cn=Write IPA Configuration,cn=privileges,cn=pbac,dc=example,dc=test"
+      "dn": "cn=Write IPA Configuration,cn=privileges,cn=pbac,dc=example,dc=test",
+      "member_role": [
+        "Security Architect"
+      ],
+      "memberof_permission": [
+        "Write IPA Configuration"
+      ],
+      "objectclass": [
+        "top",
+        "groupofnames",
+        "nestedgroup"
+      ]
     }
   ],
   "summary": "37 privileges matched",

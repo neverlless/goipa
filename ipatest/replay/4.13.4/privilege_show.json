@@ -1,0 +1,37 @@
+{
+  "result": {
+    "cn": [
+      "User Administrators"
+    ],
+    "description": [
+      "User Administrators"
+    ],
+    "dn": "cn=User Administrators,cn=privileges,cn=pbac,dc=example,dc=test",
+    "member_role": [
+      "User Administrator"
+    ],
+    "memberof_permission": [
+      "System: Read Radius Servers",
+      "System: Manage Subordinate Ids",
+      "System: Remove Subordinate Ids",
+      "System: Add User to default group",
+      "System: Add Users",
+      "System: Change User password",
+      "System: Manage User Certificates",
+      "System: Manage User Principals",
+      "System: Manage User SSH Public Keys",
+      "System: Modify Users",
+      "System: Read UPG Definition",
+      "System: Read User Kerberos Login Attributes",
+      "System: Remove Users",
+      "System: Unlock User"
+    ],
+    "objectclass": [
+      "top",
+      "groupofnames",
+      "nestedgroup"
+    ]
+  },
+  "summary": null,
+  "value": "User Administrators"
+}

@@ -2,12 +2,36 @@
   "count": 1,
   "result": [
     {
-      "dn": "ipatokenuniqueid=d9b288ad-e4b5-40c8-aec9-7e8779a60e0a,cn=otp,dc=example,dc=test",
+      "dn": "ipatokenuniqueid=ea009331-5551-48d8-b805-3f454ad50b12,cn=otp,dc=example,dc=test",
+      "ipatokenotpalgorithm": [
+        "sha1"
+      ],
+      "ipatokenotpdigits": [
+        "6"
+      ],
+      "ipatokenotpkey": "REDACTED",
       "ipatokenowner": [
-        "fritsch9058"
+        "bode4535"
+      ],
+      "ipatokentotpclockoffset": [
+        "360"
+      ],
+      "ipatokentotptimestep": [
+        "30"
+      ],
+      "ipatokentotpwatermark": [
+        "59762431"
       ],
       "ipatokenuniqueid": [
-        "d9b288ad-e4b5-40c8-aec9-7e8779a60e0a"
+        "ea009331-5551-48d8-b805-3f454ad50b12"
+      ],
+      "managedby_user": [
+        "bode4535"
+      ],
+      "objectclass": [
+        "ipatoken",
+        "ipatokentotp",
+        "top"
       ],
       "type": "TOTP"
     }

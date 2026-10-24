@@ -1,0 +1,23 @@
+{
+  "result": {
+    "automemberinclusiveregex": [
+      "uid=^b"
+    ],
+    "automembertargetgroup": [
+      "cn=gg6e80421f,cn=groups,cn=accounts,dc=example,dc=test"
+    ],
+    "cn": [
+      "gg6e80421f"
+    ],
+    "description": [
+      "goipa rule"
+    ],
+    "dn": "cn=gg6e80421f,cn=group,cn=automember,cn=etc,dc=example,dc=test",
+    "objectclass": [
+      "top",
+      "automemberregexrule"
+    ]
+  },
+  "summary": null,
+  "value": "gg6e80421f"
+}

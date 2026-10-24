@@ -1,0 +1,25 @@
+{
+  "count": 1,
+  "result": [
+    {
+      "dn": "idnsserverid=ipa.example.test,cn=servers,cn=dns,dc=example,dc=test",
+      "idnsforwardpolicy": [
+        "only"
+      ],
+      "idnsserverid": [
+        "ipa.example.test"
+      ],
+      "idnssoamname": [
+        {
+          "__dns_name__": "ipa.example.test."
+        }
+      ],
+      "objectclass": [
+        "top",
+        "idnsServerConfigObject"
+      ]
+    }
+  ],
+  "summary": "1 DNS server matched",
+  "truncated": false
+}

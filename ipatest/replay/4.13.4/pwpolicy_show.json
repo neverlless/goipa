@@ -28,6 +28,12 @@
     "krbpwdminlength": [
       "8"
     ],
+    "objectclass": [
+      "top",
+      "nsContainer",
+      "krbPwdPolicy",
+      "ipaPwdPolicy"
+    ],
     "passwordgracelimit": [
       "-1"
     ]

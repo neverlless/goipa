@@ -11,6 +11,10 @@
       "dn": "cn=acmeIPAServerCert,cn=certprofiles,cn=ca,dc=example,dc=test",
       "ipacertprofilestoreissued": [
         false
+      ],
+      "objectclass": [
+        "ipacertprofile",
+        "top"
       ]
     },
     {
@@ -23,6 +27,10 @@
       "dn": "cn=caIPAserviceCert,cn=certprofiles,cn=ca,dc=example,dc=test",
       "ipacertprofilestoreissued": [
         true
+      ],
+      "objectclass": [
+        "ipacertprofile",
+        "top"
       ]
     },
     {
@@ -35,6 +43,10 @@
       "dn": "cn=IECUserRoles,cn=certprofiles,cn=ca,dc=example,dc=test",
       "ipacertprofilestoreissued": [
         true
+      ],
+      "objectclass": [
+        "ipacertprofile",
+        "top"
       ]
     },
     {
@@ -47,6 +59,10 @@
       "dn": "cn=KDCs_PKINIT_Certs,cn=certprofiles,cn=ca,dc=example,dc=test",
       "ipacertprofilestoreissued": [
         false
+      ],
+      "objectclass": [
+        "ipacertprofile",
+        "top"
       ]
     }
   ],

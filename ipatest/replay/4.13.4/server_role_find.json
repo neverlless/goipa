@@ -19,7 +19,7 @@
     {
       "role_servrole": "DNS server",
       "server_server": "ipa.example.test",
-      "status": "absent"
+      "status": "enabled"
     },
     {
       "role_servrole": "KRA server",

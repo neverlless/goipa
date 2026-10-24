@@ -5,12 +5,22 @@
       "cn": [
         "hosts_services_caIPAserviceCert"
       ],
-      "dn": "ipaUniqueID=b06d2380-cfdf-11f1-ad7c-2276371f0835,cn=caacls,cn=ca,dc=example,dc=test",
+      "dn": "ipaUniqueID=bd365706-cfe6-11f1-b588-d28f5ba35ce1,cn=caacls,cn=ca,dc=example,dc=test",
       "hostcategory": [
         "all"
       ],
       "ipaenabledflag": [
         true
+      ],
+      "ipamembercertprofile_certprofile": [
+        "caIPAserviceCert"
+      ],
+      "ipauniqueid": [
+        "bd365706-cfe6-11f1-b588-d28f5ba35ce1"
+      ],
+      "objectclass": [
+        "ipaassociation",
+        "ipacaacl"
       ],
       "servicecategory": [
         "all"

@@ -8,6 +8,10 @@
       "dn": "cn=ca,cn=topology,cn=ipa,cn=etc,dc=example,dc=test",
       "iparepltopoconfroot": [
         "o=ipaca"
+      ],
+      "objectclass": [
+        "top",
+        "iparepltopoconf"
       ]
     },
     {
@@ -17,6 +21,19 @@
       "dn": "cn=domain,cn=topology,cn=ipa,cn=etc,dc=example,dc=test",
       "iparepltopoconfroot": [
         "dc=example,dc=test"
+      ],
+      "nsds5replicastripattrs": [
+        "modifiersName modifyTimestamp internalModifiersName internalModifyTimestamp"
+      ],
+      "nsds5replicatedattributelist": [
+        "(objectclass=*) $ EXCLUDE memberof idnssoaserial entryusn krblastsuccessfulauth krblastfailedauth krbloginfailedcount passwordgraceusertime"
+      ],
+      "nsds5replicatedattributelisttotal": [
+        "(objectclass=*) $ EXCLUDE entryusn krblastsuccessfulauth krblastfailedauth krbloginfailedcount passwordgraceusertime"
+      ],
+      "objectclass": [
+        "top",
+        "iparepltopoconf"
       ]
     }
   ],

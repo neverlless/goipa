@@ -13,18 +13,22 @@
     "ipakrboktoauthasdelegate": false,
     "ipakrbrequirespreauth": true,
     "ipauniqueid": [
-      "44f560cc-cfdf-11f1-a739-52f53a5c7008"
+      "515ccfa6-cfe6-11f1-a7be-4ad5c53010b5"
     ],
     "krbcanonicalname": [
       "host/ipa.example.test@EXAMPLE.TEST"
     ],
+    "krbextradata": "REDACTED",
     "krblastpwdchange": [
       {
-        "__datetime__": "20261024191526Z"
+        "__datetime__": "20261024200553Z"
       }
     ],
     "krbprincipalname": [
       "host/ipa.example.test@EXAMPLE.TEST"
+    ],
+    "krbpwdpolicyreference": [
+      "cn=Default Host Password Policy,cn=computers,cn=accounts,dc=example,dc=test"
     ],
     "managedby_host": [
       "ipa.example.test"
@@ -33,7 +37,11 @@
       "ipa.example.test"
     ],
     "memberof_hostgroup": [
+      "hg525bc91a",
       "ipaservers"
+    ],
+    "memberofindirect_hostgroup": [
+      "hga11529a7"
     ],
     "objectclass": [
       "top",

@@ -1,0 +1,42 @@
+{
+  "result": {
+    "cn": [
+      "System: Add Users"
+    ],
+    "dn": "cn=System: Add Users,cn=permissions,cn=pbac,dc=example,dc=test",
+    "ipapermbindruletype": [
+      "permission"
+    ],
+    "ipapermissiontype": [
+      "SYSTEM",
+      "V2",
+      "MANAGED"
+    ],
+    "ipapermlocation": [
+      "cn=users,cn=accounts,dc=example,dc=test"
+    ],
+    "ipapermright": [
+      "add"
+    ],
+    "ipapermtargetfilter": [
+      "(objectclass=posixaccount)"
+    ],
+    "member_privilege": [
+      "User Administrators"
+    ],
+    "memberindirect_role": [
+      "User Administrator"
+    ],
+    "objectclass": [
+      "top",
+      "groupofnames",
+      "ipapermission",
+      "ipapermissionv2"
+    ],
+    "type": [
+      "user"
+    ]
+  },
+  "summary": null,
+  "value": "System: Add Users"
+}

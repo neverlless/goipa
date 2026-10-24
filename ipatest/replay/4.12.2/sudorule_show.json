@@ -1,0 +1,13 @@
+{
+  "result": {
+    "cn": [
+      "gs5eb742df"
+    ],
+    "dn": "ipaUniqueID=4f0a71a8-cfe7-11f1-884e-be1d3b1abf25,cn=sudorules,cn=sudo,dc=example,dc=test",
+    "ipaenabledflag": [
+      true
+    ]
+  },
+  "summary": null,
+  "value": "gs5eb742df"
+}

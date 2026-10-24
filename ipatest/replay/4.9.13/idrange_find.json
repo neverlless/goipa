@@ -7,7 +7,7 @@
       ],
       "dn": "cn=EXAMPLE.TEST_id_range,cn=ranges,cn=etc,dc=example,dc=test",
       "ipabaseid": [
-        "1145000000"
+        "1246800000"
       ],
       "ipabaserid": [
         "1000"
@@ -23,6 +23,11 @@
       ],
       "ipasecondarybaserid": [
         "100000000"
+      ],
+      "objectclass": [
+        "top",
+        "ipaIDrange",
+        "ipaDomainIDRange"
       ]
     },
     {
@@ -47,6 +52,11 @@
       ],
       "iparangetyperaw": [
         "ipa-ad-trust"
+      ],
+      "objectclass": [
+        "top",
+        "ipaIDrange",
+        "ipaTrustedADDomainRange"
       ]
     }
   ],

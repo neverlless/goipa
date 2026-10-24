@@ -1,5 +1,11 @@
 {
   "result": {
+    "aci": [
+      "(targetattr = \"cn || ipatokenhotpauthwindow || ipatokenhotpsyncwindow || ipatokentotpauthwindow || ipatokentotpsyncwindow\")(targetfilter = \"(objectclass=ipatokenotpconfig)\")(version 3.0;acl \"permission:System: Read OTP Configuration\";allow (compare,read,search) userdn = \"ldap:///all\";)"
+    ],
+    "cn": [
+      "otp"
+    ],
     "dn": "cn=otp,cn=etc,dc=example,dc=test",
     "ipatokenhotpauthwindow": [
       "10"
@@ -12,6 +18,10 @@
     ],
     "ipatokentotpsyncwindow": [
       "86400"
+    ],
+    "objectclass": [
+      "ipatokenOTPConfig",
+      "top"
     ]
   },
   "summary": null,

@@ -5,7 +5,7 @@
     ],
     "dn": "cn=example.test,cn=ad,cn=etc,dc=example,dc=test",
     "ipantdomainguid": [
-      "bdb550ca-1698-40e2-9077-ab9aaadbcf8a"
+      "609a9eab-d8ff-4c11-bf32-85455fbc9d02"
     ],
     "ipantfallbackprimarygroup": [
       "Default SMB Group"
@@ -14,7 +14,12 @@
       "EXAMPLE"
     ],
     "ipantsecurityidentifier": [
-      "S-1-5-21-3257448744-3790817136-333710499"
+      "S-1-5-21-1456365794-3900130754-40555027"
+    ],
+    "objectclass": [
+      "ipaNTDomainAttrs",
+      "nsContainer",
+      "top"
     ]
   },
   "summary": null,

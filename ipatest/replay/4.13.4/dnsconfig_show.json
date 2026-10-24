@@ -1,0 +1,33 @@
+{
+  "result": {
+    "aci": [
+      "(targetattr = \"*\")(version 3.0; acl \"Read DNS entries from a zone\"; allow (read,search,compare) userattr = \"parent[0,1].managedby#GROUPDN\";)",
+      "(target = \"ldap:///idnsname=*,cn=dns,dc=example,dc=test\")(version 3.0;acl \"Add DNS entries in a zone\";allow (add) userattr = \"parent[1].managedby#GROUPDN\";)",
+      "(target = \"ldap:///idnsname=*,cn=dns,dc=example,dc=test\")(version 3.0;acl \"Remove DNS entries from a zone\";allow (delete) userattr = \"parent[1].managedby#GROUPDN\";)",
+      "(targetattr = \"a6record || aaaarecord || afsdbrecord || aplrecord || arecord || certrecord || cn || cnamerecord || dhcidrecord || dlvrecord || dnamerecord || dnsclass || dnsttl || dsrecord || hinforecord || hiprecord || idnsallowdynupdate || idnsallowquery || idnsallowsyncptr || idnsallowtransfer || idnsforwarders || idnsforwardpolicy || idnsname || idnssecinlinesigning || idnssoaexpire || idnssoaminimum || idnssoamname || idnssoarefresh || idnssoaretry || idnssoarname || idnssoaserial || idnsupdatepolicy || idnszoneactive || ipseckeyrecord || keyrecord || kxrecord || locrecord || mdrecord || minforecord || mxrecord || naptrrecord || nsecrecord || nsec3paramrecord || nsrecord || nxtrecord || ptrrecord || rprecord || rrsigrecord || sigrecord || spfrecord || srvrecord || sshfprecord || tlsarecord || txtrecord || urirecord || unknownrecord \")(target = \"ldap:///idnsname=*,cn=dns,dc=example,dc=test\")(version 3.0;acl \"Update DNS entries in a zone\";allow (write) userattr = \"parent[0,1].managedby#GROUPDN\";)",
+      "(targetattr = \"aaaarecord || arecord || cnamerecord || idnsname || objectclass || ptrrecord\")(targetfilter = \"(\u0026(objectclass=idnsrecord)(|(aaaarecord=*)(arecord=*)(cnamerecord=*)(ptrrecord=*)(idnsZoneActive=TRUE)))\")(version 3.0; acl \"Allow hosts to read DNS A/AAA/CNAME/PTR records\"; allow (read,search,compare) userdn = \"ldap:///fqdn=*,cn=computers,cn=accounts,dc=example,dc=test\";)"
+    ],
+    "cn": [
+      "dns"
+    ],
+    "dn": "cn=dns,dc=example,dc=test",
+    "dns_server_server": [
+      "ipa.example.test"
+    ],
+    "ipaconfigstring": [
+      "DNSVersion 1"
+    ],
+    "ipadnsversion": [
+      "2"
+    ],
+    "objectclass": [
+      "idnsConfigObject",
+      "nsContainer",
+      "ipaConfigObject",
+      "ipaDNSContainer",
+      "top"
+    ]
+  },
+  "summary": null,
+  "value": null
+}

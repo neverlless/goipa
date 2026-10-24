@@ -1,0 +1,38 @@
+{
+  "result": {
+    "accessruletype": [
+      "allow"
+    ],
+    "cn": [
+      "gr5d8fffa2"
+    ],
+    "dn": "ipaUniqueID=09417040-cfe7-11f1-a1fc-d28f5ba35ce1,cn=hbac,dc=example,dc=test",
+    "ipaenabledflag": [
+      true
+    ],
+    "ipauniqueid": [
+      "09417040-cfe7-11f1-a1fc-d28f5ba35ce1"
+    ],
+    "memberhost_host": [
+      "ipa.example.test"
+    ],
+    "memberservice_hbacsvc": [
+      "sshd"
+    ],
+    "memberservice_hbacsvcgroup": [
+      "Sudo"
+    ],
+    "memberuser_group": [
+      "gg3636fa24"
+    ],
+    "memberuser_user": [
+      "gt663df4ba"
+    ],
+    "objectclass": [
+      "ipaassociation",
+      "ipahbacrule"
+    ]
+  },
+  "summary": null,
+  "value": "gr5d8fffa2"
+}

@@ -1,11 +1,56 @@
 {
   "result": {
+    "aci": [
+      "(targetattr = \"createtimestamp || entryusn || krbauthindmaxrenewableage || krbauthindmaxticketlife || krbdefaultencsalttypes || krbmaxrenewableage || krbmaxticketlife || krbsupportedencsalttypes || modifytimestamp || objectclass\")(targetfilter = \"(objectclass=krbticketpolicyaux)\")(version 3.0;acl \"permission:System: Read Default Kerberos Ticket Policy\";allow (compare,read,search) groupdn = \"ldap:///cn=System: Read Default Kerberos Ticket Policy,cn=permissions,cn=pbac,dc=example,dc=test\";)",
+      "(targetfilter = \"(|(objectclass=ipapwdpolicy)(objectclass=krbpwdpolicy))\")(version 3.0;acl \"permission:System: Add Group Password Policy\";allow (add) groupdn = \"ldap:///cn=System: Add Group Password Policy,cn=permissions,cn=pbac,dc=example,dc=test\";)",
+      "(targetfilter = \"(|(objectclass=ipapwdpolicy)(objectclass=krbpwdpolicy))\")(version 3.0;acl \"permission:System: Delete Group Password Policy\";allow (delete) groupdn = \"ldap:///cn=System: Delete Group Password Policy,cn=permissions,cn=pbac,dc=example,dc=test\";)",
+      "(targetattr = \"ipapwddcredit || ipapwddictcheck || ipapwdlcredit || ipapwdmaxrepeat || ipapwdmaxsequence || ipapwdocredit || ipapwducredit || ipapwdusercheck || krbmaxpwdlife || krbminpwdlife || krbpwdfailurecountinterval || krbpwdhistorylength || krbpwdlockoutduration || krbpwdmaxfailure || krbpwdmindiffchars || krbpwdminlength || passwordgracelimit\")(targetfilter = \"(|(objectclass=ipapwdpolicy)(objectclass=krbpwdpolicy))\")(version 3.0;acl \"permission:System: Modify Group Password Policy\";allow (write) groupdn = \"ldap:///cn=System: Modify Group Password Policy,cn=permissions,cn=pbac,dc=example,dc=test\";)",
+      "(targetattr = \"cn || cospriority || createtimestamp || entryusn || ipapwddcredit || ipapwddictcheck || ipapwdlcredit || ipapwdmaxrepeat || ipapwdmaxsequence || ipapwdocredit || ipapwducredit || ipapwdusercheck || krbmaxpwdlife || krbminpwdlife || krbpwdfailurecountinterval || krbpwdhistorylength || krbpwdlockoutduration || krbpwdmaxfailure || krbpwdmindiffchars || krbpwdminlength || modifytimestamp || objectclass || passwordgracelimit\")(targetfilter = \"(|(objectclass=ipapwdpolicy)(objectclass=krbpwdpolicy))\")(version 3.0;acl \"permission:System: Read Group Password Policy\";allow (compare,read,search) groupdn = \"ldap:///cn=System: Read Group Password Policy,cn=permissions,cn=pbac,dc=example,dc=test\";)"
+    ],
+    "cn": [
+      "EXAMPLE.TEST"
+    ],
     "dn": "cn=EXAMPLE.TEST,cn=kerberos,dc=example,dc=test",
+    "krbdefaultencsalttypes": [
+      "aes256-sha2:special",
+      "aes128-sha2:special",
+      "aes256-cts:special",
+      "aes128-cts:special"
+    ],
     "krbmaxrenewableage": [
       "604800"
     ],
     "krbmaxticketlife": [
       "86400"
+    ],
+    "krbpwdpolicyreference": [
+      "cn=Default Kerberos Service Password Policy,cn=Kerberos Service Password Policy,cn=EXAMPLE.TEST,cn=kerberos,dc=example,dc=test"
+    ],
+    "krbsearchscope": [
+      "2"
+    ],
+    "krbsubtrees": [
+      "dc=example,dc=test"
+    ],
+    "krbsupportedencsalttypes": [
+      "aes256-sha2:special",
+      "aes128-sha2:special",
+      "aes256-sha2:normal",
+      "aes128-sha2:normal",
+      "aes256-cts:special",
+      "aes128-cts:special",
+      "aes256-cts:normal",
+      "aes128-cts:normal",
+      "camellia256-cts:special",
+      "camellia128-cts:special",
+      "camellia256-cts:normal",
+      "camellia128-cts:normal",
+      "aes256-sha2:special\nadd: krbSupportedEncSaltTypes: aes128-sha2:special\nadd: krbSupportedEncSaltTypes: aes256-sha2:normal\nadd: krbSupportedEncSaltTypes: aes128-sha2:normal\nadd: krbSupportedEncSaltTypes: aes256-cts:special\nadd: krbSupportedEncSaltTypes: aes128-cts:special\nadd: krbSupportedEncSaltTypes: aes256-cts:normal\nadd: krbSupportedEncSaltTypes: aes128-cts:normal\nadd: krbSupportedEncSaltTypes: camellia256-cts:special\nadd: krbSupportedEncSaltTypes: camellia128-cts:special\nadd: krbSupportedEncSaltTypes: camellia256-cts:normal\nadd: krbSupportedEncSaltTypes: camellia128-cts:normal\nadd: krbDefaultEncSaltTypes: aes256-sha2:special\nadd: krbDefaultEncSaltTypes: aes128-sha2:special\nadd: krbDefaultEncSaltTypes: aes256-cts:special\nadd: krbDefaultEncSaltTypes: aes128-cts:special\nremove: krbSupportedEncSaltTypes: d\nremove: krbSupportedEncSaltTypes: e\nremove: krbSupportedEncSaltTypes: s\nremove: krbSupportedEncSaltTypes: 3\nremove: krbSupportedEncSaltTypes: -\nremove: krbSupportedEncSaltTypes: h\nremove: krbSupportedEncSaltTypes: m\nremove: krbSupportedEncSaltTypes: a\nremove: krbSupportedEncSaltTypes: c\nremove: krbSupportedEncSaltTypes: -\nremove: krbSupportedEncSaltTypes: s\nremove: krbSupportedEncSaltTypes: h\nremove: krbSupportedEncSaltTypes: a\nremove: krbSupportedEncSaltTypes: 1\nremove: krbSupportedEncSaltTypes: :\nremove: krbSupportedEncSaltTypes: s\nremove: krbSupportedEncSaltTypes: p\nremove: krbSupportedEncSaltTypes: e\nremove: krbSupportedEncSaltTypes: c\nremove: krbSupportedEncSaltTypes: i\nremove: krbSupportedEncSaltTypes: a\nremove: krbSupportedEncSaltTypes: l\nremove: krbDefaultEncSaltTypes: des3-hmac-sha1:special\nremove: krbDefaultEncSaltTypes: arcfour-hmac:special"
+    ],
+    "objectclass": [
+      "top",
+      "krbrealmcontainer",
+      "krbticketpolicyaux"
     ]
   },
   "summary": null,

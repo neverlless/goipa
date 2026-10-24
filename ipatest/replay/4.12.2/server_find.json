@@ -6,11 +6,27 @@
         "ipa.example.test"
       ],
       "dn": "cn=ipa.example.test,cn=masters,cn=ipa,cn=etc,dc=example,dc=test",
+      "enabled_role_servrole": [
+        "CA server",
+        "DNS server",
+        "IPA master"
+      ],
       "ipamaxdomainlevel": [
         "1"
       ],
       "ipamindomainlevel": [
         "1"
+      ],
+      "iparepltopomanagedsuffix_topologysuffix": [
+        "domain",
+        "ca"
+      ],
+      "objectclass": [
+        "top",
+        "nsContainer",
+        "ipaReplTopoManagedServer",
+        "ipaConfigObject",
+        "ipaSupportedDomainLevelConfig"
       ]
     }
   ],

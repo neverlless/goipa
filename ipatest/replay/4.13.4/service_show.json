@@ -1,0 +1,39 @@
+{
+  "result": {
+    "dn": "krbprincipalname=goipa337ab6eb/ipa.example.test@EXAMPLE.TEST,cn=services,cn=accounts,dc=example,dc=test",
+    "has_keytab": false,
+    "ipakrbokasdelegate": false,
+    "ipakrboktoauthasdelegate": false,
+    "ipakrbprincipalalias": [
+      "goipa337ab6eb/ipa.example.test@EXAMPLE.TEST"
+    ],
+    "ipakrbrequirespreauth": true,
+    "ipauniqueid": [
+      "10e4b9b0-cfe7-11f1-85cb-d28f5ba35ce1"
+    ],
+    "krbcanonicalname": [
+      "goipa337ab6eb/ipa.example.test@EXAMPLE.TEST"
+    ],
+    "krbprincipalname": [
+      "goipa337ab6eb/ipa.example.test@EXAMPLE.TEST"
+    ],
+    "krbpwdpolicyreference": [
+      "cn=Default Service Password Policy,cn=services,cn=accounts,dc=example,dc=test"
+    ],
+    "managedby_host": [
+      "ipa.example.test"
+    ],
+    "objectclass": [
+      "krbprincipal",
+      "krbprincipalaux",
+      "krbticketpolicyaux",
+      "ipaobject",
+      "ipaservice",
+      "pkiuser",
+      "ipakrbprincipal",
+      "top"
+    ]
+  },
+  "summary": null,
+  "value": "goipa337ab6eb/ipa.example.test@EXAMPLE.TEST"
+}

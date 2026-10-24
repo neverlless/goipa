@@ -2,12 +2,36 @@
   "count": 1,
   "result": [
     {
-      "dn": "ipatokenuniqueid=af2827f7-04cc-43b2-8e27-5341b6a8174b,cn=otp,dc=example,dc=test",
+      "dn": "ipatokenuniqueid=00a13329-a77d-4d8b-8072-2f254af62b63,cn=otp,dc=example,dc=test",
+      "ipatokenotpalgorithm": [
+        "sha1"
+      ],
+      "ipatokenotpdigits": [
+        "6"
+      ],
+      "ipatokenotpkey": "REDACTED",
       "ipatokenowner": [
-        "mraz7433"
+        "heidenreich8997"
+      ],
+      "ipatokentotpclockoffset": [
+        "360"
+      ],
+      "ipatokentotptimestep": [
+        "30"
+      ],
+      "ipatokentotpwatermark": [
+        "59762438"
       ],
       "ipatokenuniqueid": [
-        "af2827f7-04cc-43b2-8e27-5341b6a8174b"
+        "00a13329-a77d-4d8b-8072-2f254af62b63"
+      ],
+      "managedby_user": [
+        "heidenreich8997"
+      ],
+      "objectclass": [
+        "ipatoken",
+        "ipatokentotp",
+        "top"
       ],
       "type": "TOTP"
     }

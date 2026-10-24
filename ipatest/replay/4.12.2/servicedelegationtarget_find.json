@@ -5,7 +5,11 @@
       "cn": [
         "ipa-cifs-delegation-targets"
       ],
-      "dn": "cn=ipa-cifs-delegation-targets,cn=s4u2proxy,cn=etc,dc=example,dc=test"
+      "dn": "cn=ipa-cifs-delegation-targets,cn=s4u2proxy,cn=etc,dc=example,dc=test",
+      "objectclass": [
+        "groupOfPrincipals",
+        "top"
+      ]
     },
     {
       "cn": [
@@ -14,6 +18,10 @@
       "dn": "cn=ipa-ldap-delegation-targets,cn=s4u2proxy,cn=etc,dc=example,dc=test",
       "memberprincipal": [
         "ldap/ipa.example.test@EXAMPLE.TEST"
+      ],
+      "objectclass": [
+        "groupOfPrincipals",
+        "top"
       ]
     }
   ],
