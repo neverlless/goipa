@@ -270,7 +270,7 @@ func groupFind(s *Server, c Call) (any, *ipa.IpaError) {
 	for _, cn := range cns {
 		recs = append(recs, s.renderGroup(cn, s.groups[cn], members, all))
 	}
-	return list(recs), nil
+	return listLimited(c, recs), nil
 }
 
 func groupAdd(s *Server, c Call) (any, *ipa.IpaError) {

@@ -407,6 +407,23 @@ func list(recs []map[string]any) map[string]any {
 	}
 }
 
+// listLimited is list for *_find commands: it honours the sizelimit option
+// (Q40).
+func listLimited(c Call, recs []map[string]any) map[string]any {
+	n, _ := c.Options["sizelimit"].(float64)
+	if n <= 0 || len(recs) <= int(n) {
+		return list(recs)
+	}
+	out := list(recs[:int(n)])
+	out["truncated"] = true
+	out["messages"] = []map[string]any{{
+		"type": "warning", "name": "SearchResultTruncated", "code": 13017,
+		"message": "Search result has been truncated: Configured size limit exceeded",
+		"data":    map[string]any{},
+	}}
+	return out
+}
+
 func notFound(pkey, object string) *ipa.IpaError {
 	return &ipa.IpaError{Code: ipa.CodeNotFound, Name: "NotFound", Message: pkey + ": " + object + " not found"}
 }
