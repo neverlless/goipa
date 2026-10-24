@@ -238,9 +238,11 @@ func (c *Client) send(ctx context.Context, b []byte) (*Response, string, bool, e
 	}
 
 	// Only successful responses count: an error envelope may come from a proxy.
-	c.mu.Lock()
-	c.serverVersion = ipaRes.Version
-	c.mu.Unlock()
+	if ipaRes.Version != "" {
+		c.mu.Lock()
+		c.serverVersion = ipaRes.Version
+		c.mu.Unlock()
+	}
 
 	return &ipaRes, sessionID, spnego, nil
 }

@@ -43,6 +43,28 @@ func TestServerVersion(t *testing.T) {
 	}
 }
 
+func TestServerVersion_KeptOnErrorAndEmpty(t *testing.T) {
+	s := ipatest.NewServer(t)
+	c := s.ClientAs("admin")
+	if _, err := c.Ping(); err != nil {
+		t.Fatal(err)
+	}
+	s.SetVersion("4.10.1")
+	if _, err := c.UserShow("ghost"); !errors.Is(err, ipa.ErrNotFound) {
+		t.Fatalf("err = %v", err)
+	}
+	if v := c.ServerVersion(); v != "4.13.4" {
+		t.Errorf("after an error envelope = %q", v)
+	}
+	s.SetVersion("")
+	if _, err := c.Ping(); err != nil {
+		t.Fatal(err)
+	}
+	if v := c.ServerVersion(); v != "4.13.4" {
+		t.Errorf("after an empty version = %q", v)
+	}
+}
+
 func TestGate_Passkey(t *testing.T) {
 	s := ipatest.NewServer(t)
 	s.SetVersion("4.10.1")

@@ -12,11 +12,15 @@ import (
 )
 
 // ErrNotSupported is returned, before anything is sent, by commands that need
-// a newer FreeIPA than the one the client last talked to. Test with errors.Is.
+// a newer FreeIPA than the one the client last talked to. The gate uses the
+// version of the server that answered last, so behind a load balancer during
+// a rolling upgrade it follows whichever replica that was. Test with
+// errors.Is.
 var ErrNotSupported = errors.New("ipa: not supported by this FreeIPA server")
 
 // ServerVersion returns the FreeIPA release from the last successful response
-// (e.g. 4.13.4), or "" before the first call; call Ping to learn it.
+// that carried one (e.g. 4.13.4), or "" before the first call; call Ping to
+// learn it.
 func (c *Client) ServerVersion() string {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -24,22 +28,27 @@ func (c *Client) ServerVersion() string {
 }
 
 // parseVersion reads the leading integers of up to three dot-separated parts,
-// so "4.13.5.dev202610" is 4.13.5 and "4.9" is 4.9.0.
+// so "4.13.5.dev202610" is 4.13.5 and "4.9" is 4.9.0. Major and minor must
+// start with digits; a patch without them counts as 0.
 func parseVersion(s string) (v [3]int, ok bool) {
-	for i, p := range strings.SplitN(s, ".", 4) {
-		if i == len(v) {
+	parts := strings.SplitN(s, ".", 4)
+	if len(parts) < 2 {
+		return v, false
+	}
+	for i := range v {
+		if i == len(parts) {
 			break
 		}
-		d := p
-		for j, r := range p {
+		d := parts[i]
+		for j, r := range d {
 			if r < '0' || r > '9' {
-				d = p[:j]
+				d = d[:j]
 				break
 			}
 		}
 		n, err := strconv.Atoi(d)
 		if err != nil {
-			return v, i > 0
+			return v, i == 2
 		}
 		v[i] = n
 	}
