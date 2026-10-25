@@ -12,11 +12,11 @@ import (
 )
 
 // hbacSvcs and hbacSvcGroups are FreeIPA's default HBAC services and service
-// groups (Q74); the fake cannot add others.
+// groups with their members (Q74, Q150); the fake cannot add others.
 var (
 	hbacSvcs = []string{"crond", "ftp", "gdm", "gdm-password", "gssftp", "kdm", "login", "proftpd",
 		"pure-ftpd", "sshd", "su", "su-l", "sudo", "sudo-i", "systemd-user", "vsftpd"}
-	hbacSvcGroups = []string{"Sudo", "ftp"}
+	hbacSvcGroups = map[string][]string{"Sudo": {"sudo", "sudo-i"}, "ftp": {"ftp", "gssftp", "proftpd", "pure-ftpd", "vsftpd"}}
 )
 
 func (s *Server) hbacRule(c Call) (string, *hbacRec, *ipa.IpaError) {
@@ -90,7 +90,7 @@ func hbacMembers(part string, add bool) builtin {
 			cat = r.ServiceCategory
 			lists = [2]list{
 				{"hbacsvc", func(n string) bool { return slices.Contains(hbacSvcs, n) }, &r.Services},
-				{"hbacsvcgroup", func(n string) bool { return slices.Contains(hbacSvcGroups, n) }, &r.ServiceGroups},
+				{"hbacsvcgroup", func(n string) bool { return hbacSvcGroups[n] != nil }, &r.ServiceGroups},
 			}
 		}
 		if add && cat == "all" {

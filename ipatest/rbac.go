@@ -156,8 +156,9 @@ func rbacShow[T any](kind string, recs map[string]*T, render func(*T, string, bo
 	}
 }
 
-// rbacFind matches the criteria against cn and description, and the cn,
-// description and type options exactly.
+// rbacFind matches the criteria against cn and description ignoring case,
+// the cn option exactly but ignoring case (Q153), and the description and
+// type options exactly.
 func rbacFind[T any](recs map[string]*T, desc, typ func(*T) string, render func(*T, string, bool, bool) map[string]any) builtin {
 	return func(s *Server, c Call) (any, *ipa.IpaError) {
 		needle := ""
@@ -178,7 +179,10 @@ func rbacFind[T any](recs map[string]*T, desc, typ func(*T) string, render func(
 			if needle != "" && !strings.Contains(strings.ToLower(cn), needle) && !strings.Contains(strings.ToLower(d), needle) {
 				continue
 			}
-			if matches(c, "cn", cn) && matches(c, "description", d) && matches(c, "type", typ(r)) {
+			if v, ok := c.Options["cn"]; ok && !strings.EqualFold(str(v), cn) {
+				continue
+			}
+			if matches(c, "description", d) && matches(c, "type", typ(r)) {
 				cns = append(cns, cn)
 			}
 		}

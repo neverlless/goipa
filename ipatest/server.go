@@ -228,7 +228,8 @@ func (s *Server) Session(uid string) string {
 }
 
 // ExpireSession ends session sid. Calls with it get HTTP 401, FreeIPA's answer
-// for an expired session, which mod_session treats as no session.
+// for an expired session, which mod_auth_gssapi treats as no session (Q13).
+// session_logout does not end one (Q155).
 func (s *Server) ExpireSession(sid string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -299,6 +300,15 @@ func denied(w http.ResponseWriter) {
 	_, _ = io.WriteString(w, "<html>\n<head>\n<title>400 Bad Request</title>\n</head>\n<body>\n<h1>Bad Request</h1>\n<p>\n<strong>denied</strong>\n</p>\n</body>\n</html>")
 }
 
+// noSession is FreeIPA's answer on /ipa/session/json without a usable
+// session: 401 with its unauthorized.html page (Q13, Q155).
+func noSession(w http.ResponseWriter) {
+	w.Header().Set("WWW-Authenticate", "Negotiate")
+	w.Header().Set("Content-Type", "text/html; charset=UTF-8")
+	w.WriteHeader(http.StatusUnauthorized)
+	_, _ = io.WriteString(w, "<!DOCTYPE html>\n<html>\n<head>\n    <meta charset=\"utf-8\">\n    <title>Identity Management</title>\n</head>\n<body class=\"info-page\">\n</body>\n</html>\n")
+}
+
 func (s *Server) refererOK(r *http.Request) bool {
 	return strings.HasPrefix(r.Referer(), "https://"+r.Host+"/ipa")
 }
@@ -318,8 +328,7 @@ func (s *Server) serveSessionJSON(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if !ok {
-		w.Header().Set("WWW-Authenticate", "Negotiate")
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		noSession(w)
 		return
 	}
 	s.serveRPC(w, r, uid, ck.Value)

@@ -79,3 +79,17 @@ func TestSudoOption_ListAt49(t *testing.T) {
 		t.Fatalf("two options at 4.9: %+v, %v", r, err)
 	}
 }
+
+func TestSudoRuleMod_UnmodelledOption(t *testing.T) {
+	_, c := ruleServer(t)
+	_, err := c.RPC("sudorule_mod", []string{"s1"}, ipa.Options{"usercategory": "all"})
+	var ie *ipa.IpaError
+	if !errors.As(err, &ie) || ie.Code != ipa.CodeCommand {
+		t.Fatalf("err = %v, want 905", err)
+	}
+	rpc(t, c, "sudorule_mod", []string{"s1"}, ipa.Options{"description": "changed"})
+	r, err := c.SudoRuleShow("s1")
+	if err != nil || r.Description != "changed" {
+		t.Errorf("after mod: %+v, %v", r, err)
+	}
+}

@@ -93,9 +93,11 @@
 //     child on a token they cannot decrypt, and goipa returns the transport
 //     error (io.EOF). A session ended with ExpireSession, and any other
 //     unknown or missing cookie, answers HTTP 401 with "WWW-Authenticate:
-//     Negotiate", which goipa maps to ErrUnauthorized. TestSessionsNotShared,
-//     TestUnknownSession, TestExpireSession,
-//     goipa.TestContractInvalidSession.
+//     Negotiate" and FreeIPA's unauthorized.html page as "text/html;
+//     charset=UTF-8", which goipa maps to ErrUnauthorized. A real session
+//     expires the same way, as mod_auth_gssapi then sees no session.
+//     TestSessionsNotShared, TestUnknownSession, TestExpireSession,
+//     goipa.TestContractInvalidSession, goipa.TestContractNoSession.
 //   - Q14: an unknown command fails with 905 CommandError ("unknown command
 //     '<name>'"). TestUnknownCommand, goipa.TestContractUnknownCommand.
 //   - Q15: session cookies are "ipa_session=MagBearerToken=...; Path=/ipa;
@@ -248,10 +250,11 @@
 //     false, summary "Unresolved rules in --rules", error the unknown names,
 //     matched and notmatched null. A rule matches when its user, host and
 //     service parts all do: category all, the name listed, or a group of the
-//     user or a host group of the host (nested ones included) listed;
-//     service groups are not expanded. An unknown user or host just has no
-//     groups.
-//     TestContractHBACTest, TestHBACTest_*.
+//     user, a host group of the host (nested ones included) or a service
+//     group holding the service (Q150) listed. An unknown user or host just
+//     has no groups.
+//     TestContractHBACTest, TestHBACTest_*,
+//     goipa.TestContractHBACTestNestedHostGroup.
 //   - Q36: user_add_passkey and user_remove_passkey take one mapping,
 //     passkey:<id>,<key>[,<userid>]; id and key must be standard base64 and
 //     the key a PKIX public key, else 3009 `invalid 'passkey': …`. A duplicate
@@ -270,12 +273,12 @@
 //   - Q38: whoami answers {"object": "user", "command": "user_show/1",
 //     "arguments": [<caller uid>]} with no "result" key. TestWhoAmI,
 //     TestContractWhoAmI.
-//   - Q39: session_logout ends the caller's session, which then gets HTTP
-//     401 as after ExpireSession; its output is {"result": null}. The reply
-//     carries a cookie that deletes ipa_session (Max-Age=0), and goipa
-//     clears its session on it. The exact cookie FreeIPA sends was not
-//     captured but is a deletion (the real-server leg of
-//     TestContractSessionLogoutGives401).
+//   - Q39: session_logout answers {"result": null} with a cookie that
+//     deletes ipa_session (Max-Age=0); goipa clears its session on it, so
+//     its next call has none and gets HTTP 401. The server keeps the session
+//     (Q155). The exact cookie FreeIPA sends was not captured but is a
+//     deletion (the real-server legs of TestContractSessionLogoutGives401
+//     and TestContractStaleSessionCookie).
 //     TestContractSessionLogoutGives401, TestSessionLogout.
 //   - Q40: user_find, group_find and host_find honour sizelimit > 0: the
 //     first n entries in sorted order (a numeric string such as "5" counts
@@ -442,7 +445,8 @@
 //     ipapermissiontype and memberindirect_role, are left out. Roles and
 //     privileges are not linked: AddRole and AddPrivilege each take their
 //     own side. The finds match the criteria against cn and description,
-//     and the cn, description and type options exactly.
+//     the cn option exactly in any case (Q153), and the description and
+//     type options exactly.
 //     goipa.TestContractRBACBuiltins, goipa.TestContractRBACFind,
 //     goipa.TestContractRBACNotFound.
 //   - Q121: role_add, role_del and role_add_member are modelled; the latter
@@ -532,7 +536,8 @@
 //     are Go RE2, not the PCRE of 389-ds. Rebuild only adds.
 //     goipa.TestContractAutomemberRule, goipa.TestContractAutomemberRebuild,
 //     goipa.TestContractAutomemberDefaultGroup,
-//     goipa.TestAutomember_StageUserActivate.
+//     goipa.TestAutomember_StageUserActivate,
+//     goipa.TestContractAutomemberStageActivate.
 //   - Q113: automember_default_group_show answers automemberdefaultgroup as
 //     the group's DN in a list, or the string "No default (fallback) group
 //     set". _set of a missing group or host group is 4001 `<type> "<cn>"
@@ -571,6 +576,36 @@
 //     SudoRuleRemoveOption send one scalar call per option.
 //     goipa.TestContractSudoRuleOptions,
 //     TestSudoOption_ListAt49.
+//   - Q150: the default HBAC service groups hold FreeIPA's members: Sudo
+//     sudo and sudo-i, ftp ftp, gssftp, proftpd, pure-ftpd and vsftpd.
+//     goipa.TestContractHBACTestServiceGroup.
+//   - Q151: sudorule_add and sudorule_mod of a sudoorder another rule holds
+//     are 3009 "invalid 'order': order must be a unique value (<n> already
+//     used by <cn>)", checked before the name on add. sudorule_mod is
+//     modelled for description and sudoorder only (any other option is
+//     905); a rule's own order, like no change at all, is 4202.
+//     goipa.TestContractSudoOrderUnique, TestSudoRuleMod_UnmodelledOption.
+//   - Q152: as Q73 for sudo rules: adding to a rule whose category is all
+//     is 4303 "users cannot be added when user category='all'" (hosts/host,
+//     "commands cannot be added when command category='all'" for allowed
+//     commands, and "users cannot be added when runAs user or runAs group
+//     category='all'" for run-as users and run-as groups when either run-as
+//     category is all). Denied commands are not checked.
+//     goipa.TestContractSudoRuleCategoryConflict.
+//   - Q153: role_find, privilege_find and permission_find match the cn
+//     option against the whole name, ignoring case ("user administrator"
+//     finds the role, "User Adm" none), the criteria as a substring.
+//     goipa.TestContractRBACFindCNExact.
+//   - Q154: otptoken_del by a caller who is neither uid admin nor in admins
+//     is 2100 "Insufficient access: " for a token that does not exist and
+//     "Insufficient access: Insufficient 'delete' privilege to delete the
+//     entry 'ipatokenuniqueid=<id>,cn=otp,dc=test,dc=local'." for another
+//     user's, on 4.9.13, 4.12.2 and 4.13.4 alike.
+//     goipa.TestContractOTPDeleteAsUser.
+//   - Q155: session_logout does not end the session on the server: the
+//     reply only deletes the client's cookie (Q39), and the old cookie sent
+//     again keeps working as before. ExpireSession is the way to end one.
+//     goipa.TestContractStaleSessionCookie.
 //
 // A response's version is the server release, 4.13.4 unless SetVersion
 // changes it, and its principal is
@@ -584,8 +619,9 @@
 // other profiles, sub-CAs, cert_find and the other cert commands are left
 // out, as is host_add's DNS check (every fqdn is accepted, as with force).
 // The *_mod commands of the families modelled since v0.9 (host groups,
-// services, HBAC and sudo rules, DNS, automember, RBAC) are not modelled,
-// nor are role, privilege and permission changes other than role_add,
+// services, HBAC and sudo rules, DNS, automember, RBAC) are not modelled
+// (sudorule_mod only for description and sudoorder, Q151), nor are role,
+// privilege and permission changes other than role_add,
 // role_del and role_add_member, HBAC services and service groups, or sudo
 // command groups; Handle is the way to reach the rest, as for config_*,
 // subid_show, stageuser_add_passkey and stageuser_remove_passkey.

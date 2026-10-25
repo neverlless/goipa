@@ -261,6 +261,12 @@ func (s *Server) hbactest(c Call) (any, *ipa.IpaError) {
 		hostGroups = s.hostGroupsOf(host)
 		hostGroups = append(hostGroups, s.hostGroupAncestors(hostGroups)...)
 	}
+	var svcGroups []string
+	for g, members := range hbacSvcGroups {
+		if slices.Contains(members, svc) {
+			svcGroups = append(svcGroups, g)
+		}
+	}
 	hit := func(cat string, direct []string, name string, indirect []string, ids ...string) bool {
 		return cat == "all" || slices.Contains(direct, name) || slices.ContainsFunc(indirect, func(g string) bool { return slices.Contains(ids, g) })
 	}
@@ -283,7 +289,7 @@ func (s *Server) hbactest(c Call) (any, *ipa.IpaError) {
 			errs = append(errs, cn)
 		case hit(r.UserCategory, r.Users, user, groups, r.Groups...) &&
 			hit(r.HostCategory, r.Hosts, host, hostGroups, r.HostGroups...) &&
-			hit(r.ServiceCategory, r.Services, svc, nil):
+			hit(r.ServiceCategory, r.Services, svc, svcGroups, r.ServiceGroups...):
 			matched = append(matched, cn)
 		default:
 			notMatched = append(notMatched, cn)
@@ -325,12 +331,16 @@ func init() {
 		}, (*hbacRec).render)
 	}
 	builtins["sudorule_add"] = func(s *Server, c Call) (any, *ipa.IpaError) {
+		order, _ := strconv.Atoi(fmt.Sprint(c.Options["sudoorder"]))
+		if err := s.sudoOrderTaken(order, ""); err != nil { // Q151: checked before the name
+			return nil, err
+		}
 		return ruleAdd("sudo rule", s.sudo, c, func(c Call) *sudoRec {
 			r := &sudoRec{SudoRule: SudoRule{Description: str(c.Options["description"]),
 				UserCategory: str(c.Options["usercategory"]), HostCategory: str(c.Options["hostcategory"]),
 				CmdCategory: str(c.Options["cmdcategory"]), RunAsUserCategory: str(c.Options["ipasudorunasusercategory"]),
 				RunAsGroupCategory: str(c.Options["ipasudorunasgroupcategory"])}, uuid: newUUID()}
-			r.Order, _ = strconv.Atoi(fmt.Sprint(c.Options["sudoorder"]))
+			r.Order = order
 			return r
 		}, (*sudoRec).render)
 	}

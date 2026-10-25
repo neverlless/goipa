@@ -11,9 +11,7 @@ func init() {
 	builtins["whoami"] = func(s *Server, c Call) (any, *ipa.IpaError) {
 		return map[string]any{"object": "user", "command": "user_show/1", "arguments": []string{c.User}}, nil
 	}
-	builtins["session_logout"] = func(s *Server, c Call) (any, *ipa.IpaError) { // Q39
-		delete(s.sessions, c.session)
-		s.expired[c.session] = true
+	builtins["session_logout"] = func(s *Server, c Call) (any, *ipa.IpaError) { // Q39: the session lives on (Q155)
 		return map[string]any{"result": nil}, nil
 	}
 }
