@@ -93,3 +93,46 @@ func TestSudoRuleMod_UnmodelledOption(t *testing.T) {
 		t.Errorf("after mod: %+v, %v", r, err)
 	}
 }
+
+// TestSudoRuleAdd_TakenOrderBeatsDuplicateName pins Q151: the order check
+// runs before the name check.
+func TestSudoRuleAdd_TakenOrderBeatsDuplicateName(t *testing.T) {
+	s, c := ruleServer(t)
+	s.AddSudoRule("s3", ipatest.SudoRule{Order: 7})
+	_, err := c.RPC("sudorule_add", []string{"s3"}, ipa.Options{"sudoorder": 7})
+	var ierr *ipa.IpaError
+	if !errors.As(err, &ierr) || ierr.Code != ipa.CodeValidation || ierr.Message != "invalid 'order': order must be a unique value (7 already used by s3)" {
+		t.Errorf("err = %v", err)
+	}
+	_, err = c.RPC("sudorule_add", []string{"s3"}, ipa.Options{"sudoorder": 8})
+	if !errors.As(err, &ierr) || ierr.Code != ipa.CodeDuplicateEntry {
+		t.Errorf("free order, taken name: %v", err)
+	}
+}
+
+// TestSudoRuleOrder_NotAnInteger pins Q151: sudoorder is an Int parameter,
+// so a non-number fails conversion before anything else is checked.
+func TestSudoRuleOrder_NotAnInteger(t *testing.T) {
+	s, c := ruleServer(t)
+	s.AddSudoRule("s3", ipatest.SudoRule{Order: 7})
+	for _, call := range []struct {
+		method string
+		cn     string
+	}{{"sudorule_add", "s3"}, {"sudorule_add", "fresh"}, {"sudorule_mod", "s3"}} {
+		_, err := c.RPC(call.method, []string{call.cn}, ipa.Options{"sudoorder": "seven"})
+		var ierr *ipa.IpaError
+		if !errors.As(err, &ierr) || ierr.Code != ipa.CodeConversion || ierr.Message != "invalid 'sudoorder': must be an integer" {
+			t.Errorf("%s %s: %v", call.method, call.cn, err)
+		}
+	}
+	if r, _ := s.SudoRule("s3"); r.Order != 7 {
+		t.Errorf("order = %d after failed mod", r.Order)
+	}
+	if _, ok := s.SudoRule("fresh"); ok {
+		t.Error("failed add stored the rule")
+	}
+	rpc(t, c, "sudorule_mod", []string{"s3"}, ipa.Options{"sudoorder": "2000000"})
+	if r, _ := s.SudoRule("s3"); r.Order != 2000000 {
+		t.Errorf("order = %d after mod to a numeric string", r.Order)
+	}
+}
