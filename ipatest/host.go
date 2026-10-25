@@ -159,7 +159,11 @@ func hostDel(s *Server, c Call) (any, *ipa.IpaError) {
 		for _, r := range s.sudo {
 			r.Hosts = dropName(r.Hosts, fqdn)
 		}
-		for _, v := range s.services {
+		for p, v := range s.services {
+			if _, h, _ := strings.Cut(strings.SplitN(p, "@", 2)[0], "/"); strings.EqualFold(h, fqdn) {
+				delete(s.services, p) // FreeIPA deletes the host's services with it
+				continue
+			}
 			v.ManagedBy = dropName(v.ManagedBy, fqdn)
 			v.KeytabRetrieve.Hosts = dropName(v.KeytabRetrieve.Hosts, fqdn)
 			v.KeytabCreate.Hosts = dropName(v.KeytabCreate.Hosts, fqdn)

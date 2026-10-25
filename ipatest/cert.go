@@ -97,8 +97,11 @@ func certRequest(s *Server, c Call) (any, *ipa.IpaError) {
 	}
 	name, _, _ := strings.Cut(principal, "@")
 	fqdn, ok := strings.CutPrefix(name, "host/")
-	if _, exists := s.hosts[fqdn]; !ok || !exists {
+	if !ok {
 		return nil, &ipa.IpaError{Code: ipa.CodeNotFound, Message: "The service principal for this request doesn't exist."}
+	}
+	if _, exists := s.hosts[fqdn]; !exists { // Kerberos principals are case-sensitive (Q144)
+		return nil, &ipa.IpaError{Code: ipa.CodeNotFound, Message: "The principal for this request doesn't exist."}
 	}
 	if !strings.EqualFold(csr.Subject.CommonName, fqdn) {
 		return nil, invalid(fmt.Sprintf("invalid 'csr': hostname in subject of request '%s' does not match name or aliases of principal '%s'", csr.Subject.CommonName, principal))
@@ -114,10 +117,10 @@ func certRequest(s *Server, c Call) (any, *ipa.IpaError) {
 	now := time.Now().UTC().Truncate(time.Second)
 	tmpl := &x509.Certificate{
 		SerialNumber: big.NewInt(ca.next),
-		Subject:      pkix.Name{CommonName: fqdn, Organization: []string{realm}},
+		Subject:      pkix.Name{CommonName: csr.Subject.CommonName, Organization: []string{realm}}, // spelled as in the CSR (Q144)
 		NotBefore:    now,
 		NotAfter:     now.AddDate(2, 0, 0),
-		DNSNames:     []string{fqdn},
+		DNSNames:     []string{csr.Subject.CommonName},
 		KeyUsage:     x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment,
 		ExtKeyUsage:  []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth, x509.ExtKeyUsageClientAuth},
 	}
@@ -204,12 +207,29 @@ func certRevoke(s *Server, c Call) (any, *ipa.IpaError) {
 	if err != nil {
 		return nil, err
 	}
+	if r.revoked {
+		return nil, s.alreadyRevoked(r.cert.SerialNumber)
+	}
 	reason := 0
 	if v, ok := c.Options["revocation_reason"].(float64); ok {
 		reason = int(v)
 	}
 	r.revoked, r.reason = true, reason
 	return map[string]any{"result": map[string]any{"revoked": true}, "value": "", "summary": nil}, nil
+}
+
+// alreadyRevoked is how each release reports revoking a revoked certificate
+// (Q145); the first revocation's reason stays.
+func (s *Server) alreadyRevoked(n *big.Int) *ipa.IpaError {
+	var x, y int
+	_, _ = fmt.Sscanf(s.version, "%d.%d", &x, &y)
+	switch {
+	case x < 4 || x == 4 && y < 12:
+		return certOpError("ERROR (Attempt to revoke non-existent certificate(s).)")
+	case x == 4 && y == 12:
+		return &ipa.IpaError{Code: 4035, Name: "HTTPRequestError", Message: fmt.Sprintf("Request failed with status 400: Non-2xx response from CA REST API: 400. certificate #%x has already been revoked", n)}
+	}
+	return certOpError(fmt.Sprintf("Unable to communicate with CMS (certificate 0x%x has already been revoked)", n))
 }
 
 func init() {

@@ -360,3 +360,26 @@ func init() {
 		return entry(cn, r.render(cn, !flag(c, "no_members"), flag(c, "all")), fmt.Sprintf("Added option %q to Sudo Rule %q", strings.Join(opts, ","), cn)), nil
 	}
 }
+
+// HBACRule returns a copy of HBAC rule cn.
+func (s *Server) HBACRule(cn string) (HBACRule, bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	r, ok := s.hbac[cn]
+	if !ok {
+		return HBACRule{}, false
+	}
+	return r.HBACRule.clone(), true
+}
+
+// SudoRule returns a copy of sudo rule cn; external members (Q81) are not
+// part of it.
+func (s *Server) SudoRule(cn string) (SudoRule, bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	r, ok := s.sudo[cn]
+	if !ok {
+		return SudoRule{}, false
+	}
+	return r.SudoRule.clone(), true
+}

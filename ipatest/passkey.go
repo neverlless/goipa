@@ -65,7 +65,14 @@ func passkeyCmd(add bool) builtin {
 		default:
 			r.Passkeys = slices.DeleteFunc(r.Passkeys, func(p string) bool { return p == m })
 		}
-		return entry(uid, map[string]any{"uid": []string{uid}, "ipapasskey": slices.Clone(r.Passkeys)}, summary), nil
+		if flag(c, "all") {
+			return entry(uid, r.render(s, uid, false, true), summary), nil
+		}
+		out := map[string]any{"uid": []string{uid}}
+		if len(r.Passkeys) > 0 {
+			out["ipapasskey"] = slices.Clone(r.Passkeys)
+		}
+		return entry(uid, out, summary), nil
 	}
 }
 

@@ -260,3 +260,43 @@ func init() {
 	builtins["role_del"] = func(s *Server, c Call) (any, *ipa.IpaError) { return ruleDel("role", s.roles, c) }
 	builtins["role_add_member"] = roleAddMember
 }
+
+// Role returns a copy of role cn, with Name set to cn.
+func (s *Server) Role(cn string) (ipa.Role, bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	r, ok := s.roles[cn]
+	if !ok {
+		return ipa.Role{}, false
+	}
+	out := cloneRole(*r)
+	out.Name = cn
+	return *out, true
+}
+
+// Privilege returns a copy of privilege cn, with Name set to cn.
+func (s *Server) Privilege(cn string) (ipa.Privilege, bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	p, ok := s.privs[cn]
+	if !ok {
+		return ipa.Privilege{}, false
+	}
+	out := *p
+	out.Name, out.Permissions, out.Roles = cn, cloneStrs(p.Permissions), cloneStrs(p.Roles)
+	return out, true
+}
+
+// Permission returns a copy of permission cn, with Name set to cn.
+func (s *Server) Permission(cn string) (ipa.Permission, bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	p, ok := s.perms[cn]
+	if !ok {
+		return ipa.Permission{}, false
+	}
+	out := *p
+	out.Name = cn
+	out.Rights, out.Attrs, out.Filters, out.Privileges = cloneStrs(p.Rights), cloneStrs(p.Attrs), cloneStrs(p.Filters), cloneStrs(p.Privileges)
+	return out, true
+}

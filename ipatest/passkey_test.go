@@ -52,3 +52,27 @@ func TestPasskeyCommands(t *testing.T) {
 		t.Errorf("missing user code = %d", got)
 	}
 }
+
+// TestService_AuthIndVersion checks what 4.11 added: the passkey commands
+// and the passkey auth indicator.
+func TestService_AuthIndVersion(t *testing.T) {
+	s := ipatest.NewServer(t)
+	s.AddUser("bob", ipatest.User{})
+	s.SetVersion("4.9.13")
+	c := s.ClientAs("admin")
+	_, err := c.RPC("user_add_passkey", []string{"bob", "passkey:Z29pcGEtdGVzdC1pZA==," + spki}, nil)
+	if got := ipaCode(t, err); got != ipa.CodeCommand {
+		t.Errorf("user_add_passkey on 4.9.13: code %d", got)
+	}
+	_, err = c.RPC("service_add", []string{"HTTP/ipa.test.local"}, ipa.Options{"krbprincipalauthind": []string{"passkey"}})
+	if got := ipaCode(t, err); got != ipa.CodeValidation {
+		t.Errorf("passkey indicator on 4.9.13: code %d", got)
+	}
+	s.SetVersion("4.12.2")
+	if _, err := c.RPC("service_add", []string{"HTTP/ipa.test.local"}, ipa.Options{"krbprincipalauthind": []string{"passkey"}}); err != nil {
+		t.Errorf("passkey indicator on 4.12.2: %v", err)
+	}
+	if v, ok := s.Service("HTTP/ipa.test.local"); !ok || len(v.AuthIndicators) != 1 || v.AuthIndicators[0] != "passkey" {
+		t.Errorf("Service = %+v, %v", v, ok)
+	}
+}
