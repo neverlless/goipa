@@ -6,6 +6,7 @@
 [![Coverage](https://codecov.io/gh/neverlless/goipa/branch/main/graph/badge.svg)](https://codecov.io/gh/neverlless/goipa)
 [![Go Reference](https://pkg.go.dev/badge/github.com/neverlless/goipa.svg)](https://pkg.go.dev/github.com/neverlless/goipa)
 [![Release](https://img.shields.io/github/v/release/neverlless/goipa)](https://github.com/neverlless/goipa/releases)
+[![Go Report Card](https://goreportcard.com/badge/github.com/neverlless/goipa)](https://goreportcard.com/report/github.com/neverlless/goipa)
 [![Go version](https://img.shields.io/github/go-mod/go-version/neverlless/goipa)](go.mod)
 [![License](https://img.shields.io/github/license/neverlless/goipa)](LICENSE)
 
@@ -127,6 +128,40 @@ create); for automember use `RPC`, since `automember_mod` needs the rule type.
 | DNS record | `DNSRecordShow`, `DNSRecordFind`, `DNSRecordAdd`, `DNSRecordRemove`, `DNSRecordDelete` | `dnsrecord_show`, `_find`, `_add`, `_del` (remove values; `del_all` for the name) |
 | Automember rule | `AutomemberShow`, `AutomemberFind`, `AutomemberAdd`, `AutomemberDelete`, `AutomemberAddCondition`, `AutomemberRemoveCondition`, `AutomemberDefaultGroup`, `AutomemberSetDefaultGroup`, `AutomemberRemoveDefaultGroup`, `AutomemberRebuild` | `automember_show`, `_find`, `_add`, `_del`, `_add_condition`, `_remove_condition`, `automember_default_group_show`, `_set`, `_remove`, `automember_rebuild` |
 | Role, privilege, permission (read only) | `RoleShow`/`RoleFind`, `PrivilegeShow`/`PrivilegeFind`, `PermissionShow`/`PermissionFind` | `role_*`, `privilege_*`, `permission_*` `_show` and `_find` |
+
+## Stability
+
+goipa follows [Semantic Versioning](https://semver.org/). From v1.0.0:
+
+- **API.** No exported identifier of `ipa` or `ipatest` is removed or changes
+  signature within v1. This covers every identifier inherited from
+  ubccr/goipa v0.0.7. Identifiers that newer ones supersede are marked
+  `Deprecated` and stay. A breaking change would ship as
+  `github.com/neverlless/goipa/v2`.
+- **Errors.** FreeIPA errors stay bare `*IpaError` values, and sentinels and
+  error types stay matchable with `errors.Is` and `errors.As` as documented
+  under Errors. Error message text is not part of the API.
+- **Wire behaviour.** A call sends the same command, arguments and options
+  for the whole of v1, unless that shape is a bug against FreeIPA. Bugs are
+  fixed in patch releases and listed in the [ChangeLog](CHANGELOG.md).
+- **FreeIPA.** Supported: FreeIPA 4.9 (RHEL 8) to the latest 4.13 release,
+  checked nightly against 4.9.13, 4.12.2 and 4.13.4; 4.10 and 4.11 are not
+  tested. A newer FreeIPA release is added in a minor release. Dropping a
+  FreeIPA line takes a minor release and a ChangeLog note one release ahead.
+  Calls for features newer than the server fail with `ErrNotSupported`
+  instead of reaching it.
+- **Go.** goipa supports the two most recent Go releases, as the Go team
+  does. The Go version in go.mod and the newest stable release are tested in
+  CI. The `go` directive in go.mod moves only in a minor release, never in a
+  patch.
+- **ipatest.** Its API is stable as above. Its behaviour follows real FreeIPA
+  and may change in minor releases (see the package documentation).
+- **Command catalogue.** `Commands`/`LookupCommand` data grows with new
+  FreeIPA releases; entries are not removed.
+
+Security note: on FreeIPA 4.9 to 4.13 the server keeps accepting a session
+cookie after `session_logout`, so logging out only makes the client forget it.
+Treat a session ID as a credential until it expires.
 
 ## Install
 
@@ -256,6 +291,15 @@ On macOS use `sed -i ''`. What changed since v0.0.7 is listed in the
 - The `RPC` escape hatch, typed errors and `context.Context` support
 - `ipatest`, a fake FreeIPA server, and contract tests that run the same
   checks nightly against real FreeIPA 4.9, 4.12 and 4.13
+
+## Credits
+
+goipa builds on [ubccr/goipa](https://github.com/ubccr/goipa) by Andrew E.
+Bruno, and on work from its pull requests and forks: @earthquakesan,
+@ivanovilia96, @m-vinc, @farzandalaee, @Demacr (`UsersFindBy`, now
+`UserFind`), tubby1981, fajo-de and sitnikovv. Thank you. If you maintain a
+fork with changes that are not here, you are welcome to send them: open an
+issue or a pull request (see [CONTRIBUTING.md](CONTRIBUTING.md)).
 
 ## Development
 
