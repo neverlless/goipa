@@ -183,6 +183,22 @@ func (s *Server) sudoOrderTaken(order int, self string) *ipa.IpaError {
 	return nil
 }
 
+// sudoOrder converts sudoorder as FreeIPA's Int parameter does (Q151).
+func sudoOrder(c Call) (int, *ipa.IpaError) {
+	v, ok := c.Options["sudoorder"]
+	if !ok {
+		return 0, nil
+	}
+	if f, ok := v.(float64); ok {
+		return int(f), nil
+	}
+	n, err := strconv.Atoi(str(v))
+	if err != nil {
+		return 0, &ipa.IpaError{Code: ipa.CodeConversion, Message: "invalid 'order': must be an integer"}
+	}
+	return n, nil
+}
+
 // sudoRuleMod changes description and sudoorder only (Q151).
 func sudoRuleMod(s *Server, c Call) (any, *ipa.IpaError) {
 	cn, r, err := sudoRuleArg(s, c)
@@ -198,8 +214,10 @@ func sudoRuleMod(s *Server, c Call) (any, *ipa.IpaError) {
 	if v, ok := c.Options["description"]; ok {
 		desc = str(v)
 	}
-	if v, ok := c.Options["sudoorder"]; ok {
-		order, _ = strconv.Atoi(fmt.Sprint(v))
+	if _, ok := c.Options["sudoorder"]; ok {
+		if order, err = sudoOrder(c); err != nil {
+			return nil, err
+		}
 		if order != r.Order {
 			if err := s.sudoOrderTaken(order, cn); err != nil {
 				return nil, err

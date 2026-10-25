@@ -15,14 +15,19 @@ on:
       - "docs/**"
       - "LICENSE"
       - ".github/ISSUE_TEMPLATE/**"
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
   test:
-    name: Build and test
+    name: Build and test (${{ matrix.go }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        go: [go.mod, stable]
     permissions:
       contents: read
       id-token: write
@@ -33,7 +38,8 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v7
         with:
-          go-version-file: go.mod
+          go-version-file: ${{ matrix.go == 'go.mod' && 'go.mod' || '' }}
+          go-version: ${{ matrix.go != 'go.mod' && matrix.go || '' }}
 
       - name: Check formatting
         run: |
@@ -61,7 +67,7 @@ jobs:
           go tool cover -func=coverage.out | awk '/^total:/ { sub("%", "", $3); print "coverage " $3 "%"; if ($3 + 0 < 80) exit 1 }'
 
       - name: Upload coverage
-        if: github.event_name == 'push'
+        if: github.event_name == 'push' && matrix.go == 'go.mod'
         uses: codecov/codecov-action@v7
         with:
           files: coverage.out

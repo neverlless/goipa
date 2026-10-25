@@ -331,8 +331,15 @@ func init() {
 		}, (*hbacRec).render)
 	}
 	builtins["sudorule_add"] = func(s *Server, c Call) (any, *ipa.IpaError) {
-		order, _ := strconv.Atoi(fmt.Sprint(c.Options["sudoorder"]))
-		if err := s.sudoOrderTaken(order, ""); err != nil { // Q151: checked before the name
+		order, err := sudoOrder(c)
+		if err != nil {
+			return nil, err
+		}
+		cn, err := ruleName(c)
+		if err != nil {
+			return nil, err
+		}
+		if err := s.sudoOrderTaken(order, cn); err != nil { // Q151: checked before the name, skipping the rule of that name
 			return nil, err
 		}
 		return ruleAdd("sudo rule", s.sudo, c, func(c Call) *sudoRec {
