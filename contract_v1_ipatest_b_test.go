@@ -77,11 +77,9 @@ func TestContractSudoOrderUnique(t *testing.T) {
 			t.Errorf("add: %v\nwant %s", err, want)
 		}
 		_, err = b.admin.SudoRuleAdd(&ipa.SudoRule{Name: first, Order: order})
-		if err == nil || err.Error() != want {
-			t.Errorf("add with a taken name: %v\nwant %s", err, want)
-		}
+		wantCode(t, "add with the holder's name", err, ipa.CodeDuplicateEntry)
 		_, err = b.admin.RPC("sudorule_mod", []string{first}, ipa.Options{"sudoorder": "seven"})
-		if want := "ipa: error 3008 - invalid 'sudoorder': must be an integer"; err == nil || err.Error() != want {
+		if want := "ipa: error 3008 - invalid 'order': must be an integer"; err == nil || err.Error() != want {
 			t.Errorf("mod to a non-number: %v\nwant %s", err, want)
 		}
 		if _, err := b.admin.SudoRuleAdd(&ipa.SudoRule{Name: second, Order: order + 1}); err != nil {

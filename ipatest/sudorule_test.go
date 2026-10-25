@@ -94,19 +94,19 @@ func TestSudoRuleMod_UnmodelledOption(t *testing.T) {
 	}
 }
 
-// TestSudoRuleAdd_TakenOrderBeatsDuplicateName pins Q151: the order check
-// runs before the name check.
-func TestSudoRuleAdd_TakenOrderBeatsDuplicateName(t *testing.T) {
+// TestSudoRuleAdd_OrderAndName pins Q151: the order check runs before the
+// name check but skips the rule of the same name.
+func TestSudoRuleAdd_OrderAndName(t *testing.T) {
 	s, c := ruleServer(t)
 	s.AddSudoRule("s3", ipatest.SudoRule{Order: 7})
-	_, err := c.RPC("sudorule_add", []string{"s3"}, ipa.Options{"sudoorder": 7})
+	_, err := c.RPC("sudorule_add", []string{"s1"}, ipa.Options{"sudoorder": 7})
 	var ierr *ipa.IpaError
 	if !errors.As(err, &ierr) || ierr.Code != ipa.CodeValidation || ierr.Message != "invalid 'order': order must be a unique value (7 already used by s3)" {
-		t.Errorf("err = %v", err)
+		t.Errorf("taken name, order held by another rule: %v", err)
 	}
-	_, err = c.RPC("sudorule_add", []string{"s3"}, ipa.Options{"sudoorder": 8})
+	_, err = c.RPC("sudorule_add", []string{"s3"}, ipa.Options{"sudoorder": 7})
 	if !errors.As(err, &ierr) || ierr.Code != ipa.CodeDuplicateEntry {
-		t.Errorf("free order, taken name: %v", err)
+		t.Errorf("taken name, order held by that rule: %v", err)
 	}
 }
 
@@ -121,7 +121,7 @@ func TestSudoRuleOrder_NotAnInteger(t *testing.T) {
 	}{{"sudorule_add", "s3"}, {"sudorule_add", "fresh"}, {"sudorule_mod", "s3"}} {
 		_, err := c.RPC(call.method, []string{call.cn}, ipa.Options{"sudoorder": "seven"})
 		var ierr *ipa.IpaError
-		if !errors.As(err, &ierr) || ierr.Code != ipa.CodeConversion || ierr.Message != "invalid 'sudoorder': must be an integer" {
+		if !errors.As(err, &ierr) || ierr.Code != ipa.CodeConversion || ierr.Message != "invalid 'order': must be an integer" {
 			t.Errorf("%s %s: %v", call.method, call.cn, err)
 		}
 	}

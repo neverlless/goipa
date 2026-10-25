@@ -335,7 +335,11 @@ func init() {
 		if err != nil {
 			return nil, err
 		}
-		if err := s.sudoOrderTaken(order, ""); err != nil { // Q151: checked before the name
+		cn, err := ruleName(c)
+		if err != nil {
+			return nil, err
+		}
+		if err := s.sudoOrderTaken(order, cn); err != nil { // Q151: checked before the name, skipping the rule of that name
 			return nil, err
 		}
 		return ruleAdd("sudo rule", s.sudo, c, func(c Call) *sudoRec {

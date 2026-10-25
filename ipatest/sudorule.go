@@ -194,7 +194,7 @@ func sudoOrder(c Call) (int, *ipa.IpaError) {
 	}
 	n, err := strconv.Atoi(str(v))
 	if err != nil {
-		return 0, &ipa.IpaError{Code: ipa.CodeConversion, Message: "invalid 'sudoorder': must be an integer"}
+		return 0, &ipa.IpaError{Code: ipa.CodeConversion, Message: "invalid 'order': must be an integer"}
 	}
 	return n, nil
 }

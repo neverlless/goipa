@@ -668,13 +668,14 @@
 //     goipa.TestContractHBACTestServiceGroup.
 //   - Q151: sudorule_add and sudorule_mod of a sudoorder another rule holds
 //     are 3009 "invalid 'order': order must be a unique value (<n> already
-//     used by <cn>)", checked before the name on add. sudoorder is an Int
-//     parameter: a non-number is 3008 "invalid 'sudoorder': must be an
-//     integer" before either check. sudorule_mod is
+//     used by <cn>)", checked before the name on add but skipping the rule
+//     of the added name, so re-adding the holder's name is 4002. sudoorder
+//     is an Int parameter: a non-number is 3008 "invalid 'order': must be
+//     an integer" before either check. sudorule_mod is
 //     modelled for description and sudoorder only (any other option is
 //     905); a rule's own order, like no change at all, is 4202.
 //     goipa.TestContractSudoOrderUnique, TestSudoRuleMod_UnmodelledOption,
-//     TestSudoRuleAdd_TakenOrderBeatsDuplicateName,
+//     TestSudoRuleAdd_OrderAndName,
 //     TestSudoRuleOrder_NotAnInteger.
 //   - Q152: as Q73 for sudo rules: adding to a rule whose category is all
 //     is 4303 "users cannot be added when user category='all'" (hosts/host,
