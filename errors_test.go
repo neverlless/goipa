@@ -178,6 +178,20 @@ func TestFormHTTPError_SetPassword(t *testing.T) {
 	checkFormHTTPError(t, c.SetPassword("u", "old", "new", ""), "ipa: change password failed with HTTP status code: 500")
 }
 
+func TestFormHTTPError_SetPassword401(t *testing.T) {
+	c, _ := newFakeIPA(t, http.StatusUnauthorized, "")
+	if err := c.SetPassword("u", "old", "new", ""); !errors.Is(err, ipa.ErrUnauthorized) {
+		t.Errorf("err = %v, want ErrUnauthorized", err)
+	}
+}
+
+func TestFormHTTPError_SyncOTPToken401(t *testing.T) {
+	c, _ := newFakeIPA(t, http.StatusUnauthorized, "")
+	if err := c.SyncOTPToken("u", "p", "1", "2", ""); !errors.Is(err, ipa.ErrUnauthorized) {
+		t.Errorf("err = %v, want ErrUnauthorized", err)
+	}
+}
+
 func TestFormHTTPError_SyncOTPToken(t *testing.T) {
 	c, _ := newFakeIPA(t, http.StatusInternalServerError, "")
 	checkFormHTTPError(t, c.SyncOTPToken("u", "p", "1", "2", ""), "ipa: token sync failed with HTTP status code: 500")

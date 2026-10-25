@@ -108,7 +108,7 @@ func NewDefaultClientWithSession(sessionID string) *Client {
 
 // New IPA Client with host and realm
 //
-// Deprecated: use New(WithHost(host), WithRealm(realm)).
+// Deprecated: use New(WithHost(host)); add WithRealm(realm) for Kerberos logins.
 func NewClient(host, realm string) *Client {
 	return &Client{
 		host:       host,
@@ -120,7 +120,7 @@ func NewClient(host, realm string) *Client {
 
 // New IPA Client with host, realm and custom http client
 //
-// Deprecated: use New(WithHost(host), WithRealm(realm), WithHTTPClient(httpClient)).
+// Deprecated: use New(WithHost(host), WithHTTPClient(httpClient)); add WithRealm(realm) for Kerberos logins.
 func NewClientCustomHttp(host, realm string, httpClient *http.Client) *Client {
 	return &Client{
 		host:       host,

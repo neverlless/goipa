@@ -19,6 +19,11 @@ the API review and makes `ipatest` follow FreeIPA more closely.
   with nil), `ParseDateTime` (use `Entry.Time`) and `Response.Error`. All
   keep working.
 
+### Added
+
+- `ipatest`: getters `HBACRule`, `SudoRule`, `PwPolicy`, `Role`, `Privilege`
+  and `Permission`, and `Service.AuthIndicators`
+
 ### Changed
 
 - Wire-equivalent shape changes, visible in `ipatest.Calls()`:
@@ -32,8 +37,6 @@ the API review and makes `ipatest` follow FreeIPA more closely.
   `SyncOTPToken` match `*HTTPError` with `errors.As`, message text unchanged
 - With `WithValidation`, an option key that names a positional argument newer
   than the server gives `ErrNotSupported`
-- `ipatest`: new getters `HBACRule`, `SudoRule`, `PwPolicy`, `Role`,
-  `Privilege` and `Permission`, and `Service.AuthIndicators`
 - `ipatest` behaviour (see Q140 to Q155 in the package documentation):
   `host_del` deletes the host's services; host group cycles are accepted;
   `service_mod` and `krbprincipalauthind`; `sudoorder` must be unique and
@@ -55,7 +58,7 @@ the API review and makes `ipatest` follow FreeIPA more closely.
 
 ### Security
 
-- On FreeIPA 4.9 to 4.13 the server keeps accepting a session cookie after
+- On FreeIPA (seen on 4.9.13, 4.12.2 and 4.13.4) the server keeps accepting a session cookie after
   `session_logout`. Logout only makes the client forget it, so treat a
   session ID as a credential until it expires. Documented in the README and
   the package documentation.

@@ -35,6 +35,8 @@
 //     because the server generates their IDs.
 //   - DNS zones, automember rules and certificates have no seed helper;
 //     create them with client calls.
+//   - Exceptions: hosts have no getter because Server.Host() is the server's
+//     address, and OTPTokens(owner) and SubID(owner) are keyed by owner.
 //
 // The ipatest types hold the seed input form with FreeIPA's default as the
 // zero value, so some fields differ from the matching ipa types: Disabled

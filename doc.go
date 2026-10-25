@@ -74,7 +74,7 @@
 //
 // # Sessions
 //
-// On FreeIPA 4.9 to 4.13 the server keeps accepting an ipa_session cookie
+// On FreeIPA (seen on 4.9.13, 4.12.2 and 4.13.4) the server keeps accepting an ipa_session cookie
 // after session_logout: logout only makes the client forget it. Treat a
 // session ID as a credential until it expires, and do not log or share it.
 // ClearSession drops the ID on the client side only.
