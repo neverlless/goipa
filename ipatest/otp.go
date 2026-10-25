@@ -241,6 +241,15 @@ func otptokenMod(s *Server, c Call) (any, *ipa.IpaError) {
 
 func otptokenDel(s *Server, c Call) (any, *ipa.IpaError) {
 	t, err := s.tokenArg(c)
+	if !s.isAdmin(c.User) { // Q154
+		if err != nil && err.Code == ipa.CodeNotFound {
+			return nil, &ipa.IpaError{Code: ipa.CodeACI, Message: "Insufficient access: "}
+		}
+		if err == nil && t.Owner != c.User {
+			return nil, &ipa.IpaError{Code: ipa.CodeACI, Message: "Insufficient access: Insufficient 'delete' privilege to delete the entry 'ipatokenuniqueid=" +
+				t.UUID + ",cn=otp,dc=test,dc=local'."}
+		}
+	}
 	if err != nil {
 		return nil, err
 	}

@@ -6,7 +6,9 @@ package ipatest
 
 import (
 	"fmt"
+	"maps"
 	"slices"
+	"strconv"
 	"strings"
 
 	ipa "github.com/neverlless/goipa"
@@ -23,6 +25,8 @@ type sudoSlot struct {
 type sudoKind struct {
 	attr  string // the key under failed
 	slots []sudoSlot
+	all   func(*sudoRec) bool // the category that refuses adds (Q152); nil for none
+	what  string              // MutuallyExclusiveError's reason
 }
 
 func hasUser(s *Server, n string) bool      { return s.users[n] != nil }
@@ -36,27 +40,29 @@ var (
 	sudoUsers = sudoKind{"memberuser", []sudoSlot{
 		{"user", func(r *sudoRec) *[]string { return &r.Users }, hasUser, "externaluser"},
 		{"group", func(r *sudoRec) *[]string { return &r.Groups }, hasGroup, "externaluser"},
-	}}
+	}, func(r *sudoRec) bool { return r.UserCategory == "all" }, "users cannot be added when user category='all'"}
 	sudoHosts = sudoKind{"memberhost", []sudoSlot{
 		{"host", func(r *sudoRec) *[]string { return &r.Hosts }, hasHost, "externalhost"},
 		{"hostgroup", func(r *sudoRec) *[]string { return &r.HostGroups }, hasHostGroup, ""},
-	}}
+	}, func(r *sudoRec) bool { return r.HostCategory == "all" }, "hosts cannot be added when host category='all'"}
 	sudoAllow = sudoKind{"memberallowcmd", []sudoSlot{
 		{"sudocmd", func(r *sudoRec) *[]string { return &r.AllowCommands }, hasSudoCmd, ""},
 		{"sudocmdgroup", func(r *sudoRec) *[]string { return &r.AllowCommandGroups }, noSuch, ""},
-	}}
+	}, func(r *sudoRec) bool { return r.CmdCategory == "all" }, "commands cannot be added when command category='all'"}
 	sudoDeny = sudoKind{"memberdenycmd", []sudoSlot{
 		{"sudocmd", func(r *sudoRec) *[]string { return &r.DenyCommands }, hasSudoCmd, ""},
 		{"sudocmdgroup", func(r *sudoRec) *[]string { return &r.DenyCommandGroups }, noSuch, ""},
-	}}
+	}, nil, ""}
 	sudoRunAsUser = sudoKind{"ipasudorunas", []sudoSlot{
 		{"user", func(r *sudoRec) *[]string { return &r.RunAsUsers }, hasUser, "ipasudorunasextuser"},
 		{"group", func(r *sudoRec) *[]string { return &r.RunAsUserGroups }, hasGroup, "ipasudorunasextusergroup"},
-	}}
+	}, runAsAll, "users cannot be added when runAs user or runAs group category='all'"}
 	sudoRunAsGroup = sudoKind{"ipasudorunasgroup", []sudoSlot{
 		{"group", func(r *sudoRec) *[]string { return &r.RunAsGroups }, hasGroup, "ipasudorunasextgroup"},
-	}}
+	}, runAsAll, "users cannot be added when runAs user or runAs group category='all'"}
 )
+
+func runAsAll(r *sudoRec) bool { return r.RunAsUserCategory == "all" || r.RunAsGroupCategory == "all" }
 
 // sudoMember serves the sudorule_{add,remove}_* member calls in
 // group_add_member's output shape; unknown names of the kinds FreeIPA keeps
@@ -70,6 +76,9 @@ func sudoMember(add bool, k sudoKind) builtin {
 		r := s.sudo[cn]
 		if r == nil {
 			return nil, notFound(cn, "sudo rule")
+		}
+		if add && k.all != nil && k.all(r) {
+			return nil, &ipa.IpaError{Code: 4303, Name: "MutuallyExclusiveError", Message: k.what}
 		}
 		failed := map[string][][]string{}
 		completed := 0
@@ -163,7 +172,49 @@ func sudoRuleFlag(disabled bool) builtin {
 	}
 }
 
+// sudoOrderTaken is Q151: order held by a rule other than self.
+func (s *Server) sudoOrderTaken(order int, self string) *ipa.IpaError {
+	for _, cn := range slices.Sorted(maps.Keys(s.sudo)) {
+		if order != 0 && cn != self && s.sudo[cn].Order == order {
+			return &ipa.IpaError{Code: ipa.CodeValidation,
+				Message: fmt.Sprintf("invalid 'order': order must be a unique value (%d already used by %s)", order, cn)}
+		}
+	}
+	return nil
+}
+
+// sudoRuleMod changes description and sudoorder only (Q151).
+func sudoRuleMod(s *Server, c Call) (any, *ipa.IpaError) {
+	cn, r, err := sudoRuleArg(s, c)
+	if err != nil {
+		return nil, err
+	}
+	for k := range c.Options {
+		if !slices.Contains([]string{"all", "raw", "rights", "no_members", "version", "description", "sudoorder"}, k) {
+			return nil, &ipa.IpaError{Code: ipa.CodeCommand, Message: "ipatest: sudorule_mod models description and sudoorder only, not " + k}
+		}
+	}
+	desc, order := r.Description, r.Order
+	if v, ok := c.Options["description"]; ok {
+		desc = str(v)
+	}
+	if v, ok := c.Options["sudoorder"]; ok {
+		order, _ = strconv.Atoi(fmt.Sprint(v))
+		if order != r.Order {
+			if err := s.sudoOrderTaken(order, cn); err != nil {
+				return nil, err
+			}
+		}
+	}
+	if desc == r.Description && order == r.Order {
+		return nil, &ipa.IpaError{Code: ipa.CodeEmptyModlist, Message: "no modifications to be performed"}
+	}
+	r.Description, r.Order = desc, order
+	return entry(cn, r.render(cn, !flag(c, "no_members"), flag(c, "all")), fmt.Sprintf("Modified sudo rule %q", cn)), nil
+}
+
 func init() {
+	builtins["sudorule_mod"] = sudoRuleMod
 	builtins["sudorule_show"] = func(s *Server, c Call) (any, *ipa.IpaError) {
 		cn, r, err := sudoRuleArg(s, c)
 		if err != nil {
