@@ -25,7 +25,7 @@ func (s *Server) batch(c Call, methods json.RawMessage) (any, *ipa.IpaError) {
 }
 
 func (s *Server) batchOne(outer Call, req map[string]json.RawMessage) map[string]any {
-	n := Call{User: outer.User, Options: map[string]any{}, session: outer.session}
+	n := Call{User: outer.User, Options: map[string]any{}}
 	var params []json.RawMessage
 	var ierr *ipa.IpaError
 	switch {

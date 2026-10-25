@@ -10,8 +10,8 @@ them. Upstream items are referenced as `ubccr/goipa#NN`.
 
 Rules that hold for every release:
 
-- Every exported identifier of ubccr/goipa v0.0.7 keeps its signature until
-  v1.0. New behaviour goes into new identifiers.
+- Every exported identifier of ubccr/goipa v0.0.7 keeps its signature for
+  all of v1. New behaviour goes into new identifiers.
 - FreeIPA command shapes are checked against FreeIPA's own `API.txt` and a
   live server, not memory. Support target: FreeIPA 4.9 (RHEL 8) to the latest
   4.13.
@@ -219,10 +219,11 @@ Accept: the listed objects have typed APIs verified nightly on FreeIPA 4.9,
 
 ## v1.0.0 — Stable API
 
-- [ ] API review: deprecations marked, error model and context policy final,
+- [x] API review: deprecations marked, error model and context policy final,
       `ipatest` API final
 - [ ] Listed in [awesome-go](https://github.com/avelino/awesome-go) (Third-party APIs)
-- [ ] Invite authors of active forks to contribute here
+- [x] Invite authors of active forks to contribute here (README Credits,
+      CONTRIBUTING)
 
 ## Out of scope
 

@@ -16,7 +16,10 @@ import (
 
 // The Kerberos logins need a KDC, so this example is compiled but not run.
 func Example_login() {
-	c := ipa.NewClient("ipa.example.com", "EXAMPLE.COM")
+	c, err := ipa.New(ipa.WithHost("ipa.example.com"), ipa.WithRealm("EXAMPLE.COM"))
+	if err != nil {
+		log.Fatal(err)
+	}
 	if err := c.LoginWithKeytab("/etc/app/app.keytab", "svc-app"); err != nil {
 		log.Fatal(err)
 	}
@@ -44,7 +47,10 @@ func ExampleClient_RPC() {
 // authenticate with; it needs /etc/krb5.conf and a KDC, so it is compiled but
 // not run.
 func ExampleClient_Login() {
-	c := ipa.NewClient("ipa.example.com", "EXAMPLE.COM")
+	c, err := ipa.New(ipa.WithHost("ipa.example.com"), ipa.WithRealm("EXAMPLE.COM"))
+	if err != nil {
+		log.Fatal(err)
+	}
 	if err := c.Login("jesse", "secret"); err != nil {
 		log.Fatal(err)
 	}
@@ -52,7 +58,10 @@ func ExampleClient_Login() {
 
 // LoginFromCCache reuses a ticket obtained with kinit; compiled but not run.
 func ExampleClient_LoginFromCCache() {
-	c := ipa.NewDefaultClient()
+	c, err := ipa.New()
+	if err != nil {
+		log.Fatal(err)
+	}
 	if err := c.LoginFromCCache("/tmp/krb5cc_1000"); err != nil {
 		log.Fatal(err)
 	}
@@ -62,13 +71,20 @@ func ExampleClient_LoginFromCCache() {
 // ID can be stored, for example in a web session, and reused later without
 // logging in again; compiled but not run.
 func ExampleClient_RemoteLogin() {
-	c := ipa.NewDefaultClient()
+	c, err := ipa.New()
+	if err != nil {
+		log.Fatal(err)
+	}
 	if err := c.RemoteLogin("jesse", "secret"); err != nil {
 		log.Fatal(err)
 	}
 	sid := c.SessionID()
 
-	later := ipa.NewDefaultClientWithSession(sid)
+	later, err := ipa.New()
+	if err != nil {
+		log.Fatal(err)
+	}
+	later.SetSessionID(sid)
 	u, err := later.UserShow("jesse")
 	if err != nil {
 		log.Fatal(err)
@@ -131,7 +147,10 @@ func ExampleClient_LoginWithKeytabData() {
 // Call decodes any command's result; Entry reads FreeIPA's attribute
 // encoding. Compiled but not run.
 func ExampleCall() {
-	c := ipa.NewDefaultClient()
+	c, err := ipa.New()
+	if err != nil {
+		log.Fatal(err)
+	}
 	u, _, err := ipa.Call[ipa.Entry](context.Background(), c, "user_show",
 		[]string{"jesse"}, ipa.Options{"all": true})
 	if err != nil {
@@ -143,7 +162,10 @@ func ExampleCall() {
 // FindEntries returns the entries it got together with ErrTruncated when the
 // server cut the search short; compiled but not run.
 func ExampleFindEntries() {
-	c := ipa.NewDefaultClient()
+	c, err := ipa.New()
+	if err != nil {
+		log.Fatal(err)
+	}
 	hosts, err := ipa.FindEntries(context.Background(), c, "host_find", []string{"web"}, nil, 500)
 	if errors.Is(err, ipa.ErrTruncated) {
 		fmt.Println("more hosts match; narrow the search")
@@ -158,8 +180,11 @@ func ExampleFindEntries() {
 // Modify changes single attributes without reading the object first;
 // compiled but not run.
 func ExampleClient_Modify() {
-	c := ipa.NewDefaultClient()
-	_, err := c.Modify("user_mod", "jesse").
+	c, err := ipa.New()
+	if err != nil {
+		log.Fatal(err)
+	}
+	_, err = c.Modify("user_mod", "jesse").
 		Set("title", "Engineer").
 		Add("mail", "jesse@example.com").
 		Run(context.Background())
@@ -171,7 +196,10 @@ func ExampleClient_Modify() {
 // Batch runs several commands in one round trip; a failed command fills Err
 // and does not fail the batch. Compiled but not run.
 func ExampleClient_Batch() {
-	c := ipa.NewDefaultClient()
+	c, err := ipa.New()
+	if err != nil {
+		log.Fatal(err)
+	}
 	res, err := c.Batch(context.Background(),
 		ipa.BatchCall{Method: "user_show", Args: []string{"jesse"}},
 		ipa.BatchCall{Method: "group_show", Args: []string{"admins"}},
@@ -225,7 +253,10 @@ func ExampleWithValidation() {
 // Member calls return the updated group and a *MemberError for members the
 // server refused. The example is compiled but not run.
 func ExampleClient_HostGroupAddMember() {
-	c := ipa.NewClient("ipa.example.com", "EXAMPLE.COM")
+	c, err := ipa.New(ipa.WithHost("ipa.example.com"), ipa.WithRealm("EXAMPLE.COM"))
+	if err != nil {
+		log.Fatal(err)
+	}
 	g, err := c.HostGroupAddMember("web", []string{"web1.example.com", "typo.example.com"}, nil)
 
 	var me *ipa.MemberError

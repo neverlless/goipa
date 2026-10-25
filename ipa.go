@@ -16,7 +16,10 @@ import (
 )
 
 const (
-	DefaultKerbConf   = "/etc/krb5.conf"
+	DefaultKerbConf = "/etc/krb5.conf"
+	// IpaClientVersion is the API version goipa sends by default; fixed for v1
+	// so behaviour does not change with an upgrade. Override it per call with
+	// the version option.
 	IpaClientVersion  = "2.237"
 	IpaDatetimeFormat = "20060102150405Z"
 )
@@ -24,9 +27,11 @@ const (
 // FreeIPA Client
 //
 // Methods with a Context suffix bound the HTTP request with the given
-// context. Kerberos login and SPNEGO header generation are not cancellable
-// (gokrb5 has no context support), so Login, LoginWithKeytab,
-// LoginFromCCache and their Data variants have no Context twins.
+// context. The generic and builder APIs (Call, FindEntries, Batch,
+// Modification.Run) exist only in that form, by design. Kerberos login and
+// SPNEGO header generation are not cancellable (gokrb5 has no context
+// support), so Login, LoginWithKeytab, LoginFromCCache and their Data variants
+// have no Context twins.
 //
 // When FreeIPA answers 401 for an expired session, the Client drops that
 // session and, if it can, sends the request again once: a Kerberos client
@@ -39,18 +44,18 @@ type Client struct {
 	realm      string
 	httpClient *http.Client
 
-	// reloginMu serializes password re-login. Lock order: reloginMu, krbMu,
-	// mu; only reloginMu is held across an HTTP request.
-	reloginMu sync.Mutex
-
 	// krbMu keeps Destroy of a replaced Kerberos client out of an in-flight
-	// SPNEGO step.
+	// SPNEGO step. Lock order: krbMu, mu; neither is held across an HTTP
+	// request.
 	krbMu sync.RWMutex
 
 	mu        sync.Mutex // guards the fields below; a Client is shared across goroutines
 	sessionID string
-	sticky    bool
-	krbClient *client.Client
+	// reloginDone is non-nil while a password re-login runs and is closed when
+	// it ends; a channel, not a mutex, so waiters can give up with their ctx.
+	reloginDone chan struct{}
+	sticky      bool
+	krbClient   *client.Client
 
 	serverVersion string // envelope version of the last successful response
 
@@ -85,18 +90,25 @@ func newHTTPClient(pool *x509.CertPool) *http.Client {
 }
 
 // New default IPA Client using host and realm from /etc/ipa/default.conf, read on first use
+//
+// Deprecated: use New, which reads the same files and returns an error when
+// there is no host.
 func NewDefaultClient() *Client {
 	d := systemDefaults()
 	return &Client{host: d.host, realm: d.realm, sticky: true, httpClient: newHTTPClient(d.pool)}
 }
 
 // New default IPA Client with existing sessionID using host and realm from /etc/ipa/default.conf, read on first use
+//
+// Deprecated: use New, then SetSessionID.
 func NewDefaultClientWithSession(sessionID string) *Client {
 	d := systemDefaults()
 	return &Client{host: d.host, realm: d.realm, sticky: true, sessionID: sessionID, httpClient: newHTTPClient(d.pool)}
 }
 
 // New IPA Client with host and realm
+//
+// Deprecated: use New(WithHost(host)); add WithRealm(realm) for Kerberos logins.
 func NewClient(host, realm string) *Client {
 	return &Client{
 		host:       host,
@@ -107,6 +119,8 @@ func NewClient(host, realm string) *Client {
 }
 
 // New IPA Client with host, realm and custom http client
+//
+// Deprecated: use New(WithHost(host), WithHTTPClient(httpClient)); add WithRealm(realm) for Kerberos logins.
 func NewClientCustomHttp(host, realm string, httpClient *http.Client) *Client {
 	return &Client{
 		host:       host,

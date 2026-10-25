@@ -69,12 +69,16 @@ func (e Entry) Str(attr string) string { return dnsName(e.first(attr)) }
 func (e Entry) DN(attr string) string { return e.Str(attr) }
 
 // Strs returns all values of the attribute; a scalar is one element. It is
-// nil when the attribute is absent or null.
+// nil when the attribute is absent or null. A lone object other than
+// {"__dns_name__"} is returned as its JSON; use Time or Bytes for those hints.
 func (e Entry) Strs(attr string) []string {
 	res, p := e.get(attr)
 	v := res.Get(p)
 	if v.Type == gjson.Null {
 		return nil
+	}
+	if v.IsObject() { // a scalar class hint such as {"__dns_name__": "x"}, not a list
+		return []string{dnsName(v)}
 	}
 	var out []string
 	v.ForEach(func(_, v gjson.Result) bool {

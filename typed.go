@@ -55,10 +55,11 @@ func findTyped[T any](ctx context.Context, c *Client, method string, args []stri
 	return out, err
 }
 
-// memberEntry runs an <x>_add_member / _remove_member style command. FreeIPA
+// members runs an <x>_add_member / _remove_member style command. FreeIPA
 // reports members it could not change in the result, not as an error, so those
-// come back as *MemberError together with the updated entry.
-func (c *Client) memberEntry(ctx context.Context, method string, args []string, lists map[string][]string) (Entry, error) {
+// come back as *MemberError together with the converted entry; any other error
+// comes back alone.
+func members[T any](ctx context.Context, c *Client, method string, args []string, lists map[string][]string, conv func(Entry) *T) (*T, error) {
 	o := Options{"all": true, "no_members": false}
 	n := 0
 	for k, v := range lists {
@@ -68,14 +69,14 @@ func (c *Client) memberEntry(ctx context.Context, method string, args []string, 
 		}
 	}
 	if n == 0 {
-		return Entry{}, errors.New("ipa: " + method + ": nothing to add or remove")
+		return nil, errors.New("ipa: " + method + ": nothing to add or remove")
 	}
 	e, res, err := Call[Entry](ctx, c, method, args, o)
 	if err != nil {
-		return Entry{}, err
+		return nil, err
 	}
 	if f := parseMemberFailures(res.Failed); len(f) > 0 {
-		return e, &MemberError{Failures: f}
+		return conv(e), &MemberError{Failures: f}
 	}
-	return e, nil
+	return conv(e), nil
 }

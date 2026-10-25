@@ -129,8 +129,12 @@ func TestHostDelete_DropsReferences(t *testing.T) {
 	s.AddSudoRule("s", ipatest.SudoRule{Hosts: []string{h}})
 	s.AddService("HTTP/ipa.test.local", ipatest.Service{ManagedBy: []string{"ipa.test.local", h},
 		KeytabRetrieve: ipa.KeytabAccess{Hosts: []string{h}}, KeytabCreate: ipa.KeytabAccess{Hosts: []string{h}}})
+	s.AddService("HTTP/"+h, ipatest.Service{ManagedBy: []string{h}})
 	if _, err := c.RPC("host_del", []string{"WEB1.test.local"}, nil); err != nil {
 		t.Fatal(err)
+	}
+	if _, ok := s.Service("HTTP/" + h); ok {
+		t.Error("the host's own service survived host_del")
 	}
 	if g, err := c.HostGroupShow("web"); err != nil || len(g.Hosts) != 0 {
 		t.Errorf("host group = %+v, %v", g, err)

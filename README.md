@@ -6,6 +6,7 @@
 [![Coverage](https://codecov.io/gh/neverlless/goipa/branch/main/graph/badge.svg)](https://codecov.io/gh/neverlless/goipa)
 [![Go Reference](https://pkg.go.dev/badge/github.com/neverlless/goipa.svg)](https://pkg.go.dev/github.com/neverlless/goipa)
 [![Release](https://img.shields.io/github/v/release/neverlless/goipa)](https://github.com/neverlless/goipa/releases)
+[![Go Report Card](https://goreportcard.com/badge/github.com/neverlless/goipa)](https://goreportcard.com/report/github.com/neverlless/goipa)
 [![Go version](https://img.shields.io/github/go-mod/go-version/neverlless/goipa)](go.mod)
 [![License](https://img.shields.io/github/license/neverlless/goipa)](LICENSE)
 
@@ -29,12 +30,12 @@ tokens.
 - Login: password (`Login`, `RemoteLogin`), keytab (`LoginWithKeytab`,
   `LoginWithKeytabData`), Kerberos credential cache (`LoginFromCCache`,
   `LoginFromCCacheData`), or a saved session ID
-  (`NewDefaultClientWithSession`); see [Which login to use](#which-login-to-use)
+  (`SetSessionID`); see [Which login to use](#which-login-to-use)
 - Kerberos clients recover expired sessions; password re-login is opt-in
   (`WithPasswordRelogin`); `WhoAmI`
 - Reads the host, realm and CA from `/etc/ipa/default.conf` and
   `/etc/ipa/ca.crt` on enrolled machines, or takes them explicitly
-  (`New` with `With*` options, `NewClient`, `NewClientCustomHttp`)
+  (`New` with `With*` options)
 - Users: show, find, add (with random or given password), modify, enable,
   disable, delete
 - Passwords: set, change (with OTP), reset; typed errors for policy, invalid
@@ -128,6 +129,41 @@ create); for automember use `RPC`, since `automember_mod` needs the rule type.
 | Automember rule | `AutomemberShow`, `AutomemberFind`, `AutomemberAdd`, `AutomemberDelete`, `AutomemberAddCondition`, `AutomemberRemoveCondition`, `AutomemberDefaultGroup`, `AutomemberSetDefaultGroup`, `AutomemberRemoveDefaultGroup`, `AutomemberRebuild` | `automember_show`, `_find`, `_add`, `_del`, `_add_condition`, `_remove_condition`, `automember_default_group_show`, `_set`, `_remove`, `automember_rebuild` |
 | Role, privilege, permission (read only) | `RoleShow`/`RoleFind`, `PrivilegeShow`/`PrivilegeFind`, `PermissionShow`/`PermissionFind` | `role_*`, `privilege_*`, `permission_*` `_show` and `_find` |
 
+## Stability
+
+goipa follows [Semantic Versioning](https://semver.org/). From v1.0.0:
+
+- **API.** No exported identifier of `ipa` or `ipatest` is removed or changes
+  signature within v1. This covers every identifier inherited from
+  ubccr/goipa v0.0.7. Identifiers that newer ones supersede are marked
+  `Deprecated` and stay. A breaking change would ship as
+  `github.com/neverlless/goipa/v2`.
+- **Errors.** FreeIPA errors stay bare `*IpaError` values, and sentinels and
+  error types stay matchable with `errors.Is` and `errors.As` as documented
+  under Errors. Error message text is not part of the API.
+- **Wire behaviour.** A call sends the same command, arguments and options
+  for the whole of v1, unless that shape is a bug against FreeIPA. Bugs are
+  fixed in patch releases and listed in the [ChangeLog](CHANGELOG.md).
+- **FreeIPA.** Supported: FreeIPA 4.9 (RHEL 8) to the latest 4.13 release,
+  checked nightly against 4.9.13, 4.12.2 and 4.13.4; 4.10 and 4.11 are not
+  tested. A newer FreeIPA release is added in a minor release. Dropping a
+  FreeIPA line takes a minor release and a ChangeLog note one release ahead.
+  Calls for features newer than the server fail with `ErrNotSupported`
+  instead of reaching it.
+- **Go.** goipa supports the two most recent Go releases, as the Go team
+  does. Go 1.26 (the go.mod minimum) and the newest stable release are tested in
+  CI. The `go` directive in go.mod moves only in a minor release, never in a
+  patch.
+- **ipatest.** Its API is stable as above. Its behaviour follows real FreeIPA
+  and may change in minor releases (see the package documentation).
+- **Command catalogue.** `Commands`/`LookupCommand` data grows with new
+  FreeIPA releases. The maintainer does not remove entries, except the few
+  listed in `allowedRemovals` in `internal/gencatalogue`.
+
+Security note: on FreeIPA (seen on 4.9.13, 4.12.2 and 4.13.4) the server keeps accepting a session
+cookie after `session_logout`, so logging out only makes the client forget it.
+Treat a session ID as a credential until it expires.
+
 ## Install
 
 ```sh
@@ -152,7 +188,10 @@ import (
 )
 
 func main() {
-	client := ipa.NewDefaultClient()
+	client, err := ipa.New()
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	if err := client.LoginWithKeytab("/etc/myapp/myapp.keytab", "myapp"); err != nil {
 		log.Fatal(err)
@@ -167,10 +206,16 @@ func main() {
 }
 ```
 
+`NewDefaultClient`, `NewClient` and `NewClientCustomHttp` still work but are
+deprecated in favour of `New`.
+
 Elsewhere, name the server and realm and log in with a password:
 
 ```go
-client := ipa.NewClient("ipa.example.com", "EXAMPLE.COM")
+client, err := ipa.New(ipa.WithHost("ipa.example.com"), ipa.WithRealm("EXAMPLE.COM"))
+if err != nil {
+	log.Fatal(err)
+}
 if err := client.RemoteLogin("jdoe", password); err != nil {
 	switch {
 	case errors.Is(err, ipa.ErrExpiredPassword):
@@ -179,7 +224,7 @@ if err := client.RemoteLogin("jdoe", password); err != nil {
 		// wrong password
 	}
 }
-// Keep client.SessionID() and reuse it later with NewDefaultClientWithSession.
+// Keep client.SessionID() and restore it later: ipa.New(...) then SetSessionID.
 ```
 
 ## Which login to use
@@ -190,7 +235,7 @@ if err := client.RemoteLogin("jdoe", password); err != nil {
 | `Login` | password through the KDC (Kerberos) | krb5.conf (`WithKrb5Config*`), realm | you have a password and want a ticket |
 | `LoginWithKeytab` / `LoginWithKeytabData` | keytab | krb5.conf, realm | services, daemons |
 | `LoginFromCCache` / `LoginFromCCacheData` | an existing ticket cache (kinit) | krb5.conf | CLI tools run by a logged-in user |
-| saved session (`SetSessionID`, `NewDefaultClientWithSession`) | the `ipa_session` cookie | none | restoring a web session |
+| saved session (`SetSessionID`) | the `ipa_session` cookie | none | restoring a web session |
 
 `Login` is Kerberos, not the web login: it needs a KDC and a krb5.conf. To
 log in with a password over HTTPS, use `RemoteLogin`.
@@ -256,6 +301,20 @@ On macOS use `sed -i ''`. What changed since v0.0.7 is listed in the
 - The `RPC` escape hatch, typed errors and `context.Context` support
 - `ipatest`, a fake FreeIPA server, and contract tests that run the same
   checks nightly against real FreeIPA 4.9, 4.12 and 4.13
+
+## Credits
+
+goipa builds on [ubccr/goipa](https://github.com/ubccr/goipa) by Andrew E.
+Bruno, and on work from its pull requests and forks: [@earthquakesan](https://github.com/earthquakesan),
+[@ivanovilia96](https://github.com/ivanovilia96),
+[@m-vinc](https://github.com/m-vinc),
+[@farzandalaee](https://github.com/farzandalaee),
+[@Demacr](https://github.com/Demacr) (`UsersFindBy`, now `UserFind`),
+[@tubby1981](https://github.com/tubby1981),
+[@fajo-de](https://github.com/fajo-de) and
+[@sitnikovv](https://github.com/sitnikovv). Thank you. If you maintain a
+fork with changes that are not here, you are welcome to send them: open an
+issue or a pull request (see [CONTRIBUTING.md](CONTRIBUTING.md)).
 
 ## Development
 

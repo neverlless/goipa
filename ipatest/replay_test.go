@@ -271,6 +271,7 @@ func TestRecorder_RoundTrip(t *testing.T) {
 	})
 	hc := src.HTTPClient()
 	hc.Transport = ipatest.NewRecorder(hc.Transport, dir)
+	//lint:ignore SA1019 same constructor as Server.Client
 	c := ipa.NewClientCustomHttp(src.Host(), src.Realm(), hc)
 	c.SetSessionID(src.Session("admin"))
 	if _, err := c.RPC("config_show", nil, nil); err != nil {

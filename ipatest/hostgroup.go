@@ -126,12 +126,16 @@ func (s *Server) renderHostGroup(cn string, g *HostGroup, members, all bool) map
 	}
 	if members {
 		hosts := s.hostGroupHosts(cn)
-		nested := walk([]string{cn}, func(n string) []string {
+		kids := func(n string) []string {
 			if g := s.hostgroups[n]; g != nil {
 				return g.HostGroups
 			}
 			return nil
-		})
+		}
+		nested := walk([]string{cn}, kids)
+		if slices.ContainsFunc(nested, func(n string) bool { return slices.Contains(kids(n), cn) }) {
+			nested = append(nested, cn) // FreeIPA accepts cycles and lists the group in its own memberindirect (Q140)
+		}
 		var nestedHosts []string
 		for _, n := range nested {
 			for _, h := range s.hostGroupHosts(n) {
@@ -145,7 +149,9 @@ func (s *Server) renderHostGroup(cn string, g *HostGroup, members, all bool) map
 		set("member_hostgroup", g.HostGroups)
 		set("memberindirect_host", without(nestedHosts, hosts))
 		set("memberindirect_hostgroup", without(nested, g.HostGroups))
-		set("memberof_hostgroup", s.hostGroupParents(cn))
+		parents := s.hostGroupParents(cn)
+		set("memberof_hostgroup", parents)
+		set("memberofindirect_hostgroup", without(s.hostGroupAncestors(parents), []string{cn}))
 		set("membermanager_user", g.ManagerUsers)
 		set("membermanager_group", g.ManagerGroups)
 	}
@@ -290,12 +296,14 @@ func hostGroupMemberCmd(add, managers bool) builtin {
 		mine := s.groupsOf(c.User)
 		allowed := s.isAdmin(c.User) || !managers && (slices.Contains(g.ManagerUsers, c.User) ||
 			slices.ContainsFunc(g.ManagerGroups, func(n string) bool { return slices.Contains(mine, n) }))
-		denied := fmt.Sprintf("Insufficient access: Insufficient 'write' privilege to the '%s' attribute of entry 'cn=%s,%s'.", strings.TrimSuffix(key, "manager"), cn, hostGroupBaseDN)
+		attr := map[bool]string{false: "member", true: "memberManager"}[managers]
+		denied := fmt.Sprintf("Insufficient access: Insufficient 'write' privilege to the '%s' attribute of entry 'cn=%s,%s'.", attr, cn, hostGroupBaseDN)
 		failed := map[string][][]string{kinds[0]: {}, kinds[1]: {}}
 		completed := 0
 		for _, kind := range kinds {
 			list := lists[kind]
-			for _, n := range strs(c.Options[kind]) {
+			for _, given := range strs(c.Options[kind]) {
+				n := given
 				if !managers && kind == "hostgroup" {
 					n = hostGroupKey(n)
 				}
@@ -303,6 +311,8 @@ func hostGroupMemberCmd(add, managers bool) builtin {
 				switch {
 				case !allowed:
 					msg = denied
+				case !add && !managers && !isMember[kind](n): // FreeIPA does not look a removed member up (Q141)
+					msg = "This entry is not a member"
 				case !exists[kind](n):
 					msg = "no such entry"
 				case add && !managers && kind == "hostgroup" && n == cn:
@@ -313,7 +323,7 @@ func hostGroupMemberCmd(add, managers bool) builtin {
 					msg = "This entry is not a member"
 				}
 				if msg != "" {
-					failed[kind] = append(failed[kind], []string{n, msg})
+					failed[kind] = append(failed[kind], []string{given, msg}) // spelled as given (Q141)
 					continue
 				}
 				completed++

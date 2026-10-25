@@ -261,6 +261,12 @@ func (s *Server) hbactest(c Call) (any, *ipa.IpaError) {
 		hostGroups = s.hostGroupsOf(host)
 		hostGroups = append(hostGroups, s.hostGroupAncestors(hostGroups)...)
 	}
+	var svcGroups []string
+	for g, members := range hbacSvcGroups {
+		if slices.Contains(members, svc) {
+			svcGroups = append(svcGroups, g)
+		}
+	}
 	hit := func(cat string, direct []string, name string, indirect []string, ids ...string) bool {
 		return cat == "all" || slices.Contains(direct, name) || slices.ContainsFunc(indirect, func(g string) bool { return slices.Contains(ids, g) })
 	}
@@ -283,7 +289,7 @@ func (s *Server) hbactest(c Call) (any, *ipa.IpaError) {
 			errs = append(errs, cn)
 		case hit(r.UserCategory, r.Users, user, groups, r.Groups...) &&
 			hit(r.HostCategory, r.Hosts, host, hostGroups, r.HostGroups...) &&
-			hit(r.ServiceCategory, r.Services, svc, nil):
+			hit(r.ServiceCategory, r.Services, svc, svcGroups, r.ServiceGroups...):
 			matched = append(matched, cn)
 		default:
 			notMatched = append(notMatched, cn)
@@ -325,12 +331,23 @@ func init() {
 		}, (*hbacRec).render)
 	}
 	builtins["sudorule_add"] = func(s *Server, c Call) (any, *ipa.IpaError) {
+		order, err := sudoOrder(c)
+		if err != nil {
+			return nil, err
+		}
+		cn, err := ruleName(c)
+		if err != nil {
+			return nil, err
+		}
+		if err := s.sudoOrderTaken(order, cn); err != nil { // Q151: checked before the name, skipping the rule of that name
+			return nil, err
+		}
 		return ruleAdd("sudo rule", s.sudo, c, func(c Call) *sudoRec {
 			r := &sudoRec{SudoRule: SudoRule{Description: str(c.Options["description"]),
 				UserCategory: str(c.Options["usercategory"]), HostCategory: str(c.Options["hostcategory"]),
 				CmdCategory: str(c.Options["cmdcategory"]), RunAsUserCategory: str(c.Options["ipasudorunasusercategory"]),
 				RunAsGroupCategory: str(c.Options["ipasudorunasgroupcategory"])}, uuid: newUUID()}
-			r.Order, _ = strconv.Atoi(fmt.Sprint(c.Options["sudoorder"]))
+			r.Order = order
 			return r
 		}, (*sudoRec).render)
 	}
@@ -359,4 +376,27 @@ func init() {
 		r.Options = append(r.Options, opts...)
 		return entry(cn, r.render(cn, !flag(c, "no_members"), flag(c, "all")), fmt.Sprintf("Added option %q to Sudo Rule %q", strings.Join(opts, ","), cn)), nil
 	}
+}
+
+// HBACRule returns a copy of HBAC rule cn.
+func (s *Server) HBACRule(cn string) (HBACRule, bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	r, ok := s.hbac[cn]
+	if !ok {
+		return HBACRule{}, false
+	}
+	return r.HBACRule.clone(), true
+}
+
+// SudoRule returns a copy of sudo rule cn; external members (Q81) are not
+// part of it.
+func (s *Server) SudoRule(cn string) (SudoRule, bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	r, ok := s.sudo[cn]
+	if !ok {
+		return SudoRule{}, false
+	}
+	return r.SudoRule.clone(), true
 }

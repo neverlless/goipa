@@ -11,8 +11,8 @@ import (
 	"github.com/neverlless/goipa"
 )
 
-// TestContractSessionLogoutGives401 pins W2 and Q39: after session_logout
-// the old session cookie gets HTTP 401.
+// TestContractSessionLogoutGives401 pins W2 and Q39: with the client's
+// session cleared by session_logout, the next call gets HTTP 401.
 func TestContractSessionLogoutGives401(t *testing.T) {
 	forEachBackend(t, func(t *testing.T, b backend) {
 		c := mustLogin(t, b, newUserWithPassword(t, b, goodPW), goodPW)
@@ -24,8 +24,8 @@ func TestContractSessionLogoutGives401(t *testing.T) {
 	})
 }
 
-// TestContractPasswordRelogin pins W3: WithPasswordRelogin renews a session
-// ended by session_logout.
+// TestContractPasswordRelogin pins W3: WithPasswordRelogin renews the
+// client's session cleared by session_logout.
 func TestContractPasswordRelogin(t *testing.T) {
 	forEachBackend(t, func(t *testing.T, b backend) {
 		uid := newUserWithPassword(t, b, goodPW)

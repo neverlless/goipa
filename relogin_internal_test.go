@@ -5,12 +5,15 @@
 package ipa
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/jcmturner/gokrb5/v8/client"
 	"github.com/jcmturner/gokrb5/v8/config"
@@ -151,5 +154,100 @@ func TestSetSessionID_DeletionCookieClearsSession(t *testing.T) {
 				t.Errorf("sessionID = %q, want cleared", c.sessionID)
 			}
 		})
+	}
+}
+
+// slowLoginServer answers 401 to oldSID and to requests without a session,
+// and holds each password login until release is called; started is closed
+// when the first login arrives. unauth counts the 401s.
+func slowLoginServer(t *testing.T) (c *Client, started chan struct{}, release func(), unauth *atomic.Int32) {
+	t.Helper()
+	started, unauth = make(chan struct{}), new(atomic.Int32)
+	released := make(chan struct{})
+	var once sync.Once
+	srv := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/ipa/session/login_password":
+			once.Do(func() { close(started) })
+			<-released
+			w.Header().Set("Set-Cookie", "ipa_session="+newSID+"; Path=/ipa")
+		case "/ipa/session/json":
+			if ck, err := r.Cookie("ipa_session"); err == nil && ck.Value == newSID {
+				_, _ = w.Write([]byte(`{"result":{"summary":"ok"}}`))
+				return
+			}
+			fallthrough
+		default:
+			unauth.Add(1)
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		}
+	}))
+	t.Cleanup(srv.Close)
+	var releaseOnce sync.Once
+	release = func() { releaseOnce.Do(func() { close(released) }) }
+	t.Cleanup(release) // runs before srv.Close
+	c = NewClientCustomHttp(strings.TrimPrefix(srv.URL, "https://"), "EXAMPLE.COM", srv.Client())
+	c.relogin = true
+	c.reloginUser, c.reloginPass = "u", "p"
+	c.sessionID = oldSID
+	return c, started, release, unauth
+}
+
+func waitErr(t *testing.T, ch <-chan error) error {
+	t.Helper()
+	select {
+	case err := <-ch:
+		return err
+	case <-time.After(5 * time.Second):
+		t.Fatal("call did not return")
+		return nil
+	}
+}
+
+func TestRelogin_WaiterCancelled(t *testing.T) {
+	c, started, release, unauth := slowLoginServer(t)
+	errA := make(chan error, 1)
+	go func() { _, err := c.Ping(); errA <- err }()
+	<-started
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	errB := make(chan error, 1)
+	go func() { _, err := c.PingContext(ctx); errB <- err }()
+	for unauth.Load() < 2 { // B got its 401 and goes on to wait for A's login
+		time.Sleep(time.Millisecond)
+	}
+	cancel()
+	if err := waitErr(t, errB); !errors.Is(err, context.Canceled) {
+		t.Errorf("waiter: err = %v, want context.Canceled", err)
+	}
+
+	release()
+	if err := waitErr(t, errA); err != nil {
+		t.Errorf("login owner: %v", err)
+	}
+	if c.SessionID() != newSID {
+		t.Errorf("SessionID = %q, want %q", c.SessionID(), newSID)
+	}
+}
+
+func TestClearSession_DuringRelogin(t *testing.T) {
+	c, started, release, _ := slowLoginServer(t)
+	errA := make(chan error, 1)
+	go func() { _, err := c.Ping(); errA <- err }()
+	<-started
+	c.ClearSession()
+	release()
+	if err := waitErr(t, errA); !errors.Is(err, ErrUnauthorized) {
+		t.Errorf("err = %v, want ErrUnauthorized", err)
+	}
+	if sid := c.SessionID(); sid != "" {
+		t.Errorf("SessionID = %q, want cleared", sid)
+	}
+	c.mu.Lock()
+	user := c.reloginUser
+	c.mu.Unlock()
+	if user != "" {
+		t.Errorf("relogin user = %q, want forgotten", user)
 	}
 }

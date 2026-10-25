@@ -23,6 +23,42 @@
 // (github.com/neverlless/mokey, server/fakeipa_test.go, BSD-3-Clause, same
 // maintainer).
 //
+// # Seed helpers
+//
+// The helpers follow one convention:
+//
+//   - AddX(key, X) creates or replaces an object.
+//   - X(key) returns a copy of it, taken under the server's lock.
+//   - SetX is used where the object always exists (SetPwPolicy) or for
+//     server settings (SetVersion, SetReplay, SetNegotiateUser).
+//   - AddOTPToken and AddSubID take no key and return the stored value,
+//     because the server generates their IDs.
+//   - DNS zones, automember rules and certificates have no seed helper;
+//     create them with client calls.
+//   - Exceptions: hosts have no getter because Server.Host() is the server's
+//     address, and OTPTokens(owner) and SubID(owner) are keyed by owner.
+//
+// The ipatest types hold the seed input form with FreeIPA's default as the
+// zero value, so some fields differ from the matching ipa types: Disabled
+// instead of Enabled, Group.Members instead of Users, User.Telephone and
+// User.SSHPubKeys. The RBAC helpers take the ipa types and ignore their
+// Name.
+//
+// # Compatibility
+//
+// The exported API of ipatest follows goipa's semver. That covers types,
+// fields, methods and the HandlerFunc and NewRecorder signatures.
+//
+// Behaviour does not follow semver. ipatest follows real FreeIPA, and a
+// minor release may change a response, an error code, a default or a
+// replayed recording to match what FreeIPA does, or model a command that
+// used to be answered by replay or 905. Every such change is listed in
+// CHANGELOG under "ipatest".
+//
+// Quirk numbers (Q1, Q2, ...) are never reused. The default SetVersion may
+// move to the newest supported FreeIPA in a minor release; pin it in tests
+// that depend on it. Handle overrides always win and are not validated.
+//
 // # Auth model
 //
 // Every authenticated caller may run every command; ACIs are not evaluated
@@ -93,9 +129,11 @@
 //     child on a token they cannot decrypt, and goipa returns the transport
 //     error (io.EOF). A session ended with ExpireSession, and any other
 //     unknown or missing cookie, answers HTTP 401 with "WWW-Authenticate:
-//     Negotiate", which goipa maps to ErrUnauthorized. TestSessionsNotShared,
-//     TestUnknownSession, TestExpireSession,
-//     goipa.TestContractInvalidSession.
+//     Negotiate" and FreeIPA's unauthorized.html page as "text/html;
+//     charset=UTF-8", which goipa maps to ErrUnauthorized. A real session
+//     expires the same way, as mod_auth_gssapi then sees no session.
+//     TestSessionsNotShared, TestUnknownSession, TestExpireSession,
+//     goipa.TestContractInvalidSession, goipa.TestContractNoSession.
 //   - Q14: an unknown command fails with 905 CommandError ("unknown command
 //     '<name>'"). TestUnknownCommand, goipa.TestContractUnknownCommand.
 //   - Q15: session cookies are "ipa_session=MagBearerToken=...; Path=/ipa;
@@ -120,7 +158,8 @@
 //     homedirectory fail with 4205 ObjectclassViolation, as "" means no value
 //     and homeDirectory is required by posixAccount; leaving the option out
 //     gets /home/<uid> on add and keeps the value on mod.
-//     TestUserAddEmptyHomeDir, TestUserModEmptyHomeDir, goipa.TestContractUserAddDefaults.
+//     TestUserAddEmptyHomeDir, TestUserModEmptyHomeDir,
+//     goipa.TestContractUserAddDefaults.
 //   - Q20: group_show returns members unless no_members is true (all
 //     overrides it); group_find returns them only with no_members false or
 //     all true. Empty member lists are left out; gidnumber only on POSIX
@@ -154,13 +193,13 @@
 //     member lands in failed with "Insufficient access: Insufficient 'write'
 //     privilege to the 'member' attribute of entry '<dn>'.".
 //     TestGroupAddMember_DeniedGoesToFailed, TestGroupAddMember_ManagerAllowed.
-//   - Q25: nesting is transitive: memberindirect_user and
-//     memberindirect_group list what comes through member groups,
-//     memberof_group the direct parents. user_show has memberof_group (direct) and
-//     memberofindirect_group; user_find with all folds the nested groups into
-//     memberof_group and has no memberofindirect_group. Membership is the
-//     union of User.Groups and Group.Members.
-//     TestUserShow_IndirectGroups, TestUserFind_NestedGroupsFlattened.
+//   - Q25: nesting is transitive: memberindirect_user and memberindirect_group
+//     list what comes through member groups, memberof_group the direct parents.
+//     user_show has memberof_group (direct) and memberofindirect_group;
+//     user_find with all folds the nested groups into memberof_group and has no
+//     memberofindirect_group. Membership is the union of User.Groups and
+//     Group.Members. TestUserShow_IndirectGroups,
+//     TestUserFind_NestedGroupsFlattened.
 //   - Q26: street, l, st, postalcode and preferredlanguage come back only
 //     with all true; title, ou and ipapasskey always. mail lists
 //     User.Emails, else User.Email; user_add and user_mod take mail as a
@@ -248,17 +287,21 @@
 //     false, summary "Unresolved rules in --rules", error the unknown names,
 //     matched and notmatched null. A rule matches when its user, host and
 //     service parts all do: category all, the name listed, or a group of the
-//     user or a host group of the host (nested ones included) listed;
-//     service groups are not expanded. An unknown user or host just has no
-//     groups.
-//     TestContractHBACTest, TestHBACTest_*.
+//     user, a host group of the host (nested ones included) or a service
+//     group holding the service (Q150) listed. An unknown user or host just
+//     has no groups.
+//     TestContractHBACTest, TestHBACTest_*,
+//     goipa.TestContractHBACTestNestedHostGroup.
 //   - Q36: user_add_passkey and user_remove_passkey take one mapping,
 //     passkey:<id>,<key>[,<userid>]; id and key must be standard base64 and
 //     the key a PKIX public key, else 3009 `invalid 'passkey': …`. A duplicate
 //     is 4038 `'ipapasskey' already contains '<mapping>'`, an absent one on
 //     remove 4026 `'ipapasskey' does not contain '<mapping>'`. The answer
-//     holds uid and ipapasskey. Any caller may manage any user's mappings.
-//     TestPasskeyCommands, TestContractPasskeys.
+//     holds uid and ipapasskey, left out when empty, or the whole user with
+//     all. Any caller may manage any user's mappings. Before 4.11
+//     (SetVersion) both commands are 905, as Q44.
+//     TestPasskeyCommands, TestContractPasskeys, TestContractPasskeyAnswer,
+//     TestService_AuthIndVersion.
 //   - Q37: /ipa/session/sync_token answers HTTP 400 with an HTML body when
 //     user, password, first_code or second_code is missing. Otherwise it is
 //     200 with X-IPA-TokenSync-Result invalid-credentials (unknown user, no
@@ -270,12 +313,12 @@
 //   - Q38: whoami answers {"object": "user", "command": "user_show/1",
 //     "arguments": [<caller uid>]} with no "result" key. TestWhoAmI,
 //     TestContractWhoAmI.
-//   - Q39: session_logout ends the caller's session, which then gets HTTP
-//     401 as after ExpireSession; its output is {"result": null}. The reply
-//     carries a cookie that deletes ipa_session (Max-Age=0), and goipa
-//     clears its session on it. The exact cookie FreeIPA sends was not
-//     captured but is a deletion (the real-server leg of
-//     TestContractSessionLogoutGives401).
+//   - Q39: session_logout answers {"result": null} with a cookie that
+//     deletes ipa_session (Max-Age=0); goipa clears its session on it, so
+//     its next call has none and gets HTTP 401. The server keeps the session
+//     (Q155). The exact cookie FreeIPA sends was not captured but is a
+//     deletion (the real-server legs of TestContractSessionLogoutGives401
+//     and TestContractStaleSessionCookie).
 //     TestContractSessionLogoutGives401, TestSessionLogout.
 //   - Q40: user_find, group_find and host_find honour sizelimit > 0: the
 //     first n entries in sorted order (a numeric string such as "5" counts
@@ -312,7 +355,8 @@
 //     Calls records the batch call, then each nested call. A nested batch
 //     is dispatched recursively, and a nested session_logout sends no
 //     deletion cookie (neither verified against FreeIPA). TestBatch,
-//     TestBatch_MiddleFails, TestBatchMalformedEntries, goipa.TestContractBatch.
+//     TestBatch_MiddleFails, TestBatchMalformedEntries,
+//     goipa.TestContractBatch.
 //   - Q43: passkeyconfig_show answers FreeIPA's default configuration,
 //     iparequireuserverification [true], with null value and summary; only
 //     its success is pinned against FreeIPA, the attribute shape follows
@@ -337,9 +381,10 @@
 //     drops the group from other host groups, hosts, HBAC and sudo rules and
 //     service keytab access, and host_del (case-insensitive) drops the host
 //     from host groups, HBAC and sudo rules and service managedby and
-//     keytab access. Member problems (no such entry, already a member, not
-//     a member, the group itself, Insufficient access for callers that are
-//     neither admins nor member managers) come back in failed under
+//     keytab access and deletes its services (Q146). Member problems (no
+//     such entry, already a member, not a member, the group itself,
+//     Insufficient access for callers that are neither admins nor member
+//     managers) come back in failed under
 //     member.{host,hostgroup} or membermanager.{user,group}, as U3.
 //     TestContractHostGroupLifecycle, TestContractHostGroupMemberMissing,
 //     TestContractHostGroupManagers, TestHostGroupMembers_Fake,
@@ -358,11 +403,28 @@
 //     goipa.TestContractHostGroupMixedCase,
 //     goipa.TestContractHostGroupMixedCaseReferences,
 //     goipa.TestContractAutomemberHostGroupMixedCase.
+//   - Q140: host group cycles are accepted, as on FreeIPA: a group reachable
+//     from itself is in its own memberindirect_hostgroup, while
+//     memberofindirect_hostgroup (the parents' ancestors) leaves it out.
+//     goipa.TestContractHostGroupCycle.
+//   - Q141: hostgroup_* member failures spell the name as given, mixed case
+//     included; removing a host or host group that is not a member, known or
+//     not, is "This entry is not a member". The denial text names the
+//     'member' attribute for members and 'memberManager' for member
+//     managers; member managers may not change the managers.
+//     goipa.TestContractHostGroupMemberSpelling,
+//     goipa.TestContractHostGroupDenied.
+//   - Q146: host_del also deletes the services of the host (<svc>/<fqdn>).
+//     goipa.TestContractHostDeleteServices,
+//     goipa.TestHostDelete_DropsReferences.
+//   - Q147: hostgroup_del and group_del leave the automember rule of the
+//     group in place; FreeIPA keeps it with a dangling automembertargetgroup.
+//     goipa.TestContractHostGroupDeleteKeepsAutomember.
 //   - Q90: cert_request signs the CSR with an in-memory CA (ECDSA P-256,
 //     "CN=Certificate Authority,O=TEST.LOCAL", created on first use) for an
-//     existing host principal host/<fqdn>[@REALM] only; the subject is
-//     "CN=<fqdn>,O=TEST.LOCAL", validity two years, serials sequential from
-//     2. cert_request and cert_show answer certificate as base64 DER,
+//     existing host principal host/<fqdn>[@REALM] only; the subject is "CN=<the
+//     CSR's CN>,O=TEST.LOCAL", validity two years, serials sequential from 2.
+//     cert_request and cert_show answer certificate as base64 DER,
 //     serial_number as a JSON number, valid_not_before/valid_not_after in
 //     ipalib's "Mon Jan 02 15:04:05 2006 UTC" layout, and revoked.
 //     goipa.TestContractCert.
@@ -383,6 +445,20 @@
 //     2100 ACIError: FreeIPA needs Retrieve Certificates from the CA or a
 //     host principal named in the subject, and no plain user is either.
 //     goipa.TestContractCertShowPlainUser.
+//   - Q144: the principal of cert_request is case-sensitive: host/<FQDN>
+//     in another case, like any unknown principal, is 4001 "The principal
+//     for this request doesn't exist."; the CSR's CN matches the host in any
+//     case and the subject and SAN keep its spelling.
+//     goipa.TestContractCertPrincipalCase.
+//   - Q145: cert_revoke of a revoked certificate fails and keeps the first
+//     reason: before 4.12 4301 "Certificate operation cannot be completed:
+//     ERROR (Attempt to revoke non-existent certificate(s).)", on 4.12 4035
+//     HTTPRequestError "Request failed with status 400: Non-2xx response
+//     from CA REST API: 400. certificate #<hex> has already been revoked",
+//     from 4.13 4301 "Certificate operation cannot be completed: Unable to
+//     communicate with CMS (certificate 0x<hex> has already been revoked)"
+//     (seen on 4.9.13, 4.12.2 and 4.13.4; 4.10 and 4.11 are not checked).
+//     goipa.TestContractCertRevokeTwice.
 //   - Q70: hbacrule_add stores description and the user, host and service
 //     categories; hbacrule_show of a missing rule is 4001 "<cn>: HBAC rule
 //     not found" and shows members unless no_members is true.
@@ -429,6 +505,15 @@
 //     last value; a value the name lacks is 4026 AttrValueNotFound (nothing
 //     is removed), del_all removes the name, neither is 3005 OptionError.
 //     TestDNS_Errors, goipa.TestContractDNSRecords.
+//   - Q143: the apex "@" cannot be deleted: del_all is 3009 "invalid
+//     'del_all': Zone record '@' cannot be deleted", and removing its last
+//     value keeps it. A missing value is 4026 "<TYPE> record does not contain
+//     '<value>'". An absolute name outside the zone is 3009 "invalid
+//     'idnsname': out-of-zone data: record name must be a subdomain of the
+//     zone or a relative name"; a name without the trailing dot is relative
+//     even when it ends in the zone's name, and dnsrecord_add then warns
+//     with DNSSuspiciousRelativeName (13014).
+//     goipa.TestContractDNSApexAndNames.
 //   - Q104: dnsrecord_* in a missing zone, and dnszone_* of one, are 4001
 //     NotFound "<zone>: DNS zone not found"; a missing name is 4001 "<name>:
 //     DNS resource record not found". goipa.TestContractDNSRecordMissingZone,
@@ -442,7 +527,8 @@
 //     ipapermissiontype and memberindirect_role, are left out. Roles and
 //     privileges are not linked: AddRole and AddPrivilege each take their
 //     own side. The finds match the criteria against cn and description,
-//     and the cn, description and type options exactly.
+//     the cn option exactly in any case (Q153), and the description and
+//     type options exactly.
 //     goipa.TestContractRBACBuiltins, goipa.TestContractRBACFind,
 //     goipa.TestContractRBACNotFound.
 //   - Q121: role_add, role_del and role_add_member are modelled; the latter
@@ -504,6 +590,13 @@
 //     service_del of a service holding a certificate without
 //     subjectAltName; not modelled.
 //     TestService_SeededAndDisable, goipa.TestContractServiceDisable.
+//   - Q142: service_add and service_mod take krbprincipalauthind (auth_ind)
+//     as an option, and service_mod by setattr, addattr and delattr as in
+//     Q41; values outside radius, otp, pkinit, hardened, idp (and passkey
+//     from 4.11 on, SetVersion) are 3009 "invalid 'auth_ind': must be one
+//     of ..." ('krbprincipalauthind' by attribute). service_show lists them
+//     without all; a change that changes nothing is 4202.
+//     goipa.TestContractServiceAuthIndicators, TestService_AuthIndVersion.
 //   - Q110: automember rules (automember_add, _show, _find, _del) are kept
 //     per type, group or hostgroup; another type is 3009 ValidationError
 //     "invalid 'type': must be one of 'group', 'hostgroup'". show and del of
@@ -532,7 +625,8 @@
 //     are Go RE2, not the PCRE of 389-ds. Rebuild only adds.
 //     goipa.TestContractAutomemberRule, goipa.TestContractAutomemberRebuild,
 //     goipa.TestContractAutomemberDefaultGroup,
-//     goipa.TestAutomember_StageUserActivate.
+//     goipa.TestAutomember_StageUserActivate,
+//     goipa.TestContractAutomemberStageActivate.
 //   - Q113: automember_default_group_show answers automemberdefaultgroup as
 //     the group's DN in a list, or the string "No default (fallback) group
 //     set". _set of a missing group or host group is 4001 `<type> "<cn>"
@@ -571,6 +665,41 @@
 //     SudoRuleRemoveOption send one scalar call per option.
 //     goipa.TestContractSudoRuleOptions,
 //     TestSudoOption_ListAt49.
+//   - Q150: the default HBAC service groups hold FreeIPA's members: Sudo
+//     sudo and sudo-i, ftp ftp, gssftp, proftpd, pure-ftpd and vsftpd.
+//     goipa.TestContractHBACTestServiceGroup.
+//   - Q151: sudorule_add and sudorule_mod of a sudoorder another rule holds
+//     are 3009 "invalid 'order': order must be a unique value (<n> already
+//     used by <cn>)", checked before the name on add but skipping the rule
+//     of the added name, so re-adding the holder's name is 4002. sudoorder
+//     is an Int parameter: a non-number is 3008 "invalid 'order': must be
+//     an integer" before either check. sudorule_mod is
+//     modelled for description and sudoorder only (any other option is
+//     905); a rule's own order, like no change at all, is 4202.
+//     goipa.TestContractSudoOrderUnique, TestSudoRuleMod_UnmodelledOption,
+//     TestSudoRuleAdd_OrderAndName,
+//     TestSudoRuleOrder_NotAnInteger.
+//   - Q152: as Q73 for sudo rules: adding to a rule whose category is all
+//     is 4303 "users cannot be added when user category='all'" (hosts/host,
+//     "commands cannot be added when command category='all'" for allowed
+//     commands, and "users cannot be added when runAs user or runAs group
+//     category='all'" for run-as users and run-as groups when either run-as
+//     category is all). Denied commands are not checked.
+//     goipa.TestContractSudoRuleCategoryConflict.
+//   - Q153: role_find, privilege_find and permission_find match the cn
+//     option against the whole name, ignoring case ("user administrator"
+//     finds the role, "User Adm" none), the criteria as a substring.
+//     goipa.TestContractRBACFindCNExact.
+//   - Q154: otptoken_del by a caller who is neither uid admin nor in admins
+//     is 2100 "Insufficient access: " for a token that does not exist and
+//     "Insufficient access: Insufficient 'delete' privilege to delete the
+//     entry 'ipatokenuniqueid=<id>,cn=otp,dc=test,dc=local'." for another
+//     user's, on 4.9.13, 4.12.2 and 4.13.4 alike.
+//     goipa.TestContractOTPDeleteAsUser.
+//   - Q155: session_logout does not end the session on the server: the
+//     reply only deletes the client's cookie (Q39), and the old cookie sent
+//     again keeps working as before. ExpireSession is the way to end one.
+//     goipa.TestContractStaleSessionCookie.
 //
 // A response's version is the server release, 4.13.4 unless SetVersion
 // changes it, and its principal is
@@ -584,8 +713,9 @@
 // other profiles, sub-CAs, cert_find and the other cert commands are left
 // out, as is host_add's DNS check (every fqdn is accepted, as with force).
 // The *_mod commands of the families modelled since v0.9 (host groups,
-// services, HBAC and sudo rules, DNS, automember, RBAC) are not modelled,
-// nor are role, privilege and permission changes other than role_add,
+// services, HBAC and sudo rules, DNS, automember, RBAC) are not modelled
+// (sudorule_mod only for description and sudoorder, Q151), nor are role,
+// privilege and permission changes other than role_add,
 // role_del and role_add_member, HBAC services and service groups, or sudo
 // command groups; Handle is the way to reach the rest, as for config_*,
 // subid_show, stageuser_add_passkey and stageuser_remove_passkey.

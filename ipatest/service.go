@@ -21,6 +21,7 @@ type Service struct {
 	ManagedBy                    []string // managedby_host
 	HasKeytab                    bool
 	KeytabRetrieve, KeytabCreate ipa.KeytabAccess
+	AuthIndicators               []string // krbprincipalauthind
 }
 
 type serviceRec struct {
@@ -36,6 +37,7 @@ func (v Service) clone() Service {
 	v.ManagedBy = cloneStrs(v.ManagedBy)
 	v.KeytabRetrieve = cloneAccess(v.KeytabRetrieve)
 	v.KeytabCreate = cloneAccess(v.KeytabCreate)
+	v.AuthIndicators = cloneStrs(v.AuthIndicators)
 	return v
 }
 
@@ -80,6 +82,7 @@ func (r *serviceRec) render(p string, members, all bool) map[string]any {
 			out[k] = slices.Clone(v) // writeEnvelope marshals after s.mu is released
 		}
 	}
+	set("krbprincipalauthind", r.AuthIndicators)
 	if len(r.certs) > 0 {
 		certs := make([]map[string]string, len(r.certs))
 		for i, der := range r.certs {
@@ -166,6 +169,12 @@ func serviceAdd(s *Server, c Call) (any, *ipa.IpaError) {
 	}
 	_, hostname, _ := strings.Cut(strings.SplitN(p, "@", 2)[0], "/")
 	r := &serviceRec{}
+	if v, ok := c.Options["krbprincipalauthind"]; ok {
+		if err := s.checkAuthInds("auth_ind", strs(v)); err != nil {
+			return nil, err
+		}
+		r.AuthIndicators = strs(v)
+	}
 	if _, ok := s.hosts[hostname]; ok {
 		r.ManagedBy = []string{hostname}
 	} else if !flag(c, "skip_host_check") {
@@ -173,6 +182,57 @@ func serviceAdd(s *Server, c Call) (any, *ipa.IpaError) {
 	}
 	s.services[p] = r
 	return entry(p, r.render(p, true, flag(c, "all")), fmt.Sprintf("Added service %q", p)), nil
+}
+
+// checkAuthInds is the StrEnum check of krbprincipalauthind (Q142); name is
+// the option or attribute as FreeIPA names it in the error.
+func (s *Server) checkAuthInds(name string, vals []string) *ipa.IpaError {
+	allowed := []string{"radius", "otp", "pkinit", "hardened", "idp"}
+	var ma, mi int
+	_, _ = fmt.Sscanf(s.version, "%d.%d", &ma, &mi)
+	if ma > 4 || ma == 4 && mi >= 11 {
+		allowed = append(allowed, "passkey")
+	}
+	for _, v := range vals {
+		if !slices.Contains(allowed, v) {
+			return invalid(fmt.Sprintf("invalid '%s': must be one of '%s'", name, strings.Join(allowed, "', '")))
+		}
+	}
+	return nil
+}
+
+// serviceMod changes the auth indicators, by option or setattr, addattr and
+// delattr (Q142).
+func serviceMod(s *Server, c Call) (any, *ipa.IpaError) {
+	p, r, err := s.serviceArg(c)
+	if err != nil {
+		return nil, err
+	}
+	next := slices.Clone(r.AuthIndicators)
+	if v, ok := c.Options["krbprincipalauthind"]; ok {
+		if err := s.checkAuthInds("auth_ind", strs(v)); err != nil {
+			return nil, err
+		}
+		next = strs(v)
+	}
+	vals := func(attr string) ([]string, bool) {
+		return next, attr == "krbprincipalauthind"
+	}
+	merged, err := attrOpts(c.Options, vals, map[string]bool{"krbprincipalauthind": true})
+	if err != nil {
+		return nil, err
+	}
+	if v, ok := merged["krbprincipalauthind"]; ok {
+		next = strs(v)
+		if err := s.checkAuthInds("krbprincipalauthind", next); err != nil {
+			return nil, err
+		}
+	}
+	if slices.Equal(next, r.AuthIndicators) {
+		return nil, &ipa.IpaError{Code: ipa.CodeEmptyModlist, Message: "no modifications to be performed"}
+	}
+	r.AuthIndicators = next
+	return entry(p, r.render(p, true, flag(c, "all")), fmt.Sprintf("Modified service %q", p)), nil
 }
 
 func serviceDel(s *Server, c Call) (any, *ipa.IpaError) {
@@ -301,6 +361,7 @@ func init() {
 	builtins["service_find"] = serviceFind
 	builtins["service_add"] = serviceAdd
 	builtins["service_del"] = serviceDel
+	builtins["service_mod"] = serviceMod
 	builtins["service_add_host"] = serviceMembers("managedby", true, managedBy)
 	builtins["service_remove_host"] = serviceMembers("managedby", false, managedBy)
 	builtins["service_allow_retrieve_keytab"] = serviceMembers("ipaallowedtoperform_read_keys", true, retrieve)

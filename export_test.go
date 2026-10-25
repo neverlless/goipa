@@ -19,6 +19,6 @@ func FindTyped(ctx context.Context, c *Client, method string, args []string, o O
 	return findTyped(ctx, c, method, args, o, ptr)
 }
 
-func MemberEntry(ctx context.Context, c *Client, method string, args []string, lists map[string][]string) (Entry, error) {
-	return c.memberEntry(ctx, method, args, lists)
+func Members(ctx context.Context, c *Client, method string, args []string, lists map[string][]string) (*Entry, error) {
+	return members(ctx, c, method, args, lists, ptr)
 }

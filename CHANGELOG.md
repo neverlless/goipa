@@ -7,6 +7,64 @@ existing exported identifiers keep their signatures).
 
 ## [Unreleased]
 
+## [v1.0.0] - 2026-10-24
+
+The v1 API freeze: from v1.0.0 no exported identifier of `ipa` or `ipatest`
+is removed or re-signed (see Stability in the README). This release marks
+what newer identifiers supersede, fixes the last client-side bugs found in
+the API review and makes `ipatest` follow FreeIPA more closely.
+
+### Deprecated
+
+- `NewDefaultClient`, `NewDefaultClientWithSession`, `NewClient` and
+  `NewClientCustomHttp` (use `New`), `DefaultTOTPToken` (use `AddOTPToken`
+  with nil), `ParseDateTime` (use `Entry.Time`) and `Response.Error`. All
+  keep working.
+
+### Added
+
+- `ipatest`: getters `HBACRule`, `SudoRule`, `PwPolicy`, `Role`, `Privilege`
+  and `Permission`, and `Service.AuthIndicators`
+
+### Changed
+
+- Wire-equivalent shape changes, visible in `ipatest.Calls()`:
+  `hbacrule_del` and `dnszone_del` send `continue: false`;
+  `hostgroup_find` and `otptoken_find` with no criteria send `[""]` as the
+  argument
+- `Entry.Strs` returns a lone hint object other than `__dns_name__` as its
+  JSON instead of its inner value, as it already did inside a list
+- A 401 from `SetPassword` and `SyncOTPToken` now also matches
+  `ErrUnauthorized`; failures of `RemoteLogin`, `SetPassword` and
+  `SyncOTPToken` match `*HTTPError` with `errors.As`, message text unchanged
+- With `WithValidation`, an option key that names a positional argument newer
+  than the server gives `ErrNotSupported`
+- `ipatest` behaviour (see Q140 to Q155 in the package documentation):
+  `host_del` deletes the host's services; host group cycles are accepted;
+  `service_mod` and `krbprincipalauthind`; `sudoorder` must be unique and
+  sudo rules reject member lists that conflict with a category; `hbactest`
+  expands the default HBAC service groups; RBAC `cn` finds match the whole
+  name; `otptoken_del` by a non-admin gives 2100; certificate principals are
+  case-sensitive and a second revoke fails; DNS apex and name checks;
+  `session_logout` does not end the session, as on real servers (Q155), and
+  a missing session gets FreeIPA's HTML 401 page
+
+### Fixed
+
+- A goroutine waiting for another's password re-login returns `ctx.Err()`
+  when its context ends instead of blocking
+- `ClearSession` during a re-login is no longer undone by the login that was
+  already in flight
+- Command catalogue generator: `autofill` is read only as a keyword argument,
+  a stale allow-list entry and two source files for one version are errors
+
+### Security
+
+- On FreeIPA (seen on 4.9.13, 4.12.2 and 4.13.4) the server keeps accepting a session cookie after
+  `session_logout`. Logout only makes the client forget it, so treat a
+  session ID as a credential until it expires. Documented in the README and
+  the package documentation.
+
 ## [v0.9.1] - 2026-10-24
 
 ### Fixed
@@ -386,7 +444,8 @@ v0.0.1 – v0.0.7 were released by Andrew E. Bruno as
 [ubccr/goipa](https://github.com/ubccr/goipa/tags). This repository keeps
 that history.
 
-[Unreleased]: https://github.com/neverlless/goipa/compare/v0.9.1...HEAD
+[Unreleased]: https://github.com/neverlless/goipa/compare/v1.0.0...HEAD
+[v1.0.0]: https://github.com/neverlless/goipa/compare/v0.9.1...v1.0.0
 [v0.9.1]: https://github.com/neverlless/goipa/compare/v0.9.0...v0.9.1
 [v0.9.0]: https://github.com/neverlless/goipa/compare/v0.8.0...v0.9.0
 [v0.8.0]: https://github.com/neverlless/goipa/compare/v0.7.0...v0.8.0

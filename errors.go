@@ -38,6 +38,7 @@ const (
 
 // Sentinels for common FreeIPA errors. They are matched with errors.Is by
 // code only; any other code is available through errors.As and IpaError.Code.
+// Do not modify.
 var (
 	ErrNotFound       = &IpaError{Code: CodeNotFound, Name: "NotFound", Message: "not found"}
 	ErrDuplicateEntry = &IpaError{Code: CodeDuplicateEntry, Name: "DuplicateEntry", Message: "entry already exists"}
@@ -69,6 +70,25 @@ func (e *HTTPError) Is(target error) bool {
 	return target == ErrUnauthorized && e.StatusCode == http.StatusUnauthorized
 }
 
+// formHTTPError is a form endpoint's status error: it keeps the message those
+// endpoints returned before, and errors.As still finds the *HTTPError.
+type formHTTPError struct {
+	prefix string
+	*HTTPError
+}
+
+func (e *formHTTPError) Error() string {
+	return fmt.Sprintf("%s with HTTP status code: %d", e.prefix, e.StatusCode)
+}
+
+func (e *formHTTPError) Unwrap() error { return e.HTTPError }
+
+func newFormHTTPError(prefix string, res *http.Response) error {
+	return &formHTTPError{prefix, &HTTPError{StatusCode: res.StatusCode, Status: res.Status}}
+}
+
+// Sentinels for the password form endpoints and UserAdd, matched with
+// errors.Is. Do not modify.
 var (
 	// ErrPasswordPolicy is returned when a password does not conform to the password policy
 	ErrPasswordPolicy = errors.New("password does not conform to policy")
