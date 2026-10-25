@@ -66,6 +66,18 @@ FreeIPA 4.9, 4.12 and 4.13; a maintainer can also start it by hand
 merge. Every `ipatest` behaviour that mirrors a FreeIPA quirk is a numbered
 `Qn` entry in `ipatest/doc.go` naming the test that pins it.
 
+### Scheduled workflows
+
+GitHub disables a scheduled workflow after 60 days without activity in the
+repository, so the nightly integration run can stop silently. The Actions
+tab then shows a "This scheduled workflow is disabled" banner, and
+`gh workflow list -a -R neverlless/goipa` lists it as `disabled_inactivity`.
+Re-enable it with:
+
+```sh
+gh workflow enable integration.yml -R neverlless/goipa
+```
+
 ## Refreshing recorded responses
 
 `ipatest/replay/<version>/` holds responses recorded on real FreeIPA. To
