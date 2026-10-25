@@ -5,6 +5,11 @@ welcome. This project is the maintained continuation of
 [ubccr/goipa](https://github.com/ubccr/goipa). For anything bigger than a
 small fix, please open an issue first so we can agree on the API.
 
+If you maintain a fork of ubccr/goipa or have local changes that are not
+here, you are very welcome to contribute them: open an issue or a pull
+request and we will work out the API together. Credits for earlier work are
+in the [README](README.md#credits).
+
 ## Reporting issues
 
 - Use the [issue forms](https://github.com/neverlless/goipa/issues/new/choose)
@@ -84,8 +89,8 @@ redaction missed, run `go test ./ipatest/...`, and commit.
 
 ## Compatibility
 
-goipa is on v0.x but is used in production. Every exported identifier from
-any released tag keeps its signature until v1.0; add new functions or fields
+goipa is used in production. Every exported identifier from
+any released tag keeps its signature for all of v1; add new functions or fields
 instead of changing existing ones. CI's "API compatibility" job (apidiff)
 fails on incompatible changes against the latest tag. Breaking changes need
 an issue first.

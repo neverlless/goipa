@@ -72,6 +72,13 @@
 // is off by default, does not check values or required options, and does
 // nothing when the server is newer than the newest catalogued release.
 //
+// # Sessions
+//
+// On FreeIPA 4.9 to 4.13 the server keeps accepting an ipa_session cookie
+// after session_logout: logout only makes the client forget it. Treat a
+// session ID as a credential until it expires, and do not log or share it.
+// ClearSession drops the ID on the client side only.
+//
 // # Errors
 //
 // A FreeIPA error is returned as a bare *IpaError, never wrapped. This applies
