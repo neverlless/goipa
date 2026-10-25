@@ -1,7 +1,0 @@
-version: 2
-
-secret:
-  ignored_paths:
-    - "**/*_test.go"
-    - "ipatest/**"
-    - "ipatest/replay/**"
