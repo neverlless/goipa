@@ -7,6 +7,8 @@ existing exported identifiers keep their signatures).
 
 ## [Unreleased]
 
+## [v1.0.0] - 2026-10-24
+
 The v1 API freeze: from v1.0.0 no exported identifier of `ipa` or `ipatest`
 is removed or re-signed (see Stability in the README). This release marks
 what newer identifiers supersede, fixes the last client-side bugs found in
@@ -442,7 +444,8 @@ v0.0.1 – v0.0.7 were released by Andrew E. Bruno as
 [ubccr/goipa](https://github.com/ubccr/goipa/tags). This repository keeps
 that history.
 
-[Unreleased]: https://github.com/neverlless/goipa/compare/v0.9.1...HEAD
+[Unreleased]: https://github.com/neverlless/goipa/compare/v1.0.0...HEAD
+[v1.0.0]: https://github.com/neverlless/goipa/compare/v0.9.1...v1.0.0
 [v0.9.1]: https://github.com/neverlless/goipa/compare/v0.9.0...v0.9.1
 [v0.9.0]: https://github.com/neverlless/goipa/compare/v0.8.0...v0.9.0
 [v0.8.0]: https://github.com/neverlless/goipa/compare/v0.7.0...v0.8.0
