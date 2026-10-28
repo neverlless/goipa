@@ -179,6 +179,10 @@ func twinCalls() []twinCall {
 			_, err := c.SudoRuleFindContext(ctx, nil)
 			return err
 		}},
+		{"StageUserAddWithPasswordContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.StageUserAddWithPasswordContext(ctx, &ipa.User{Username: "bob"}, "Secret123")
+			return err
+		}},
 		{"StageUserAddContext", func(ctx context.Context, c *ipa.Client) error {
 			_, err := c.StageUserAddContext(ctx, &ipa.User{Username: "bob"})
 			return err

@@ -124,3 +124,24 @@ func TestContractStageActivateSummary(t *testing.T) {
 		}
 	})
 }
+
+// Q160
+func TestContractStageUserAddWithPassword(t *testing.T) {
+	forEachBackend(t, func(t *testing.T, b backend) {
+		uid := newStageUID(t, b)
+		const pw = "Secret123-" + "stage"
+		u, err := b.admin.StageUserAddWithPassword(&ipa.User{Username: uid, First: "Go", Last: "Test"}, pw)
+		if err != nil || !u.HasPassword {
+			t.Fatalf("add = %+v, %v", u, err)
+		}
+		if got, err := b.admin.StageUserShow(uid); err != nil || !got.HasPassword {
+			t.Fatalf("show = %+v, %v", got, err)
+		}
+		act, err := b.admin.StageUserActivate(uid)
+		if err != nil || !act.HasPassword {
+			t.Fatalf("activate = %+v, %v", act, err)
+		}
+		// A password an admin sets is expired on the first login.
+		wantIs(t, b.client().RemoteLogin(uid, pw), ipa.ErrExpiredPassword)
+	})
+}

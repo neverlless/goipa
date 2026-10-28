@@ -571,6 +571,9 @@ func (s *Server) userAdd(stage bool, c Call) (any, *ipa.IpaError) {
 		return nil, required("sn")
 	}
 	r := s.putUser(stage, uid, u)
+	if pw := str(c.Options["userpassword"]); pw != "" { // Q160
+		r.Password, r.PasswdExpire = pw, expiredNow()
+	}
 	if !stage {
 		s.applyAutomember(uid)
 	}

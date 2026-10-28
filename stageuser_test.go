@@ -6,6 +6,8 @@ package ipa_test
 
 import (
 	"errors"
+	"fmt"
+	"strings"
 	"testing"
 
 	ipa "github.com/neverlless/goipa"
@@ -64,5 +66,65 @@ func TestStageUserFind_DoesNotModifyOptions(t *testing.T) {
 	}
 	if len(opts) != 1 {
 		t.Errorf("options modified: %v", opts)
+	}
+}
+
+func TestStageUserAddWithPassword_SendsUserpassword(t *testing.T) {
+	s, c := newFake(t)
+	u, err := c.StageUserAddWithPassword(&ipa.User{Username: "eve", First: "Eve", Last: "E"}, "Secret123")
+	if err != nil || !u.HasPassword {
+		t.Fatalf("add = %+v, %v", u, err)
+	}
+	call := s.Calls()[0]
+	if call.Method != "stageuser_add" || call.Options["userpassword"] != "REDACTED" {
+		t.Errorf("call = %+v", call)
+	}
+	if r, _ := s.StageUser("eve"); r.Password != "Secret123" {
+		t.Errorf("server password = %q", r.Password)
+	}
+}
+
+func TestStageUserAddWithPassword_Validation(t *testing.T) {
+	c, f := newFakeIPA(t, 200, envelope(`{}`))
+	if _, err := c.StageUserAddWithPassword(&ipa.User{Username: "eve"}, ""); err == nil || err.Error() != "ipa: password is required" {
+		t.Errorf("err = %v", err)
+	}
+	if _, err := c.StageUserAddWithPassword(&ipa.User{}, "x"); err == nil || err.Error() != "ipa: username is required" {
+		t.Errorf("err = %v", err)
+	}
+	if n := len(f.Calls()); n != 0 {
+		t.Errorf("%d calls", n)
+	}
+}
+
+func TestStageUserActivate_KeepsPassword(t *testing.T) {
+	s, c := newFake(t)
+	if _, err := c.StageUserAddWithPassword(&ipa.User{Username: "eve", First: "Eve", Last: "E"}, "Secret123"); err != nil {
+		t.Fatal(err)
+	}
+	u, err := c.StageUserActivate("eve")
+	if err != nil || !u.HasPassword {
+		t.Fatalf("activate = %+v, %v", u, err)
+	}
+	if err := s.Client().RemoteLogin("eve", "Secret123"); !errors.Is(err, ipa.ErrExpiredPassword) {
+		t.Errorf("login = %v, want expired password", err)
+	}
+}
+
+func TestCalls_RedactsPasswords(t *testing.T) {
+	s, c := newFake(t)
+	if _, err := c.RPC("user_add", []string{"al"}, ipa.Options{"givenname": "A", "sn": "L", "userpassword": "Secret123"}); err != nil {
+		t.Fatal(err)
+	}
+	for _, call := range s.Calls() {
+		if strings.Contains(fmt.Sprint(call.Options), "Secret123") {
+			t.Errorf("%s leaks: %v", call.Method, call.Options)
+		}
+	}
+	if got := s.Calls()[0].Options["userpassword"]; got != "REDACTED" {
+		t.Errorf("user_add userpassword = %v", got)
+	}
+	if u, _ := s.User("al"); u.Password == "REDACTED" || u.Password == "" {
+		t.Errorf("server password = %q", u.Password)
 	}
 }

@@ -259,12 +259,16 @@ func (s *Server) SetNegotiateUser(uid string) {
 }
 
 // Calls returns a copy of every JSON-RPC call accepted so far, in order.
+// Secrets in the options (userpassword, randompassword and the other keys
+// ipatest also keeps out of recordings) read "REDACTED"; the server keeps the
+// real values.
 func (s *Server) Calls() []Call {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	out := make([]Call, len(s.calls))
 	for i, c := range s.calls {
 		out[i] = c.clone()
+		out[i].Options, _ = redact(c.Options).(map[string]any)
 	}
 	return out
 }

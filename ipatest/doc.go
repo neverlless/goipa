@@ -700,6 +700,9 @@
 //     reply only deletes the client's cookie (Q39), and the old cookie sent
 //     again keeps working as before. ExpireSession is the way to end one.
 //     goipa.TestContractStaleSessionCookie.
+//   - Q160: stageuser_add and user_add with userpassword store it, so
+//     has_password is true; the password is expired (set by an admin), and
+//     stageuser_activate keeps it. goipa.TestContractStageUserAddWithPassword.
 //
 // A response's version is the server release, 4.13.4 unless SetVersion
 // changes it, and its principal is
@@ -724,8 +727,7 @@
 // checks, serials do not move, record values are neither validated nor
 // normalised, a CNAME may share a name with other records, and dnsrecord_find
 // filters by criteria and idnsname only.
-// Stage user passwords are not modelled: userpassword is ignored and random
-// behaves as for active users. Kerberos, LDAP search filters, size limits on
+// Kerberos, LDAP search filters, size limits on
 // other commands, replication and HTTP fault injection are left out; wrap
 // HTTPClient's transport for the latter.
 package ipatest
