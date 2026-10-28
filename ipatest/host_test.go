@@ -92,3 +92,35 @@ func TestHostDel_UpdateDNSOnlyWhenAsked(t *testing.T) {
 		t.Errorf("err = %v", err)
 	}
 }
+
+func TestHostMod_RandomAndPassword(t *testing.T) {
+	s := ipatest.NewServer(t)
+	s.AddHost("m.test.local", ipatest.Host{})
+	c := s.ClientAs("admin")
+	var rec map[string]any
+	if err := json.Unmarshal(rpc(t, c, "host_mod", []string{"m.test.local"}, ipa.Options{"random": true}).Result.Data, &rec); err != nil {
+		t.Fatal(err)
+	}
+	if p, _ := rec["randompassword"].(string); p == "" || rec["has_password"] != true {
+		t.Errorf("randompassword/has_password = %v/%v", rec["randompassword"], rec["has_password"])
+	}
+	s.AddHost("n.test.local", ipatest.Host{})
+	rec = nil
+	if err := json.Unmarshal(rpc(t, c, "host_mod", []string{"n.test.local"}, ipa.Options{"userpassword": "pw"}).Result.Data, &rec); err != nil {
+		t.Fatal(err)
+	}
+	if _, has := rec["randompassword"]; has || rec["has_password"] != true {
+		t.Errorf("randompassword/has_password = %v/%v", rec["randompassword"], rec["has_password"])
+	}
+}
+
+// Q158: 4.9.13 leaves the records.
+func TestHostDel_UpdateDNSBefore412(t *testing.T) {
+	s := ipatest.NewServer(t)
+	s.SetVersion("4.9.13")
+	c := s.ClientAs("admin")
+	s.AddHost("w.test.local", ipatest.Host{})
+	rpc(t, c, "dnsrecord_add", []string{"test.local.", "w"}, ipa.Options{"arecord": "192.0.2.1"})
+	rpc(t, c, "host_del", []string{"w.test.local"}, ipa.Options{"updatedns": true})
+	rpc(t, c, "dnsrecord_show", []string{"test.local.", "w"}, nil)
+}

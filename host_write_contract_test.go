@@ -6,6 +6,7 @@ package ipa_test
 
 import (
 	"errors"
+	"reflect"
 	"slices"
 	"strings"
 	"testing"
@@ -152,6 +153,32 @@ func TestContractHostModRoundTrip(t *testing.T) {
 
 // TestContractHostDisable pins Q157: only a host with a keytab can be
 // disabled, and a one-time password alone does not count.
+// TestContractHostModMinimalRoundTrip: absent attributes go out as "" and []
+// and the server reads them as no change.
+func TestContractHostModMinimalRoundTrip(t *testing.T) {
+	forEachBackend(t, func(t *testing.T, b backend) {
+		fqdn := newHostFQDN(t, b)
+		if _, err := b.admin.HostAdd(&ipa.Host{FQDN: fqdn}, true, false); err != nil {
+			t.Fatal(err)
+		}
+		shown, err := b.admin.HostShow(fqdn)
+		if err != nil {
+			t.Fatal(err)
+		}
+		same, err := b.admin.HostMod(shown)
+		if err != nil || same != shown {
+			t.Fatalf("HostMod of a minimal host: %p, %p, %v", same, shown, err)
+		}
+		after, err := b.admin.HostShow(fqdn)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !reflect.DeepEqual(after, shown) {
+			t.Errorf("after %+v, before %+v", after, shown)
+		}
+	})
+}
+
 func TestContractHostDisable(t *testing.T) {
 	forEachBackend(t, func(t *testing.T, b backend) {
 		fqdn := newHostFQDN(t, b)
@@ -194,7 +221,7 @@ func TestContractHostDeleteUpdateDNS(t *testing.T) {
 			if updateDNS && serverAtLeast(b.admin.ServerVersion(), 4, 12) {
 				wantIs(t, err, ipa.ErrNotFound)
 			} else if err != nil {
-				t.Errorf("updateDNS=false removed the record: %v", err)
+				t.Errorf("record gone (updateDNS=%v): %v", updateDNS, err)
 			}
 		}
 	})

@@ -189,21 +189,35 @@ func hostMod(s *Server, c Call) (any, *ipa.IpaError) {
 	}
 	for k := range c.Options {
 		if !slices.Contains([]string{"all", "raw", "rights", "no_members", "version", "description", "l", "nshostlocation",
-			"nshardwareplatform", "nsosversion", "macaddress", "userclass"}, k) {
-			return nil, &ipa.IpaError{Code: ipa.CodeCommand, Message: "ipatest: host_mod models description, l, nshostlocation, nshardwareplatform, nsosversion, macaddress and userclass only, not " + k}
+			"nshardwareplatform", "nsosversion", "macaddress", "userclass", "random", "userpassword"}, k) {
+			return nil, &ipa.IpaError{Code: ipa.CodeCommand, Message: "ipatest: host_mod models description, l, nshostlocation, nshardwareplatform, nsosversion, macaddress, userclass, random and userpassword only, not " + k}
 		}
 	}
 	n := h.clone()
 	n.applyAttrs(c)
-	if n.sameAttrs(h) {
+	random := flag(c, "random")
+	if random {
+		n.Password = randomPassword()
+	} else if pw := str(c.Options["userpassword"]); pw != "" {
+		n.Password = pw
+	}
+	if n.sameAttrs(h) && n.Password == h.Password {
 		return nil, &ipa.IpaError{Code: ipa.CodeEmptyModlist, Message: "no modifications to be performed"}
 	}
 	s.hosts[fqdn] = n
 	all := flag(c, "all")
-	return entry(fqdn, s.renderHost(fqdn, n, all || !flag(c, "no_members"), all), `Modified host "`+fqdn+`"`), nil
+	rec := s.renderHost(fqdn, n, all || !flag(c, "no_members"), all)
+	if random {
+		rec["randompassword"] = n.Password
+	}
+	return entry(fqdn, rec, `Modified host "`+fqdn+`"`), nil
 }
 
-// hostDisable implements Q157.
+// hostDisable follows host_disable in FreeIPA 4.9.13 to 4.13.4: it disables
+// the keys of the host's services and of the host, leaves the one-time
+// password, and is 4010 only if there was nothing to do (Q157). Not modelled:
+// certificates (revoked and removed when the CA is on) and the refusal for
+// an IPA master (not verified).
 func hostDisable(s *Server, c Call) (any, *ipa.IpaError) {
 	if len(c.Args) == 0 || c.Args[0] == "" {
 		return nil, required("fqdn")
@@ -213,12 +227,18 @@ func hostDisable(s *Server, c Call) (any, *ipa.IpaError) {
 	if !ok {
 		return nil, notFound(c.Args[0], "host")
 	}
-	if !h.HasKeytab {
+	done := h.HasKeytab
+	for p, v := range s.services {
+		if _, host, _ := strings.Cut(strings.SplitN(p, "@", 2)[0], "/"); strings.EqualFold(host, fqdn) && v.HasKeytab {
+			v.HasKeytab, done = false, true
+		}
+	}
+	if !done {
 		return nil, &ipa.IpaError{Code: ipa.CodeAlreadyInactive, Message: "This entry is already disabled"}
 	}
 	h.HasKeytab = false
 	s.hosts[fqdn] = h
-	return map[string]any{"result": true, "value": fqdn, "summary": fmt.Sprintf("Removed kerberos key from host %q", fqdn)}, nil
+	return map[string]any{"result": true, "value": fqdn, "summary": fmt.Sprintf("Disabled host %q", fqdn)}, nil
 }
 
 func hostDel(s *Server, c Call) (any, *ipa.IpaError) {

@@ -323,7 +323,7 @@ func TestHostDisable_DropsKeytab(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if h.HasKeytab || !h.HasPassword {
+	if h.HasKeytab || !h.HasPassword { // the source leaves userPassword
 		t.Errorf("shown %+v", h)
 	}
 	var ie *ipa.IpaError
@@ -332,5 +332,22 @@ func TestHostDisable_DropsKeytab(t *testing.T) {
 	}
 	if err := c.HostDisable(""); err == nil {
 		t.Error("empty fqdn: nil error")
+	}
+}
+
+func TestHostDisable_ServiceKeys(t *testing.T) {
+	s, c := newFake(t)
+	s.AddHost("h2.test.local", ipatest.Host{})
+	s.AddService("HTTP/h2.test.local", ipatest.Service{HasKeytab: true})
+	res, err := c.RPC("host_disable", []string{"h2.test.local"}, nil)
+	if err != nil {
+		t.Fatalf("host without keytab but with a service key: %v", err)
+	}
+	if res.Result.Summary != `Disabled host "h2.test.local"` {
+		t.Errorf("summary %q", res.Result.Summary)
+	}
+	svc, err := c.ServiceShow("HTTP/h2.test.local")
+	if err != nil || svc.HasKeytab {
+		t.Errorf("service %+v, %v", svc, err)
 	}
 }

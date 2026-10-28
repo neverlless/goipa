@@ -702,9 +702,13 @@
 //     goipa.TestContractStaleSessionCookie.
 //   - Q156: host_add and host_mod return macaddress upper-case, however it
 //     was sent. goipa.TestContractHostAddShowDelete.
-//   - Q157: host_disable of a host without a keytab, one that only has a
-//     one-time password included, is 4010 "This entry is already disabled"
-//     and leaves the password. goipa.TestContractHostDisable.
+//   - Q157: host_disable disables the keys of the host's services and of the
+//     host and leaves the one-time password (from the 4.9.13, 4.12.2 and
+//     4.13.4 sources, identical); it is 4010 "This entry is already
+//     disabled" only if there was no keytab to remove, a host with only a
+//     one-time password included. Certificates and the refusal for an IPA
+//     master are not modelled. goipa.TestContractHostDisable pins the 4010;
+//     the success path is not verified against a real server.
 //   - Q158: host_del with updatedns removes the host's A and AAAA records
 //     from the zone holding its name on 4.12 and later; 4.9.13 leaves them.
 //     goipa.TestContractHostDeleteUpdateDNS.
@@ -721,7 +725,7 @@
 // other profiles, sub-CAs, cert_find and the other cert commands are left
 // out, as is host_add's DNS check (every fqdn is accepted, as with force);
 // host_mod models description, l, nshostlocation, nshardwareplatform,
-// nsosversion, macaddress and userclass only.
+// nsosversion, macaddress, userclass, random and userpassword only.
 // The *_mod commands of the families modelled since v0.9 (host groups,
 // services, HBAC and sudo rules, DNS, automember, RBAC) are not modelled
 // (sudorule_mod only for description and sudoorder, Q151), nor are role,
