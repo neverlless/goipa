@@ -14,7 +14,9 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     strategy:
-      fail-fast: false
+      # Nightly runs keep every leg for its replay artifacts and the report;
+      # a manual run on a branch stops at the first failing release.
+      fail-fast: ${{ github.event_name != 'schedule' }}
       matrix:
         image: [almalinux-8-4.9.13, almalinux-9-4.12.2, almalinux-9-4.13.4]
     steps:
