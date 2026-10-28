@@ -35,7 +35,7 @@ func TestContractHostAddShowDelete(t *testing.T) {
 		}
 		if h.FQDN != fqdn || h.Description != "d" || h.Locality != "Kyiv" || h.Location != "rack 1" ||
 			h.Platform != "x86" || h.OSVersion != "9" || h.Principal != "host/"+fqdn+"@"+b.realm ||
-			!slices.Equal(h.MACAddresses, []string{"aa:bb:cc:dd:ee:ff"}) || !slices.Equal(h.UserClass, []string{"web"}) {
+			!slices.Equal(h.MACAddresses, []string{"AA:BB:CC:DD:EE:FF"}) || !slices.Equal(h.UserClass, []string{"web"}) {
 			t.Errorf("added %+v", h)
 		}
 		if h.HasKeytab || h.HasPassword || h.RandomPassword != "" {
@@ -150,25 +150,24 @@ func TestContractHostModRoundTrip(t *testing.T) {
 	})
 }
 
+// TestContractHostDisable pins Q157: only a host with a keytab can be
+// disabled, and a one-time password alone does not count.
 func TestContractHostDisable(t *testing.T) {
 	forEachBackend(t, func(t *testing.T, b backend) {
 		fqdn := newHostFQDN(t, b)
 		if _, err := b.admin.HostAdd(&ipa.Host{FQDN: fqdn}, true, true); err != nil {
 			t.Fatal(err)
 		}
-		if err := b.admin.HostDisable(fqdn); err != nil {
-			t.Fatal(err)
+		var ie *ipa.IpaError
+		if err := b.admin.HostDisable(fqdn); !errors.As(err, &ie) || ie.Code != ipa.CodeAlreadyInactive {
+			t.Errorf("disable without keytab: %v", err)
 		}
 		h, err := b.admin.HostShow(fqdn)
 		if err != nil {
 			t.Fatal(err)
 		}
-		if h.HasKeytab || h.HasPassword {
-			t.Errorf("disabled host has keytab %v, password %v", h.HasKeytab, h.HasPassword)
-		}
-		var ie *ipa.IpaError
-		if err := b.admin.HostDisable(fqdn); !errors.As(err, &ie) || ie.Code != ipa.CodeAlreadyInactive {
-			t.Errorf("second disable: %v", err)
+		if h.HasKeytab || !h.HasPassword {
+			t.Errorf("host has keytab %v, password %v", h.HasKeytab, h.HasPassword)
 		}
 		wantIs(t, b.admin.HostDisable(newHostFQDN(t, b)), ipa.ErrNotFound)
 	})

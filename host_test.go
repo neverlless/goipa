@@ -8,6 +8,7 @@ import (
 	"errors"
 	"maps"
 	"reflect"
+	"slices"
 	"strings"
 	"testing"
 
@@ -127,7 +128,7 @@ func TestHostAdd_SendsAttributes(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if h.FQDN != "h1.test.local" || h.Locality != "Kyiv" || h.RandomPassword != "" || h.HasPassword {
+	if h.FQDN != "h1.test.local" || h.Locality != "Kyiv" || !slices.Equal(h.MACAddresses, []string{"AA:BB:CC:DD:EE:FF"}) || h.RandomPassword != "" || h.HasPassword {
 		t.Errorf("got %+v", h)
 	}
 	call := lastCall(s)
@@ -322,7 +323,7 @@ func TestHostDisable_DropsKeytab(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if h.HasKeytab || h.HasPassword {
+	if h.HasKeytab || !h.HasPassword {
 		t.Errorf("shown %+v", h)
 	}
 	var ie *ipa.IpaError

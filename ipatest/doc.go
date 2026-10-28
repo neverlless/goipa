@@ -700,6 +700,11 @@
 //     reply only deletes the client's cookie (Q39), and the old cookie sent
 //     again keeps working as before. ExpireSession is the way to end one.
 //     goipa.TestContractStaleSessionCookie.
+//   - Q156: host_add and host_mod return macaddress upper-case, however it
+//     was sent. goipa.TestContractHostAddShowDelete.
+//   - Q157: host_disable of a host without a keytab, one that only has a
+//     one-time password included, is 4010 "This entry is already disabled"
+//     and leaves the password. goipa.TestContractHostDisable.
 //
 // A response's version is the server release, 4.13.4 unless SetVersion
 // changes it, and its principal is

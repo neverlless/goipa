@@ -236,10 +236,9 @@ func (c *Client) HostDeleteContext(ctx context.Context, updateDNS bool, fqdns ..
 	return err
 }
 
-// HostDisable removes the host's Kerberos keys and one-time password with
-// `host_disable`; it requires the Host Administrators privilege (System:
-// Manage Host Keytab). A host that is already disabled is the server's
-// *IpaError.
+// HostDisable removes the host's Kerberos keys with `host_disable`; it requires the Host Administrators privilege (System:
+// Manage Host Keytab). A host without keys, which includes one that was only
+// added and never enrolled, is the server's *IpaError 4010 (AlreadyInactive).
 func (c *Client) HostDisable(fqdn string) error {
 	return c.HostDisableContext(context.Background(), fqdn)
 }

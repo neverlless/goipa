@@ -140,8 +140,11 @@ func (h *Host) applyAttrs(c Call) {
 			*p = str(v)
 		}
 	}
-	if v, ok := c.Options["macaddress"]; ok {
+	if v, ok := c.Options["macaddress"]; ok { // Q156
 		h.MACAddresses = strs(v)
+		for i, m := range h.MACAddresses {
+			h.MACAddresses[i] = strings.ToUpper(m)
+		}
 	}
 	if v, ok := c.Options["userclass"]; ok {
 		h.UserClass = strs(v)
@@ -200,8 +203,7 @@ func hostMod(s *Server, c Call) (any, *ipa.IpaError) {
 	return entry(fqdn, s.renderHost(fqdn, n, all || !flag(c, "no_members"), all), `Modified host "`+fqdn+`"`), nil
 }
 
-// hostDisable drops the keytab and the one-time password; a host with neither
-// is already disabled.
+// hostDisable implements Q157.
 func hostDisable(s *Server, c Call) (any, *ipa.IpaError) {
 	if len(c.Args) == 0 || c.Args[0] == "" {
 		return nil, required("fqdn")
@@ -211,10 +213,10 @@ func hostDisable(s *Server, c Call) (any, *ipa.IpaError) {
 	if !ok {
 		return nil, notFound(c.Args[0], "host")
 	}
-	if !h.HasKeytab && h.Password == "" {
+	if !h.HasKeytab {
 		return nil, &ipa.IpaError{Code: ipa.CodeAlreadyInactive, Message: "This entry is already disabled"}
 	}
-	h.HasKeytab, h.Password = false, ""
+	h.HasKeytab = false
 	s.hosts[fqdn] = h
 	return map[string]any{"result": true, "value": fqdn, "summary": fmt.Sprintf("Removed kerberos key from host %q", fqdn)}, nil
 }
