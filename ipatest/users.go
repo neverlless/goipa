@@ -62,6 +62,9 @@ type userRec struct {
 	id    int // 0 = none yet: a stage user has no uidnumber until activated
 	uuid  string
 	stage bool
+
+	pwHistory []string  // earlier passwords, oldest first
+	pwChanged time.Time // last change by the user; zero = never (seeded users)
 }
 
 // clone also turns empty slices into nil, so Q11's DeepEqual sees
@@ -284,8 +287,9 @@ func flag(c Call, name string) bool {
 }
 
 // apply sets the user attributes present in opts, the ones ToOptions sends
-// plus ipauserauthtype. An empty value clears the attribute.
-func (u *User) apply(opts map[string]any) {
+// plus ipauserauthtype. An empty value clears the attribute. A malformed
+// krbpasswordexpiration is refused rather than read as "never expires".
+func (u *User) apply(opts map[string]any) *ipa.IpaError {
 	for k, v := range opts {
 		switch k {
 		case "mail": // replaces the whole set (U5)
@@ -327,8 +331,34 @@ func (u *User) apply(opts map[string]any) {
 			u.SSHPubKeys = strs(v)
 		case "ipauserauthtype":
 			u.AuthTypes = strs(v)
+		case "krbpasswordexpiration": // Q41, Q184
+			if m, ok := v.(map[string]any); ok { // the JSON form of a DateTime
+				v = m["__datetime__"]
+			}
+			t, ok := parseDateTime(str(v))
+			if !ok {
+				return &ipa.IpaError{Code: ipa.CodeConversion, Name: "ConversionError", Message: "invalid 'krbpasswordexpiration': does not match any of accepted formats: %Y%m%d%H%M%SZ, %Y-%m-%dT%H:%M:%SZ, %Y-%m-%dT%H:%MZ, %Y-%m-%dZ, %Y-%m-%d %H:%M:%SZ, %Y-%m-%d %H:%MZ"}
+			}
+			u.PasswdExpire = t
 		}
 	}
+	return nil
+}
+
+const generalizedTime = "20060102150405Z"
+
+// parseDateTime reads the formats of ipalib's DateTime parameter; "" is the
+// zero time (clears the attribute).
+func parseDateTime(s string) (time.Time, bool) {
+	if s == "" {
+		return time.Time{}, true
+	}
+	for _, layout := range []string{generalizedTime, "2006-01-02T15:04:05Z", "2006-01-02T15:04Z", "2006-01-02Z", "2006-01-02 15:04:05Z", "2006-01-02 15:04Z"} {
+		if t, err := time.Parse(layout, s); err == nil {
+			return t, true
+		}
+	}
+	return time.Time{}, false
 }
 
 // attrVals is the current values of an attribute apply knows, ok false if it
@@ -347,6 +377,11 @@ func (u *User) attrVals(attr string) (vals []string, ok bool) {
 		return u.SSHPubKeys, true
 	case attr == "ipauserauthtype":
 		return u.AuthTypes, true
+	case attr == "krbpasswordexpiration":
+		if u.PasswdExpire.IsZero() {
+			return nil, true
+		}
+		return []string{u.PasswdExpire.UTC().Format(generalizedTime)}, true
 	}
 	return nil, false
 }
@@ -362,8 +397,7 @@ func (u *User) applyAttrOpts(opts map[string]any) *ipa.IpaError {
 	if err != nil {
 		return err
 	}
-	u.apply(merged)
-	return nil
+	return u.apply(merged)
 }
 
 // attrOpts is Q41: setattr, then addattr, then delattr, as FreeIPA's
@@ -556,6 +590,16 @@ func (s *Server) userAdd(stage bool, c Call) (any, *ipa.IpaError) {
 	if err != nil {
 		return nil, err
 	}
+	ldap := "Could not read UPG Definition originfilter. Check your permissions."
+	if stage {
+		ldap = noAdd("uid=" + uid + "," + stageBaseDN)
+		if str(c.Options["userpassword"]) != "" {
+			ldap = "Insufficient 'add' privilege to the 'userPassword' attribute"
+		}
+	}
+	if err := s.refuse(c, true, ldap); err != nil {
+		return nil, err
+	}
 	if s.store(stage)[uid] != nil { // Q10, Q29
 		return nil, &ipa.IpaError{Code: ipa.CodeDuplicateEntry, Message: fmt.Sprintf("%s with name %q already exists", userObject(stage), uid)}
 	}
@@ -563,7 +607,9 @@ func (s *Server) userAdd(stage bool, c Call) (any, *ipa.IpaError) {
 		return nil, err
 	}
 	var u User
-	u.apply(c.Options)
+	if err := u.apply(c.Options); err != nil {
+		return nil, err
+	}
 	if u.First == "" {
 		return nil, required("givenname")
 	}
@@ -571,6 +617,9 @@ func (s *Server) userAdd(stage bool, c Call) (any, *ipa.IpaError) {
 		return nil, required("sn")
 	}
 	r := s.putUser(stage, uid, u)
+	if pw := str(c.Options["userpassword"]); pw != "" { // Q160
+		r.Password, r.PasswdExpire = pw, expiredNow()
+	}
 	if !stage {
 		s.applyAutomember(uid)
 	}
@@ -595,11 +644,22 @@ func (s *Server) userMod(stage bool, c Call) (any, *ipa.IpaError) {
 	if err != nil {
 		return nil, err
 	}
+	if !stage && s.denied(c) {
+		attr := firstAttr(c)
+		if uid == c.User { // Q174: self-service attributes only
+			attr = notSelfService(c)
+		}
+		if attr != "" {
+			return nil, s.aciError(true, noWrite(attr, "uid="+uid+","+baseDN))
+		}
+	}
 	if err := emptyHomeDir(c); err != nil {
 		return nil, err
 	}
 	next := r.User.clone()
-	next.apply(c.Options) // empty strings clear attributes, as in FreeIPA
+	if err := next.apply(c.Options); err != nil { // empty strings clear attributes, as in FreeIPA
+		return nil, err
+	}
 	if err := next.applyAttrOpts(c.Options); err != nil {
 		return nil, err
 	}
@@ -635,6 +695,11 @@ func (s *Server) userDel(stage bool, c Call) (any, *ipa.IpaError) {
 			deleted = append(deleted, uid)
 		}
 	}
+	if len(deleted) > 0 {
+		if err := s.refuse(c, true, noDelete("uid="+deleted[0]+","+baseDN)); err != nil {
+			return nil, err
+		}
+	}
 	for _, uid := range deleted {
 		if !stage {
 			for _, g := range s.groups { // referential integrity, also when preserved
@@ -642,6 +707,9 @@ func (s *Server) userDel(stage bool, c Call) (any, *ipa.IpaError) {
 				g.ManagerUsers = slices.DeleteFunc(g.ManagerUsers, func(m string) bool { return m == uid })
 			}
 			s.dropFromRules(uid, false)
+		}
+		if !stage {
+			delete(s.grants, uid) // the role memberships that granted them go too
 		}
 		if !stage && flag(c, "preserve") {
 			users[uid].Preserved, users[uid].Locked = true, true
@@ -699,12 +767,11 @@ func passwd(s *Server, c Call) (any, *ipa.IpaError) {
 	if pw == "" {
 		return nil, required("password")
 	}
-	r.Password = pw
-	if c.User == uid { // Q3: a password set by someone else is expired
-		r.PasswdExpire = expiredNow().Add(pwdMaxLife)
-	} else {
-		r.PasswdExpire = expiredNow()
+	self := c.User == uid
+	if msg := s.pwViolation(uid, r, pw, self); msg != "" { // Q180-Q183
+		return nil, &ipa.IpaError{Code: ipa.CodeDatabase, Name: "DatabaseError", Message: msg}
 	}
+	s.setPassword(uid, r, pw, self)
 	return map[string]any{"result": true, "value": uid, "summary": fmt.Sprintf("Changed password for %q", uid)}, nil
 }
 
@@ -739,11 +806,13 @@ func changePassword(s *Server, w http.ResponseWriter, r *http.Request) {
 	switch {
 	case u == nil || u.Password == "" || u.Password != r.FormValue("old_password"):
 		result = "invalid-password"
-	case len(newPw) < s.pwpol[globalPolicy].MinLength:
-		result = "policy-error"
-		w.Header().Set("X-IPA-Pwchange-Policy-Error", "Constraint violation: Password is too short")
 	default:
-		u.Password, u.PasswdExpire = newPw, expiredNow().Add(pwdMaxLife)
+		if msg := s.pwViolation(r.FormValue("user"), u, newPw, true); msg != "" { // Q180-Q183
+			result = "policy-error"
+			w.Header().Set("X-IPA-Pwchange-Policy-Error", msg)
+			break
+		}
+		s.setPassword(r.FormValue("user"), u, newPw, true)
 	}
 	w.Header().Set("X-IPA-Pwchange-Result", result)
 }

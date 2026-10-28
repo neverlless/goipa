@@ -57,3 +57,59 @@ func TestHostShow_NotFound(t *testing.T) {
 		t.Errorf("err = %v", err)
 	}
 }
+
+func TestHostMod_UnmodelledOption(t *testing.T) {
+	s := ipatest.NewServer(t)
+	_, err := s.ClientAs("admin").RPC("host_mod", []string{"ipa.test.local"}, ipa.Options{"ipasshpubkey": "k"})
+	var ie *ipa.IpaError
+	if !errors.As(err, &ie) || ie.Code != ipa.CodeCommand || !strings.Contains(ie.Message, "ipasshpubkey") {
+		t.Errorf("err = %v", err)
+	}
+}
+
+func TestHostAdd_RandomPasswordShape(t *testing.T) {
+	s := ipatest.NewServer(t)
+	var rec map[string]any
+	res := rpc(t, s.ClientAs("admin"), "host_add", []string{"n.test.local"}, ipa.Options{"random": true, "force": true})
+	if err := json.Unmarshal(res.Result.Data, &rec); err != nil {
+		t.Fatal(err)
+	}
+	if p, _ := rec["randompassword"].(string); p == "" || rec["has_password"] != true {
+		t.Errorf("randompassword/has_password = %v/%v", rec["randompassword"], rec["has_password"])
+	}
+}
+
+func TestHostDel_UpdateDNSOnlyWhenAsked(t *testing.T) {
+	s := ipatest.NewServer(t)
+	c := s.ClientAs("admin")
+	s.AddHost("w.test.local", ipatest.Host{})
+	rpc(t, c, "dnsrecord_add", []string{"test.local.", "w"}, ipa.Options{"arecord": "192.0.2.1"})
+	rpc(t, c, "host_del", []string{"w.test.local"}, nil)
+	rpc(t, c, "dnsrecord_show", []string{"test.local.", "w"}, nil)
+	s.AddHost("w.test.local", ipatest.Host{})
+	rpc(t, c, "host_del", []string{"w.test.local"}, ipa.Options{"updatedns": true})
+	if _, err := c.RPC("dnsrecord_show", []string{"test.local.", "w"}, nil); !errors.Is(err, ipa.ErrNotFound) {
+		t.Errorf("err = %v", err)
+	}
+}
+
+func TestHostMod_RandomAndPassword(t *testing.T) {
+	s := ipatest.NewServer(t)
+	s.AddHost("m.test.local", ipatest.Host{})
+	c := s.ClientAs("admin")
+	var rec map[string]any
+	if err := json.Unmarshal(rpc(t, c, "host_mod", []string{"m.test.local"}, ipa.Options{"random": true}).Result.Data, &rec); err != nil {
+		t.Fatal(err)
+	}
+	if p, _ := rec["randompassword"].(string); p == "" || rec["has_password"] != true {
+		t.Errorf("randompassword/has_password = %v/%v", rec["randompassword"], rec["has_password"])
+	}
+	s.AddHost("n.test.local", ipatest.Host{})
+	rec = nil
+	if err := json.Unmarshal(rpc(t, c, "host_mod", []string{"n.test.local"}, ipa.Options{"userpassword": "pw"}).Result.Data, &rec); err != nil {
+		t.Fatal(err)
+	}
+	if _, has := rec["randompassword"]; has || rec["has_password"] != true {
+		t.Errorf("randompassword/has_password = %v/%v", rec["randompassword"], rec["has_password"])
+	}
+}

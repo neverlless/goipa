@@ -63,6 +63,7 @@ type Client struct {
 	krb5Data    string // krb5.conf text (a string keeps Client comparable); wins over krb5Path
 	relogin     bool
 	validate    bool   // WithValidation
+	truncErrors bool   // WithTruncationErrors
 	reloginUser string // guarded by mu
 	reloginPass string // guarded by mu
 }

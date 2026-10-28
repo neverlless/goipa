@@ -24,6 +24,7 @@ type settings struct {
 	krb5Data    []byte
 	relogin     bool
 	validate    bool
+	truncErrors bool
 }
 
 // Option configures a Client built by New.
@@ -113,6 +114,18 @@ func WithPasswordRelogin() Option {
 	}
 }
 
+// WithTruncationErrors makes UserFind, GroupFind, HostFind, StageUserFind,
+// SubIDFind, FetchOTPTokens, HBACRuleFind and SudoRuleFind (and their Context
+// twins) return ErrTruncated together with the entries they got when the
+// server cut the search short. Off by default, so a caller that treats any
+// error as failure keeps getting its results.
+func WithTruncationErrors() Option {
+	return func(s *settings) error {
+		s.truncErrors = true
+		return nil
+	}
+}
+
 // New builds a Client from options. Without WithHost and WithRealm it takes
 // them from /etc/ipa/default.conf; without WithCACert or WithHTTPClient it
 // trusts /etc/ipa/ca.crt (else the system roots); without a Kerberos option it
@@ -158,7 +171,7 @@ func New(opts ...Option) (*Client, error) {
 	}
 	return &Client{
 		host: s.host, realm: s.realm, httpClient: s.httpClient, sticky: true,
-		krb5Path: s.krb5Path, krb5Data: string(s.krb5Data), relogin: s.relogin, validate: s.validate,
+		krb5Path: s.krb5Path, krb5Data: string(s.krb5Data), relogin: s.relogin, validate: s.validate, truncErrors: s.truncErrors,
 	}, nil
 }
 

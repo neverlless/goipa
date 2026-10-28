@@ -61,14 +61,34 @@
 //
 // # Auth model
 //
-// Every authenticated caller may run every command; ACIs are not evaluated
-// except the group member checks of Q24, the pwpolicy_show check of Q32, the
-// cert_show check of Q95 and the RBAC reads of Q122, so where FreeIPA
-// answers 2100 ACIError ipatest runs the command: an ordinary user deleting a
-// missing OTP token gets 4001 NotFound here and "2100 Insufficient access"
-// from FreeIPA.
-// OTP codes are not checked. A caller is authenticated by a session from
-// Session, ClientAs or a login, or, on /ipa/json, by SetNegotiateUser.
+// uid admin and members of admins may run every command. Other callers are
+// refused, with 2100 ACIError, the writes FreeIPA refuses a user without a
+// role on every release (Q168): user_add, user_mod, user_del and
+// stageuser_add; group_add, group_mod and group_del; host_add, host_mod and
+// host_del; hostgroup_add and hostgroup_del; service_add and service_del;
+// hbacrule_add, hbacrule_enable, hbacrule_disable and hbacrule_del;
+// sudorule_add and sudorule_del; dnszone_add; automember_add. Beyond those,
+// ACIs are evaluated only by the group member checks of Q24, the
+// pwpolicy_show check of Q32, the cert_show check of Q95, the RBAC reads of
+// Q122 and the otptoken_del check of Q154; every other command runs for any
+// caller, so where FreeIPA answers 2100 ACIError ipatest runs it (Q171,
+// Q172). Self-service calls (own passkey, OTP token, password, and user_mod
+// of the self-service attributes of the own entry, Q174) are not refused.
+// GrantPrivilege gives a caller a privilege as a role would; each check above
+// then also passes for the privileges FreeIPA binds to it (Q173): the writes
+// for the default privileges of their managed permissions (User
+// Administrators, Stage User Administrators or Stage User Provisioning, Group
+// Administrators, Host Administrators, Host Group Administrators, Service
+// Administrators, HBAC Administrator, Sudo Administrator, DNS Administrators;
+// automember_add has none), Q24 member writes for Group Administrators or
+// Modify Group membership (host groups: Host Group Administrators; manager
+// writes stay admin-only), Q32 for Password Policy Readers or Password Policy
+// Administrator, Q95 for Certificate Administrators or Host Administrators,
+// Q122 for RBAC Readers. Q154 has no privilege: FreeIPA lets only admins and
+// the token's managers delete another user's token. Grants are not shown by
+// role, privilege or user reads. OTP codes are not checked. A caller is
+// authenticated by a session from Session, ClientAs or a login, or, on
+// /ipa/json, by SetNegotiateUser.
 //
 // # FreeIPA behaviour kept
 //
@@ -252,8 +272,9 @@
 //     also for option user), not 2100. With option user the answer has no
 //     cospriority, as pwpolicy_show asks add_cospriority for a cn of None.
 //     pwpolicy_add needs an existing
-//     group (4001) and cospriority (3007); login_password and change_password
-//     use the global MaxFailures (0 disables lockout) and MinLength.
+//     group (4001) and cospriority (3007); login_password
+//     uses the global MaxFailures (0 disables lockout); a password change
+//     uses the user's effective policy (Q180).
 //     pwpolicy_show takes only all, raw, rights, user and version; any other
 //     option is 3005 OptionError "Unknown option: <name>".
 //     TestContractPwPolicyGlobal, TestUserPwPolicy_Resolution,
@@ -339,8 +360,11 @@
 //     TestContractModify; TestModify_Apply pins
 //     the fake. More than one value for a single-valued attribute (two
 //     setattr values, or addattr on a set one) is 4207 OnlyOneValueAllowed
-//     "attr: Only one value allowed.", TestModify_SingleValued. Only mail,
-//     ipasshpubkey and ipauserauthtype take several values here;
+//     "attr: Only one value allowed.", TestModify_SingleValued.
+//     setattr krbPasswordExpiration=<generalized time, 20271231235959Z>
+//     sets the password expiry (empty clears it),
+//     TestUserMod_SetattrPasswordExpiration. Only mail, ipasshpubkey and
+//     ipauserauthtype take several values here;
 //     telephonenumber, mobile and userclass are multivalue in FreeIPA but
 //     one string in the fake, so the fake rejects what FreeIPA accepts.
 //   - Q42: batch runs each {"method", "params": [args, options]} entry as
@@ -700,6 +724,136 @@
 //     reply only deletes the client's cookie (Q39), and the old cookie sent
 //     again keeps working as before. ExpireSession is the way to end one.
 //     goipa.TestContractStaleSessionCookie.
+//   - Q156: host_add and host_mod return macaddress upper-case, however it
+//     was sent. goipa.TestContractHostAddShowDelete.
+//   - Q157: host_disable disables the keys of the host's services and of the
+//     host and leaves the one-time password (from the 4.9.13, 4.12.2 and
+//     4.13.4 sources, identical); it is 4010 "This entry is already
+//     disabled" only if there was no keytab to remove, a host with only a
+//     one-time password included. Certificates and the refusal for an IPA
+//     master are not modelled. goipa.TestContractHostDisable pins the 4010;
+//     the success path is not verified against a real server.
+//   - Q158: host_del with updatedns removes the host's A and AAAA records
+//     from the zone holding its name. One real 4.9.13 run left the record
+//     (two others removed it); the cause is not known, so the fake always
+//     removes it. goipa.TestContractHostDeleteUpdateDNS.
+//   - Q160: stageuser_add and user_add with userpassword store it, so
+//     has_password is true; the password is expired (set by an admin), and
+//     stageuser_activate copies it to the active user, expired again as of
+//     the activation, so the first login is "password expired" until user_mod
+//     setattr krbPasswordExpiration lifts it.
+//     goipa.TestContractStageUserAddWithPassword.
+//   - Q164: stageuser_find honours sizelimit like user_find (Q40).
+//     goipa.TestContractTruncationOptIn.
+//   - Q165: hbacrule_find and sudorule_find honour sizelimit like Q40.
+//     goipa.TestContractTruncationOptIn.
+//   - Q166: subid_find honours sizelimit like Q40.
+//     goipa.TestContractTruncationOptIn.
+//   - Q167: otptoken_find honours sizelimit like Q40.
+//     goipa.TestContractTruncationOptIn.
+//   - Q168: a caller who is neither uid admin nor in admins and holds none of
+//     the command's privileges (see # Auth model) gets 2100 ACIError on the
+//     writes listed there, except user_mod of the caller's own self-service
+//     attributes (Q174); the target is looked up first, so a missing one is
+//     4001 as before, and an add is refused before its duplicate check. On
+//     4.9.13, 4.12.2 and 4.13.4 alike. goipa.TestContractPlainUserWrites,
+//     TestPlainUserWriteRefused.
+//   - Q169: the message is "Insufficient access: not allowed to perform this
+//     operation" (FreeIPA's API permission gate) unless SetVersion is from
+//     4.10 up to 4.13.3, where it is the directory's ACI text, as on 4.12.2:
+//     "Insufficient 'add' privilege to add the entry '<dn>'.", "Insufficient
+//     'delete' privilege to delete the entry '<dn>'." or "Insufficient
+//     'write' privilege to the '<attr>' attribute of entry '<dn>'." (FreeIPA
+//     names one of the modified attributes, not always the same one; ipatest
+//     the first option in name order); user_add is "Could not read UPG
+//     Definition originfilter. Check your permissions." and stageuser_add
+//     with userpassword "Insufficient 'add' privilege to the 'userPassword'
+//     attribute". The 4.9.13 integration image (AlmaLinux 8) answers with the
+//     gate text, so ipatest does too. goipa.TestContractPlainUserWrites,
+//     TestPlainUserMessageByVersion.
+//   - Q170: hbacrule_enable, hbacrule_disable and automember_add are not
+//     behind the gate and
+//     answer the directory's text on every release: "Insufficient 'write'
+//     privilege to the 'ipaEnabledFlag' attribute of entry
+//     'ipauniqueid=<id>,cn=hbac,<base>'." and "Insufficient 'add' privilege
+//     to add the entry 'cn=<name>,cn=<type>,cn=automember,cn=etc,<base>'.".
+//     goipa.TestContractPlainUserWrites, TestPlainUserMessageByVersion.
+//   - Q171: not modelled: FreeIPA hides DNS zones from a caller without a
+//     DNS privilege, so dnsrecord_add by a plain user is 4001 "<zone>: DNS
+//     zone not found" on 4.9.13, 4.12.2 and 4.13.4; ipatest adds the record.
+//     host_disable and service_disable of an entry without keys are 4010
+//     for a plain user as for admin (Q157). host_disable of a host that has
+//     keys by a plain user is not refused by ipatest (not probed).
+//     goipa.TestContractPlainUserWrites.
+//   - Q172: not modelled: 4.13.4 refuses user_add_passkey on the caller's
+//     own entry with "Insufficient access: not allowed to perform this
+//     operation" (4.12.2 allows it); ipatest allows it on every release.
+//     goipa.TestContractPlainUserWrites.
+//   - Q173: GrantPrivilege(uid, privilege) lets uid pass the checks bound to
+//     privilege (see # Auth model); any other name is kept and grants
+//     nothing, as AddUser takes any input; user_del (preserve too) drops the
+//     user's grants, as their role memberships go. The privilege names are
+//     those of FreeIPA 4.9.13, 4.12.2 and 4.13.4.
+//     goipa.TestContractPrivilegeNames,
+//     TestGrantPrivilege_UserAdministrators,
+//     TestGrantPrivilege_PwPolicyReaders, TestGrantPrivilege_OtherChecks,
+//     TestGrantPrivilege_UnknownPrivilege,
+//     TestGrantPrivilege_ClearedOnUserDel.
+//   - Q174: on the own entry a caller who holds none of user_mod's privileges
+//     may change only the attributes of FreeIPA's self-service ACIs
+//     (install/share/default-aci.ldif: "User Self service" — givenname, sn,
+//     cn, displayname, title, initials, loginshell, gecos, homephone, mobile,
+//     pager, facsimiletelephonenumber, telephonenumber, street, roomnumber,
+//     l, st, postalcode, manager, secretary, description, carlicense,
+//     labeleduri, inetuserhttpurl, seealso, employeetype, businesscategory,
+//     ou — plus the own password, SSH key and certificate ACIs), options and
+//     setattr/addattr/delattr alike. Any other attribute (mail,
+//     homedirectory, or the whole record the typed UserMod sends) is 2100 on
+//     4.9.13, 4.12.2 and 4.13.4. FreeIPA's message, gate or directory text,
+//     is not pinned (it names objectClass for the whole record); ipatest
+//     follows Q169, naming the first such attribute.
+//     goipa.TestContractPlainUserWrites, TestOwnUserModOutsideSelfService,
+//     TestSelfServiceAllowed.
+//   - Q180: the passwd command and /ipa/session/change_password check a new
+//     password against the policy effective for the user (the Q32
+//     resolution: lowest cospriority among the groups, else global), not the
+//     global policy alone. A refusal of the form is
+//     X-IPA-Pwchange-Result policy-error with the reason in
+//     X-IPA-Pwchange-Policy-Error ("Constraint violation: Password is too
+//     short", "... is too simple", "... Password reuse not permitted",
+//     "... Too soon to change password"); passwd answers 4203 DatabaseError
+//     with the same text as its message. A change by someone else (the admin
+//     resetting a password) skips the length, class and lifetime checks and
+//     keeps the history check. TestChangePassword_GroupPolicyStricter,
+//     TestChangePassword_AdminSkipsLengthAndClasses,
+//     TestContractPasswordPolicyEffective.
+//   - Q181: krbpwdmindiffchars is the number of character classes (lower,
+//     upper, digit, other) the password needs; FreeIPA also refuses a
+//     password of at most that many different characters ("aaaDaaaa1aaa"
+//     with 3), with the same message ("too simple"). Observed only with 3;
+//     other values are extrapolated. The checks run in the order minimum
+//     lifetime (Q183), classes, length, history (Q182); 4.9.13 and 4.12.2
+//     check the length before the classes, so a password that is both short
+//     and simple is "too short" there and "too simple" from 4.13; ipatest
+//     follows 4.13.4. TestChangePassword_CharacterClasses,
+//     TestContractPasswordPolicyEffective, TestContractPasswordCheckOrder.
+//   - Q182: krbpwdhistorylength N refuses the current password and the N-1
+//     before it, by the form and by the admin's passwd alike; the first
+//     change from a password set while the policy kept no history is
+//     allowed even to the same value. TestChangePassword_History,
+//     TestContractPasswordHistory (the real server needs the changes to be
+//     at least a second apart).
+//   - Q183: krbminpwdlife refuses a change by the owner (form and passwd)
+//     within the lifetime of the owner's last change. A password set by an
+//     admin is expired and exempt; seeded users (AddUser) count as changed
+//     long ago. The global policy's default lifetime is one hour, so a
+//     second change in a row needs SetPwPolicy with MinLife 0.
+//     TestChangePassword_MinLife, TestContractPasswordMinLife.
+//   - Q184: a krbpasswordexpiration that is not a DateTime (setattr or
+//     option) is 3008 ConversionError "invalid 'krbpasswordexpiration': does
+//     not match any of accepted formats: ...", never read as "no expiry".
+//     TestUserMod_MalformedPasswordExpiration,
+//     goipa.TestContractStageUserAddWithPassword (setattr only).
 //
 // A response's version is the server release, 4.13.4 unless SetVersion
 // changes it, and its principal is
@@ -711,7 +865,9 @@
 // Certificates are issued (cert_request, cert_show, cert_revoke) for service
 // principals only, with the default profile; user and host certificates,
 // other profiles, sub-CAs, cert_find and the other cert commands are left
-// out, as is host_add's DNS check (every fqdn is accepted, as with force).
+// out, as is host_add's DNS check (every fqdn is accepted, as with force);
+// host_mod models description, l, nshostlocation, nshardwareplatform,
+// nsosversion, macaddress, userclass, random and userpassword only.
 // The *_mod commands of the families modelled since v0.9 (host groups,
 // services, HBAC and sudo rules, DNS, automember, RBAC) are not modelled
 // (sudorule_mod only for description and sudoorder, Q151), nor are role,
@@ -724,8 +880,7 @@
 // checks, serials do not move, record values are neither validated nor
 // normalised, a CNAME may share a name with other records, and dnsrecord_find
 // filters by criteria and idnsname only.
-// Stage user passwords are not modelled: userpassword is ignored and random
-// behaves as for active users. Kerberos, LDAP search filters, size limits on
+// Kerberos, LDAP search filters, size limits on
 // other commands, replication and HTTP fault injection are left out; wrap
 // HTTPClient's transport for the latter.
 package ipatest

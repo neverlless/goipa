@@ -202,7 +202,7 @@ func otptokenFind(s *Server, c Call) (any, *ipa.IpaError) {
 			recs = append(recs, t.render())
 		}
 	}
-	return list(recs), nil
+	return listLimited(c, recs), nil
 }
 
 // lastActive implements Q7: the guard for the last enabled token of a user

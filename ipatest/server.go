@@ -126,6 +126,7 @@ type Server struct {
 	amRules    map[string]map[string]*amRule
 	amDefs     map[string]string // default group cn by type
 	sudocmds   map[string]string
+	grants     map[string]map[string]bool // uid -> privilege, from GrantPrivilege
 }
 
 // NewServer starts a server and closes it with tb.Cleanup.
@@ -165,6 +166,7 @@ func New() *Server {
 		amRules:    map[string]map[string]*amRule{"group": {}, "hostgroup": {}},
 		amDefs:     map[string]string{},
 		sudocmds:   map[string]string{},
+		grants:     map[string]map[string]bool{},
 	}
 	mux := http.NewServeMux()
 	mux.HandleFunc("/ipa/session/json", s.serveSessionJSON)
@@ -259,12 +261,16 @@ func (s *Server) SetNegotiateUser(uid string) {
 }
 
 // Calls returns a copy of every JSON-RPC call accepted so far, in order.
+// Secrets in the options (userpassword, randompassword and the other keys
+// ipatest also keeps out of recordings) read "REDACTED"; the server keeps the
+// real values.
 func (s *Server) Calls() []Call {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	out := make([]Call, len(s.calls))
 	for i, c := range s.calls {
 		out[i] = c.clone()
+		out[i].Options, _ = redact(c.Options).(map[string]any)
 	}
 	return out
 }

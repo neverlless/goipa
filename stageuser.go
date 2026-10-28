@@ -44,6 +44,27 @@ func (c *Client) StageUserAddContext(ctx context.Context, user *User) (*User, er
 	return c.stageUser(ctx, "stageuser_add", []string{user.Username}, nonEmpty(user.ToOptions()))
 }
 
+// StageUserAddWithPassword is like StageUserAdd but sets the password in the
+// same call (`userpassword`), which StageUserActivate keeps. It is a separate
+// call, not a field on User, because User.ToOptions would then send the
+// password with every add and mod.
+func (c *Client) StageUserAddWithPassword(user *User, password string) (*User, error) {
+	return c.StageUserAddWithPasswordContext(context.Background(), user, password)
+}
+
+// StageUserAddWithPasswordContext is like StageUserAddWithPassword but bounds the request with ctx.
+func (c *Client) StageUserAddWithPasswordContext(ctx context.Context, user *User, password string) (*User, error) {
+	if user.Username == "" {
+		return nil, errors.New("ipa: username is required")
+	}
+	if password == "" {
+		return nil, errors.New("ipa: password is required")
+	}
+	options := nonEmpty(user.ToOptions())
+	options["userpassword"] = password
+	return c.stageUser(ctx, "stageuser_add", []string{user.Username}, options)
+}
+
 // StageUserShow fetches a stage user with `stageuser_show`. It requires the
 // Stage User Administrators privilege.
 func (c *Client) StageUserShow(username string) (*User, error) {
@@ -62,8 +83,8 @@ func (c *Client) StageUserShowContext(ctx context.Context, username string) (*Us
 // through (e.g. `uid`, `sizelimit`). It requires the Stage User Administrators
 // privilege.
 //
-// A truncated search is not reported (kept for compatibility); use FindEntries
-// with the same method to detect it.
+// A truncated search is not reported unless the Client was built
+// WithTruncationErrors; FindEntries reports it too.
 func (c *Client) StageUserFind(options Options) ([]*User, error) {
 	return c.StageUserFindContext(context.Background(), options)
 }
@@ -89,7 +110,7 @@ func (c *Client) StageUserFindContext(ctx context.Context, options Options) ([]*
 		}
 		users = append(users, u)
 	}
-	return users, nil
+	return users, c.truncated(res)
 }
 
 // StageUserMod modifies a stage user with `stageuser_mod`, sending the same

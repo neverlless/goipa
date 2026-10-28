@@ -79,6 +79,12 @@
 // session ID as a credential until it expires, and do not log or share it.
 // ClearSession drops the ID on the client side only.
 //
+// A Kerberos client sends its first request to /ipa/json with SPNEGO; FreeIPA
+// answers with an ipa_session cookie and later calls use /ipa/session/json
+// with that cookie, so the KDC sees one ticket request per session. After
+// StickySession(false) every call negotiates SPNEGO. LoginFromCCache takes the
+// path of a file cache; strip a FILE: prefix taken from KRB5CCNAME.
+//
 // # Errors
 //
 // A FreeIPA error is returned as a bare *IpaError, never wrapped. This applies
@@ -104,7 +110,9 @@
 //
 // A Find returns ErrTruncated together with the entries it got, when the
 // server cut the search short. This applies to the Finds added in v0.9 and to
-// FindEntries.
+// FindEntries. UserFind, GroupFind, HostFind, StageUserFind, SubIDFind,
+// FetchOTPTokens, HBACRuleFind and SudoRuleFind did not report it in v1.0 and
+// still do not, unless the Client was built WithTruncationErrors.
 //
 // UserAdd keeps upstream's ErrUserExists for 4002.
 //

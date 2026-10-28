@@ -6,6 +6,8 @@ package ipa_test
 
 import (
 	"errors"
+	"fmt"
+	"strings"
 	"testing"
 
 	ipa "github.com/neverlless/goipa"
@@ -64,5 +66,116 @@ func TestStageUserFind_DoesNotModifyOptions(t *testing.T) {
 	}
 	if len(opts) != 1 {
 		t.Errorf("options modified: %v", opts)
+	}
+}
+
+func TestStageUserAddWithPassword_SendsUserpassword(t *testing.T) {
+	s, c := newFake(t)
+	u, err := c.StageUserAddWithPassword(&ipa.User{Username: "eve", First: "Eve", Last: "E"}, "Secret123")
+	if err != nil || !u.HasPassword {
+		t.Fatalf("add = %+v, %v", u, err)
+	}
+	call := s.Calls()[0]
+	if call.Method != "stageuser_add" || call.Options["userpassword"] != "REDACTED" {
+		t.Errorf("call = %+v", call)
+	}
+	if r, _ := s.StageUser("eve"); r.Password != "Secret123" {
+		t.Errorf("server password = %q", r.Password)
+	}
+}
+
+func TestStageUserAddWithPassword_Validation(t *testing.T) {
+	c, f := newFakeIPA(t, 200, envelope(`{}`))
+	if _, err := c.StageUserAddWithPassword(&ipa.User{Username: "eve"}, ""); err == nil || err.Error() != "ipa: password is required" {
+		t.Errorf("err = %v", err)
+	}
+	if _, err := c.StageUserAddWithPassword(&ipa.User{}, "x"); err == nil || err.Error() != "ipa: username is required" {
+		t.Errorf("err = %v", err)
+	}
+	if n := len(f.Calls()); n != 0 {
+		t.Errorf("%d calls", n)
+	}
+}
+
+func TestStageUserActivate_KeepsPassword(t *testing.T) {
+	s, c := newFake(t)
+	if _, err := c.StageUserAddWithPassword(&ipa.User{Username: "eve", First: "Eve", Last: "E"}, "Secret123"); err != nil {
+		t.Fatal(err)
+	}
+	u, err := c.StageUserActivate("eve")
+	if err != nil || !u.HasPassword {
+		t.Fatalf("activate = %+v, %v", u, err)
+	}
+	if err := s.Client().RemoteLogin("eve", "Secret123"); !errors.Is(err, ipa.ErrExpiredPassword) {
+		t.Errorf("login = %v, want expired password", err)
+	}
+}
+
+func TestCalls_RedactsPasswords(t *testing.T) {
+	s, c := newFake(t)
+	if _, err := c.RPC("user_add", []string{"al"}, ipa.Options{"givenname": "A", "sn": "L", "userpassword": "Secret123"}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := c.HostAddWithPassword(&ipa.Host{FQDN: "web.test.local"}, true, "Secret123"); err != nil {
+		t.Fatal(err)
+	}
+	for _, call := range s.Calls() {
+		if strings.Contains(fmt.Sprint(call.Options), "Secret123") {
+			t.Errorf("%s leaks: %v", call.Method, call.Options)
+		}
+	}
+	if got := s.Calls()[0].Options["userpassword"]; got != "REDACTED" {
+		t.Errorf("user_add userpassword = %v", got)
+	}
+	if u, _ := s.User("al"); u.Password == "REDACTED" || u.Password == "" {
+		t.Errorf("server password = %q", u.Password)
+	}
+	if got := s.Calls()[1].Options["userpassword"]; got != "REDACTED" {
+		t.Errorf("host_add userpassword = %v", got)
+	}
+	if h, err := c.HostShow("web.test.local"); err != nil || !h.HasPassword {
+		t.Errorf("host = %+v, %v", h, err)
+	}
+}
+
+func TestUserMod_SetattrPasswordExpiration(t *testing.T) {
+	s, c := newFake(t)
+	if _, err := c.StageUserAddWithPassword(&ipa.User{Username: "eve", First: "Eve", Last: "E"}, "Secret123"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := c.StageUserActivate("eve"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := c.RPC("user_mod", []string{"eve"}, ipa.Options{"setattr": "krbPasswordExpiration=20371231235959Z"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.Client().RemoteLogin("eve", "Secret123"); err != nil {
+		t.Errorf("login after lifting expiry = %v", err)
+	}
+}
+
+func TestUserMod_MalformedPasswordExpiration(t *testing.T) {
+	_, c := newFake(t)
+	if _, err := c.StageUserAddWithPassword(&ipa.User{Username: "eve", First: "Eve", Last: "E"}, "Secret123"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := c.StageUserActivate("eve"); err != nil {
+		t.Fatal(err)
+	}
+	for what, opts := range map[string]ipa.Options{
+		"setattr": {"setattr": "krbPasswordExpiration=garbage"},
+		"option":  {"krbpasswordexpiration": "garbage"},
+	} {
+		_, err := c.RPC("user_mod", []string{"eve"}, opts)
+		var ierr *ipa.IpaError
+		if !errors.As(err, &ierr) || ierr.Code != ipa.CodeConversion {
+			t.Errorf("%s: err = %v, want 3008", what, err)
+		}
+	}
+	if u, err := c.UserShow("eve"); err != nil || u.PasswdExpire.IsZero() {
+		t.Errorf("the expiry was lost: %+v, %v", u, err)
+	}
+	if _, err := c.RPC("user_mod", []string{"eve"}, ipa.Options{"krbpasswordexpiration": map[string]any{"__datetime__": "20371231235959Z"}}); err != nil {
+		t.Errorf("DateTime option: %v", err)
 	}
 }
