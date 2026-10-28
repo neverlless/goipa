@@ -263,9 +263,11 @@ When a session expires (HTTP 401), the call is retried once:
 Kerberos clients send the first call to `/ipa/json` with SPNEGO; FreeIPA
 answers with an `ipa_session` cookie and later calls use `/ipa/session/json`
 with it, negotiating again only after a 401. The KDC therefore sees one ticket
-request per session, not one per call. `LoginFromCCache` reads file caches
-only (`FILE:` or a path). RHEL and Fedora default to `KCM:`, so run
-`kinit -c /tmp/krb5cc_app` (or set `KRB5CCNAME=FILE:…`) or use a keytab.
+request per session, not one per call; after `StickySession(false)` every
+call negotiates SPNEGO. `LoginFromCCache` takes the path of a file cache, so
+strip a `FILE:` prefix taken from `KRB5CCNAME`. KCM caches are not read: RHEL
+and Fedora default to `KCM:`, so run `kinit -c /tmp/krb5cc_app` or use a
+keytab.
 
 For a host that is not enrolled in FreeIPA, give the host, realm and CA:
 

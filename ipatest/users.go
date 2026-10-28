@@ -287,8 +287,9 @@ func flag(c Call, name string) bool {
 }
 
 // apply sets the user attributes present in opts, the ones ToOptions sends
-// plus ipauserauthtype. An empty value clears the attribute.
-func (u *User) apply(opts map[string]any) {
+// plus ipauserauthtype. An empty value clears the attribute. A malformed
+// krbpasswordexpiration is refused rather than read as "never expires".
+func (u *User) apply(opts map[string]any) *ipa.IpaError {
 	for k, v := range opts {
 		switch k {
 		case "mail": // replaces the whole set (U5)
@@ -330,10 +331,18 @@ func (u *User) apply(opts map[string]any) {
 			u.SSHPubKeys = strs(v)
 		case "ipauserauthtype":
 			u.AuthTypes = strs(v)
-		case "krbpasswordexpiration": // Q41, via setattr only
-			u.PasswdExpire, _ = time.Parse(generalizedTime, str(v))
+		case "krbpasswordexpiration": // Q41, Q184
+			if m, ok := v.(map[string]any); ok { // the JSON form of a DateTime
+				v = m["__datetime__"]
+			}
+			t, err := time.Parse(generalizedTime, str(v))
+			if err != nil && str(v) != "" {
+				return &ipa.IpaError{Code: ipa.CodeValidation, Name: "ValidationError", Message: "invalid 'krbpasswordexpiration': does not match any of accepted formats: %Y%m%d%H%M%SZ"}
+			}
+			u.PasswdExpire = t
 		}
 	}
+	return nil
 }
 
 const generalizedTime = "20060102150405Z"
@@ -374,7 +383,9 @@ func (u *User) applyAttrOpts(opts map[string]any) *ipa.IpaError {
 	if err != nil {
 		return err
 	}
-	u.apply(merged)
+	if u.apply(merged) != nil { // setattr reaches LDAP, which answers 4208 InvalidSyntax (Q184)
+		return &ipa.IpaError{Code: 4208, Name: "InvalidSyntax", Message: "krbpasswordexpiration: Invalid syntax."}
+	}
 	return nil
 }
 
@@ -585,7 +596,9 @@ func (s *Server) userAdd(stage bool, c Call) (any, *ipa.IpaError) {
 		return nil, err
 	}
 	var u User
-	u.apply(c.Options)
+	if err := u.apply(c.Options); err != nil {
+		return nil, err
+	}
 	if u.First == "" {
 		return nil, required("givenname")
 	}
@@ -633,7 +646,9 @@ func (s *Server) userMod(stage bool, c Call) (any, *ipa.IpaError) {
 		return nil, err
 	}
 	next := r.User.clone()
-	next.apply(c.Options) // empty strings clear attributes, as in FreeIPA
+	if err := next.apply(c.Options); err != nil { // empty strings clear attributes, as in FreeIPA
+		return nil, err
+	}
 	if err := next.applyAttrOpts(c.Options); err != nil {
 		return nil, err
 	}

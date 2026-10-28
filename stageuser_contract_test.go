@@ -144,6 +144,10 @@ func TestContractStageUserAddWithPassword(t *testing.T) {
 		// A password an admin sets is expired on the first login.
 		wantIs(t, b.client().RemoteLogin(uid, pw), ipa.ErrExpiredPassword)
 		// #17: a service account lifts the expiry after activation.
+		// Q184: a malformed time is refused, not read as "never expires".
+		_, err = b.admin.RPC("user_mod", []string{uid}, ipa.Options{"setattr": "krbPasswordExpiration=garbage"})
+		wantCode(t, "setattr garbage", err, 4208)
+		wantIs(t, b.client().RemoteLogin(uid, pw), ipa.ErrExpiredPassword)
 		mustRPC(t, b.admin, "user_mod", []string{uid}, ipa.Options{"setattr": "krbPasswordExpiration=20371231235959Z"})
 		if err := b.client().RemoteLogin(uid, pw); err != nil {
 			t.Errorf("login after lifting the expiry = %v", err)

@@ -152,8 +152,6 @@ func TestContractHostModRoundTrip(t *testing.T) {
 	})
 }
 
-// TestContractHostDisable pins Q157: only a host with a keytab can be
-// disabled, and a one-time password alone does not count.
 // TestContractHostModMinimalRoundTrip: absent attributes go out as "" and []
 // and the server reads them as no change.
 func TestContractHostModMinimalRoundTrip(t *testing.T) {
@@ -180,6 +178,8 @@ func TestContractHostModMinimalRoundTrip(t *testing.T) {
 	})
 }
 
+// TestContractHostDisable pins Q157: only a host with a keytab can be
+// disabled, and a one-time password alone does not count.
 func TestContractHostDisable(t *testing.T) {
 	forEachBackend(t, func(t *testing.T, b backend) {
 		fqdn := newHostFQDN(t, b)

@@ -81,7 +81,9 @@
 //
 // A Kerberos client sends its first request to /ipa/json with SPNEGO; FreeIPA
 // answers with an ipa_session cookie and later calls use /ipa/session/json
-// with that cookie, so the KDC sees one ticket request per session.
+// with that cookie, so the KDC sees one ticket request per session. After
+// StickySession(false) every call negotiates SPNEGO. LoginFromCCache takes the
+// path of a file cache; strip a FILE: prefix taken from KRB5CCNAME.
 //
 // # Errors
 //

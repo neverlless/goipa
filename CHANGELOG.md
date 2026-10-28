@@ -20,7 +20,9 @@ existing exported identifiers keep their signatures).
   default stays silent as in v1.0 (#15)
 - Examples for `WithHTTPClient` (timing the requests) and `HostAdd`
 - Kerberos documented: SPNEGO on the first call, then the `ipa_session`
-  cookie; `LoginFromCCache` reads file caches only (not `KCM:`)
+  cookie; `LoginFromCCache` takes the path of a file cache (not `KCM:`; strip
+  a `FILE:` prefix from `KRB5CCNAME`); after `StickySession(false)` every call
+  negotiates SPNEGO
 - `ipatest`: `Server.GrantPrivilege(uid, privilege)` gives a user one FreeIPA
   privilege, for tests of delegated rights (#18)
 
@@ -35,8 +37,10 @@ existing exported identifiers keep their signatures).
   is refused; tests that change a password twice should call `SetPwPolicy`
   with `MinLife` 0 (users seeded with `AddUser` are exempt for their first
   change) (#19, Q180 to Q183)
+- `ipatest`: a malformed `krbpasswordexpiration` is refused (4208 for
+  `setattr`, 3009 for the option) instead of meaning "never expires" (Q184)
 - `ipatest`: `hbacrule_find`, `sudorule_find`, `subid_find` and
-  `otptoken_find` honour `sizelimit` (Q164 to Q167)
+  `otptoken_find` honour `sizelimit` (Q165 to Q167)
 - `ipatest`: a caller outside `admins` who holds no granted privilege gets
   2100 `ACIError` (`ErrACI`) on `user_add`, `user_mod` (other users),
   `user_del`, `stageuser_add`, `group_add`/`_mod`/`_del`,

@@ -153,3 +153,29 @@ func TestUserMod_SetattrPasswordExpiration(t *testing.T) {
 		t.Errorf("login after lifting expiry = %v", err)
 	}
 }
+
+func TestUserMod_MalformedPasswordExpiration(t *testing.T) {
+	_, c := newFake(t)
+	if _, err := c.StageUserAddWithPassword(&ipa.User{Username: "eve", First: "Eve", Last: "E"}, "Secret123"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := c.StageUserActivate("eve"); err != nil {
+		t.Fatal(err)
+	}
+	for what, opts := range map[string]ipa.Options{
+		"setattr": {"setattr": "krbPasswordExpiration=garbage"},
+		"option":  {"krbpasswordexpiration": "garbage"},
+	} {
+		_, err := c.RPC("user_mod", []string{"eve"}, opts)
+		var ierr *ipa.IpaError
+		if !errors.As(err, &ierr) || (ierr.Code != 4208 && ierr.Code != ipa.CodeValidation) {
+			t.Errorf("%s: err = %v, want 4208 or 3009", what, err)
+		}
+	}
+	if u, err := c.UserShow("eve"); err != nil || u.PasswdExpire.IsZero() {
+		t.Errorf("the expiry was lost: %+v, %v", u, err)
+	}
+	if _, err := c.RPC("user_mod", []string{"eve"}, ipa.Options{"krbpasswordexpiration": map[string]any{"__datetime__": "20371231235959Z"}}); err != nil {
+		t.Errorf("DateTime option: %v", err)
+	}
+}
