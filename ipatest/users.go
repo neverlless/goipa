@@ -335,9 +335,9 @@ func (u *User) apply(opts map[string]any) *ipa.IpaError {
 			if m, ok := v.(map[string]any); ok { // the JSON form of a DateTime
 				v = m["__datetime__"]
 			}
-			t, err := time.Parse(generalizedTime, str(v))
-			if err != nil && str(v) != "" {
-				return &ipa.IpaError{Code: ipa.CodeValidation, Name: "ValidationError", Message: "invalid 'krbpasswordexpiration': does not match any of accepted formats: %Y%m%d%H%M%SZ"}
+			t, ok := parseDateTime(str(v))
+			if !ok {
+				return &ipa.IpaError{Code: ipa.CodeConversion, Name: "ConversionError", Message: "invalid 'krbpasswordexpiration': does not match any of accepted formats: %Y%m%d%H%M%SZ, %Y-%m-%dT%H:%M:%SZ, %Y-%m-%dT%H:%MZ, %Y-%m-%dZ, %Y-%m-%d %H:%M:%SZ, %Y-%m-%d %H:%MZ"}
 			}
 			u.PasswdExpire = t
 		}
@@ -346,6 +346,20 @@ func (u *User) apply(opts map[string]any) *ipa.IpaError {
 }
 
 const generalizedTime = "20060102150405Z"
+
+// parseDateTime reads the formats of ipalib's DateTime parameter; "" is the
+// zero time (clears the attribute).
+func parseDateTime(s string) (time.Time, bool) {
+	if s == "" {
+		return time.Time{}, true
+	}
+	for _, layout := range []string{generalizedTime, "2006-01-02T15:04:05Z", "2006-01-02T15:04Z", "2006-01-02Z", "2006-01-02 15:04:05Z", "2006-01-02 15:04Z"} {
+		if t, err := time.Parse(layout, s); err == nil {
+			return t, true
+		}
+	}
+	return time.Time{}, false
+}
 
 // attrVals is the current values of an attribute apply knows, ok false if it
 // does not know it.
@@ -383,10 +397,7 @@ func (u *User) applyAttrOpts(opts map[string]any) *ipa.IpaError {
 	if err != nil {
 		return err
 	}
-	if u.apply(merged) != nil { // setattr reaches LDAP, which answers 4208 InvalidSyntax (Q184)
-		return &ipa.IpaError{Code: 4208, Name: "InvalidSyntax", Message: "krbpasswordexpiration: Invalid syntax."}
-	}
-	return nil
+	return u.apply(merged)
 }
 
 // attrOpts is Q41: setattr, then addattr, then delattr, as FreeIPA's

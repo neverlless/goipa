@@ -168,8 +168,8 @@ func TestUserMod_MalformedPasswordExpiration(t *testing.T) {
 	} {
 		_, err := c.RPC("user_mod", []string{"eve"}, opts)
 		var ierr *ipa.IpaError
-		if !errors.As(err, &ierr) || (ierr.Code != 4208 && ierr.Code != ipa.CodeValidation) {
-			t.Errorf("%s: err = %v, want 4208 or 3009", what, err)
+		if !errors.As(err, &ierr) || ierr.Code != ipa.CodeConversion {
+			t.Errorf("%s: err = %v, want 3008", what, err)
 		}
 	}
 	if u, err := c.UserShow("eve"); err != nil || u.PasswdExpire.IsZero() {

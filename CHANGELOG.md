@@ -37,8 +37,8 @@ existing exported identifiers keep their signatures).
   is refused; tests that change a password twice should call `SetPwPolicy`
   with `MinLife` 0 (users seeded with `AddUser` are exempt for their first
   change) (#19, Q180 to Q183)
-- `ipatest`: a malformed `krbpasswordexpiration` is refused (4208 for
-  `setattr`, 3009 for the option) instead of meaning "never expires" (Q184)
+- `ipatest`: a malformed `krbpasswordexpiration` is refused (3008
+  `ConversionError`, as FreeIPA) instead of meaning "never expires" (Q184)
 - `ipatest`: `hbacrule_find`, `sudorule_find`, `subid_find` and
   `otptoken_find` honour `sizelimit` (Q165 to Q167)
 - `ipatest`: a caller outside `admins` who holds no granted privilege gets

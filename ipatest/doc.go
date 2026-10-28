@@ -849,9 +849,9 @@
 //     long ago. The global policy's default lifetime is one hour, so a
 //     second change in a row needs SetPwPolicy with MinLife 0.
 //     TestChangePassword_MinLife, TestContractPasswordMinLife.
-//   - Q184: a krbpasswordexpiration that is not a generalized time is refused,
-//     never read as "no expiry": setattr gives 4208 InvalidSyntax, the
-//     krbpasswordexpiration option 3009 ValidationError.
+//   - Q184: a krbpasswordexpiration that is not a DateTime (setattr or
+//     option) is 3008 ConversionError "invalid 'krbpasswordexpiration': does
+//     not match any of accepted formats: ...", never read as "no expiry".
 //     TestUserMod_MalformedPasswordExpiration,
 //     goipa.TestContractStageUserAddWithPassword (setattr only).
 //
