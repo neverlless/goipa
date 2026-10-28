@@ -37,6 +37,15 @@ func Call[T any](ctx context.Context, c *Client, method string, args []string, o
 // server cut the search short.
 var ErrTruncated = errors.New("ipa: search truncated; raise sizelimit or narrow the search")
 
+// truncated is ErrTruncated for a response the server cut short, when the
+// Client was built WithTruncationErrors.
+func (c *Client) truncated(res *Response) error {
+	if c.truncErrors && res.Result.Truncated {
+		return ErrTruncated
+	}
+	return nil
+}
+
 // FindEntries runs a *_find command with args as Call sends them (nil sends
 // none; the search criteria is optional in FreeIPA), all: true (unless opts
 // sets all) and sizelimit when it is above 0 (0 keeps the server default).

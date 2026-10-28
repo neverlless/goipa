@@ -106,8 +106,8 @@ func (c *Client) GroupShowContext(ctx context.Context, name string) (*Group, err
 // `cn`, `user`, `in_group`, `sizelimit`). Any authenticated user may read
 // groups (System: Read Groups).
 //
-// A truncated search is not reported (kept for compatibility); use FindEntries
-// with the same method to detect it.
+// A truncated search is not reported unless the Client was built
+// WithTruncationErrors; FindEntries reports it too.
 func (c *Client) GroupFind(options Options) ([]*Group, error) {
 	return c.GroupFindContext(context.Background(), options)
 }
@@ -133,7 +133,7 @@ func (c *Client) GroupFindContext(ctx context.Context, options Options) ([]*Grou
 		}
 		groups = append(groups, g)
 	}
-	return groups, nil
+	return groups, c.truncated(res)
 }
 
 func groupResult(res *Response) (*Group, error) {

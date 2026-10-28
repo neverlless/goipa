@@ -204,7 +204,7 @@ func ruleFind[T any](c Call, rules map[string]*T, desc func(*T) string, disabled
 	for _, cn := range cns {
 		recs = append(recs, render(rules[cn], cn, members, all))
 	}
-	return list(recs), nil
+	return listLimited(c, recs), nil
 }
 
 func ruleName(c Call) (string, *ipa.IpaError) {

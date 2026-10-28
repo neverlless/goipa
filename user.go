@@ -318,8 +318,8 @@ func (c *Client) UserShowContext(ctx context.Context, username string) (*User, e
 
 // Find users.
 //
-// A truncated search is not reported (kept for compatibility); use FindEntries
-// with the same method to detect it.
+// A truncated search is not reported unless the Client was built
+// WithTruncationErrors; FindEntries reports it too.
 func (c *Client) UserFind(options Options) ([]*User, error) {
 	return c.UserFindContext(context.Background(), options)
 }
@@ -352,7 +352,7 @@ func (c *Client) UserFindContext(ctx context.Context, options Options) ([]*User,
 		users = append(users, user)
 	}
 
-	return users, nil
+	return users, c.truncated(res)
 }
 
 // Reset user password and return new random password
