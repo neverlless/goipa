@@ -173,6 +173,8 @@ func TestContractHostDisable(t *testing.T) {
 	})
 }
 
+// TestContractHostDeleteUpdateDNS pins Q158: FreeIPA 4.9.13 leaves the
+// records, 4.12 and later remove them.
 func TestContractHostDeleteUpdateDNS(t *testing.T) {
 	forEachBackend(t, func(t *testing.T, b backend) {
 		zone := newZone(t, b)
@@ -189,7 +191,7 @@ func TestContractHostDeleteUpdateDNS(t *testing.T) {
 				t.Fatal(err)
 			}
 			_, err := b.admin.DNSRecordShow(zone, name)
-			if updateDNS {
+			if updateDNS && serverAtLeast(b.admin.ServerVersion(), 4, 12) {
 				wantIs(t, err, ipa.ErrNotFound)
 			} else if err != nil {
 				t.Errorf("updateDNS=false removed the record: %v", err)

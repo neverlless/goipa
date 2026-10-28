@@ -705,6 +705,9 @@
 //   - Q157: host_disable of a host without a keytab, one that only has a
 //     one-time password included, is 4010 "This entry is already disabled"
 //     and leaves the password. goipa.TestContractHostDisable.
+//   - Q158: host_del with updatedns removes the host's A and AAAA records
+//     from the zone holding its name on 4.12 and later; 4.9.13 leaves them.
+//     goipa.TestContractHostDeleteUpdateDNS.
 //
 // A response's version is the server release, 4.13.4 unless SetVersion
 // changes it, and its principal is

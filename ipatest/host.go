@@ -231,7 +231,7 @@ func hostDel(s *Server, c Call) (any, *ipa.IpaError) {
 	}
 	for _, fqdn := range deleted {
 		delete(s.hosts, fqdn)
-		if flag(c, "updatedns") {
+		if flag(c, "updatedns") && s.versionAtLeast(4, 12) { // Q158
 			s.dropHostRecords(fqdn)
 		}
 		for _, g := range s.hostgroups {
@@ -258,6 +258,12 @@ func hostDel(s *Server, c Call) (any, *ipa.IpaError) {
 		"value":   deleted,
 		"summary": `Deleted host "` + strings.Join(deleted, ",") + `"`,
 	}, nil
+}
+
+func (s *Server) versionAtLeast(major, minor int) bool {
+	var ma, mi int
+	_, _ = fmt.Sscanf(s.version, "%d.%d", &ma, &mi)
+	return ma > major || ma == major && mi >= minor
 }
 
 // dropHostRecords deletes the A and AAAA records named after the host in the
