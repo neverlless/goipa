@@ -9,6 +9,8 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net/http"
+	"time"
 
 	ipa "github.com/neverlless/goipa"
 	"github.com/neverlless/goipa/ipatest"
@@ -268,4 +270,53 @@ func ExampleClient_HostGroupAddMember() {
 		log.Fatal(err)
 	}
 	fmt.Println(g.Name, g.Hosts)
+}
+
+// timingTransport times each request. Any http.RoundTripper fits the same
+// way, for example OpenTelemetry's otelhttp.NewTransport.
+type timingTransport struct{ next http.RoundTripper }
+
+func (t timingTransport) RoundTrip(r *http.Request) (*http.Response, error) {
+	start := time.Now()
+	res, err := t.next.RoundTrip(r)
+	log.Printf("%s %s took %s", r.Method, r.URL.Path, time.Since(start))
+	return res, err
+}
+
+// WithHTTPClient wraps the transport; compiled but not run. The caller owns
+// the TLS settings of the client it passes: replace http.DefaultTransport
+// with a transport that trusts the FreeIPA CA.
+func ExampleWithHTTPClient() {
+	hc := &http.Client{
+		Timeout:   30 * time.Second,
+		Transport: timingTransport{next: http.DefaultTransport},
+	}
+	c, err := ipa.New(
+		ipa.WithHost("ipa.example.com"),
+		ipa.WithRealm("EXAMPLE.COM"),
+		ipa.WithHTTPClient(hc),
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if err := c.RemoteLogin("jesse", "secret"); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func ExampleClient_HostAdd() {
+	s := ipatest.New()
+	defer s.Close()
+	c := s.ClientAs("admin")
+
+	h, err := c.HostAdd(&ipa.Host{FQDN: "web1.example.com"}, true, true)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(h.FQDN, h.RandomPassword != "")
+
+	if err := c.HostDelete(false, h.FQDN); err != nil {
+		log.Fatal(err)
+	}
+	// Output: web1.example.com true
 }
