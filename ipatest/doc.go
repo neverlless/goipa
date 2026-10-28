@@ -339,7 +339,9 @@
 //     TestContractModify; TestModify_Apply pins
 //     the fake. More than one value for a single-valued attribute (two
 //     setattr values, or addattr on a set one) is 4207 OnlyOneValueAllowed
-//     "attr: Only one value allowed.", TestModify_SingleValued. Only mail,
+//     "attr: Only one value allowed.", TestModify_SingleValued.
+//     setattr krbPasswordExpiration=<generalized time, 20271231235959Z>
+//     sets the password expiry (empty clears it), TestUserMod_SetattrPasswordExpiration. Only mail,
 //     ipasshpubkey and ipauserauthtype take several values here;
 //     telephonenumber, mobile and userclass are multivalue in FreeIPA but
 //     one string in the fake, so the fake rejects what FreeIPA accepts.
@@ -708,6 +710,11 @@
 //     goipa.TestContractTruncationOptIn.
 //   - Q167: otptoken_find honours sizelimit like Q40.
 //     goipa.TestContractTruncationOptIn.
+//   - Q160: stageuser_add and user_add with userpassword store it, so
+//     has_password is true; the password is expired (set by an admin), and
+//     stageuser_activate copies it to the active user, expired again as of
+//     the activation, so the first login is "password expired" until
+//     user_mod setattr krbPasswordExpiration lifts it. goipa.TestContractStageUserAddWithPassword.
 //
 // A response's version is the server release, 4.13.4 unless SetVersion
 // changes it, and its principal is
@@ -732,8 +739,7 @@
 // checks, serials do not move, record values are neither validated nor
 // normalised, a CNAME may share a name with other records, and dnsrecord_find
 // filters by criteria and idnsname only.
-// Stage user passwords are not modelled: userpassword is ignored and random
-// behaves as for active users. Kerberos, LDAP search filters, size limits on
+// Kerberos, LDAP search filters, size limits on
 // other commands, replication and HTTP fault injection are left out; wrap
 // HTTPClient's transport for the latter.
 package ipatest

@@ -44,6 +44,27 @@ func (c *Client) StageUserAddContext(ctx context.Context, user *User) (*User, er
 	return c.stageUser(ctx, "stageuser_add", []string{user.Username}, nonEmpty(user.ToOptions()))
 }
 
+// StageUserAddWithPassword is like StageUserAdd but sets the password in the
+// same call (`userpassword`), which StageUserActivate keeps. It is a separate
+// call, not a field on User, because User.ToOptions would then send the
+// password with every add and mod.
+func (c *Client) StageUserAddWithPassword(user *User, password string) (*User, error) {
+	return c.StageUserAddWithPasswordContext(context.Background(), user, password)
+}
+
+// StageUserAddWithPasswordContext is like StageUserAddWithPassword but bounds the request with ctx.
+func (c *Client) StageUserAddWithPasswordContext(ctx context.Context, user *User, password string) (*User, error) {
+	if user.Username == "" {
+		return nil, errors.New("ipa: username is required")
+	}
+	if password == "" {
+		return nil, errors.New("ipa: password is required")
+	}
+	options := nonEmpty(user.ToOptions())
+	options["userpassword"] = password
+	return c.stageUser(ctx, "stageuser_add", []string{user.Username}, options)
+}
+
 // StageUserShow fetches a stage user with `stageuser_show`. It requires the
 // Stage User Administrators privilege.
 func (c *Client) StageUserShow(username string) (*User, error) {

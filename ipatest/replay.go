@@ -126,20 +126,26 @@ var redactKeys = map[string]bool{
 	"sambantpassword":      true,
 }
 
+// redact returns a copy of v with the redactKeys values replaced; v itself is
+// left alone because Calls and the recorder share it with the server.
 func redact(v any) any {
 	switch v := v.(type) {
 	case map[string]any:
+		out := make(map[string]any, len(v))
 		for k, x := range v {
 			if redactKeys[strings.ToLower(k)] {
-				v[k] = "REDACTED"
+				out[k] = "REDACTED"
 			} else {
-				v[k] = redact(x)
+				out[k] = redact(x)
 			}
 		}
+		return out
 	case []any:
+		out := make([]any, len(v))
 		for i, x := range v {
-			v[i] = redact(x)
+			out[i] = redact(x)
 		}
+		return out
 	}
 	return v
 }
