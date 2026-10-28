@@ -711,7 +711,9 @@
 // Certificates are issued (cert_request, cert_show, cert_revoke) for service
 // principals only, with the default profile; user and host certificates,
 // other profiles, sub-CAs, cert_find and the other cert commands are left
-// out, as is host_add's DNS check (every fqdn is accepted, as with force).
+// out, as is host_add's DNS check (every fqdn is accepted, as with force);
+// host_mod models description, l, nshostlocation, nshardwareplatform,
+// nsosversion, macaddress and userclass only.
 // The *_mod commands of the families modelled since v0.9 (host groups,
 // services, HBAC and sudo rules, DNS, automember, RBAC) are not modelled
 // (sudorule_mod only for description and sudoorder, Q151), nor are role,

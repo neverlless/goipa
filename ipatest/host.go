@@ -5,6 +5,7 @@
 package ipatest
 
 import (
+	"fmt"
 	"slices"
 	"sort"
 	"strings"
@@ -25,6 +26,7 @@ type Host struct {
 	HostGroups                                           []string // memberof_hostgroup, with the host groups listing the host (Q50)
 	ManagedBy                                            []string // managedby_host
 	HasKeytab                                            bool
+	Password                                             string // one-time enrollment password; has_password
 }
 
 func (h Host) clone() Host {
@@ -50,7 +52,7 @@ func (s *Server) renderHost(fqdn string, h Host, members, all bool) map[string]a
 		"fqdn":             []string{fqdn},
 		"krbprincipalname": []string{"host/" + fqdn + "@" + realm},
 		"has_keytab":       h.HasKeytab,
-		"has_password":     false,
+		"has_password":     h.Password != "",
 	}
 	set := func(k string, v []string) {
 		if len(v) > 0 {
@@ -124,6 +126,28 @@ func init() {
 	builtins["host_find"] = hostFind
 }
 
+func (h Host) sameAttrs(o Host) bool {
+	return h.Description == o.Description && h.Locality == o.Locality && h.Location == o.Location &&
+		h.Platform == o.Platform && h.OSVersion == o.OSVersion &&
+		slices.Equal(h.MACAddresses, o.MACAddresses) && slices.Equal(h.UserClass, o.UserClass)
+}
+
+// applyAttrs applies the seven modelled attributes present in c.
+func (h *Host) applyAttrs(c Call) {
+	for k, p := range map[string]*string{"description": &h.Description, "l": &h.Locality, "nshostlocation": &h.Location,
+		"nshardwareplatform": &h.Platform, "nsosversion": &h.OSVersion} {
+		if v, ok := c.Options[k]; ok {
+			*p = str(v)
+		}
+	}
+	if v, ok := c.Options["macaddress"]; ok {
+		h.MACAddresses = strs(v)
+	}
+	if v, ok := c.Options["userclass"]; ok {
+		h.UserClass = strs(v)
+	}
+}
+
 // hostAdd is host_add without DNS: every fqdn is accepted, as with force.
 func hostAdd(s *Server, c Call) (any, *ipa.IpaError) {
 	if len(c.Args) == 0 || c.Args[0] == "" {
@@ -134,10 +158,65 @@ func hostAdd(s *Server, c Call) (any, *ipa.IpaError) {
 		return nil, &ipa.IpaError{Code: ipa.CodeDuplicateEntry, Message: `host with name "` + fqdn + `" already exists`}
 	}
 	h := Host{}
-	h.Description, _ = c.Options["description"].(string)
+	h.applyAttrs(c)
+	random := flag(c, "random")
+	if random {
+		h.Password = randomPassword()
+	} else {
+		h.Password = str(c.Options["userpassword"])
+	}
 	s.hosts[fqdn] = h
 	all := flag(c, "all")
-	return entry(fqdn, s.renderHost(fqdn, h, all || !flag(c, "no_members"), all), `Added host "`+fqdn+`"`), nil
+	rec := s.renderHost(fqdn, h, all || !flag(c, "no_members"), all)
+	if random {
+		rec["randompassword"] = h.Password
+	}
+	return entry(fqdn, rec, `Added host "`+fqdn+`"`), nil
+}
+
+// hostMod models the seven attributes hostAdd keeps.
+func hostMod(s *Server, c Call) (any, *ipa.IpaError) {
+	if len(c.Args) == 0 || c.Args[0] == "" {
+		return nil, required("fqdn")
+	}
+	fqdn := strings.ToLower(c.Args[0])
+	h, ok := s.hosts[fqdn]
+	if !ok {
+		return nil, notFound(c.Args[0], "host")
+	}
+	for k := range c.Options {
+		if !slices.Contains([]string{"all", "raw", "rights", "no_members", "version", "description", "l", "nshostlocation",
+			"nshardwareplatform", "nsosversion", "macaddress", "userclass"}, k) {
+			return nil, &ipa.IpaError{Code: ipa.CodeCommand, Message: "ipatest: host_mod models description, l, nshostlocation, nshardwareplatform, nsosversion, macaddress and userclass only, not " + k}
+		}
+	}
+	n := h.clone()
+	n.applyAttrs(c)
+	if n.sameAttrs(h) {
+		return nil, &ipa.IpaError{Code: ipa.CodeEmptyModlist, Message: "no modifications to be performed"}
+	}
+	s.hosts[fqdn] = n
+	all := flag(c, "all")
+	return entry(fqdn, s.renderHost(fqdn, n, all || !flag(c, "no_members"), all), `Modified host "`+fqdn+`"`), nil
+}
+
+// hostDisable drops the keytab and the one-time password; a host with neither
+// is already disabled.
+func hostDisable(s *Server, c Call) (any, *ipa.IpaError) {
+	if len(c.Args) == 0 || c.Args[0] == "" {
+		return nil, required("fqdn")
+	}
+	fqdn := strings.ToLower(c.Args[0])
+	h, ok := s.hosts[fqdn]
+	if !ok {
+		return nil, notFound(c.Args[0], "host")
+	}
+	if !h.HasKeytab && h.Password == "" {
+		return nil, &ipa.IpaError{Code: ipa.CodeAlreadyInactive, Message: "This entry is already disabled"}
+	}
+	h.HasKeytab, h.Password = false, ""
+	s.hosts[fqdn] = h
+	return map[string]any{"result": true, "value": fqdn, "summary": fmt.Sprintf("Removed kerberos key from host %q", fqdn)}, nil
 }
 
 func hostDel(s *Server, c Call) (any, *ipa.IpaError) {
@@ -150,6 +229,9 @@ func hostDel(s *Server, c Call) (any, *ipa.IpaError) {
 	}
 	for _, fqdn := range deleted {
 		delete(s.hosts, fqdn)
+		if flag(c, "updatedns") {
+			s.dropHostRecords(fqdn)
+		}
 		for _, g := range s.hostgroups {
 			g.Hosts = dropName(g.Hosts, fqdn)
 		}
@@ -176,7 +258,26 @@ func hostDel(s *Server, c Call) (any, *ipa.IpaError) {
 	}, nil
 }
 
+// dropHostRecords deletes the A and AAAA records named after the host in the
+// zone holding its name.
+func (s *Server) dropHostRecords(fqdn string) {
+	for zone, z := range s.dnsZones {
+		name, ok := strings.CutSuffix(absName(fqdn), "."+zone)
+		if !ok {
+			continue
+		}
+		r := z.records[name]
+		delete(r, "arecord")
+		delete(r, "aaaarecord")
+		if len(r) == 0 {
+			delete(z.records, name)
+		}
+	}
+}
+
 func init() {
+	builtins["host_mod"] = hostMod
+	builtins["host_disable"] = hostDisable
 	builtins["host_add"] = hostAdd
 	builtins["host_del"] = hostDel
 }

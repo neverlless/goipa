@@ -159,6 +159,24 @@ func twinCalls() []twinCall {
 			_, err := c.HostShowContext(ctx, "h.test.local")
 			return err
 		}},
+		{"HostAddContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.HostAddContext(ctx, &ipa.Host{FQDN: "h.test.local"}, true, false)
+			return err
+		}},
+		{"HostAddWithPasswordContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.HostAddWithPasswordContext(ctx, &ipa.Host{FQDN: "h.test.local"}, true, "pw")
+			return err
+		}},
+		{"HostModContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.HostModContext(ctx, &ipa.Host{FQDN: "h.test.local"})
+			return err
+		}},
+		{"HostDeleteContext", func(ctx context.Context, c *ipa.Client) error {
+			return c.HostDeleteContext(ctx, false, "h.test.local")
+		}},
+		{"HostDisableContext", func(ctx context.Context, c *ipa.Client) error {
+			return c.HostDisableContext(ctx, "h.test.local")
+		}},
 		{"HostFindContext", func(ctx context.Context, c *ipa.Client) error {
 			_, err := c.HostFindContext(ctx, nil)
 			return err
