@@ -115,8 +115,8 @@ func (c *Client) RemoveOTPTokenContext(ctx context.Context, tokenUUID string) er
 
 // Fetch OTP tokens by owner.
 //
-// A truncated search is not reported (kept for compatibility); use FindEntries
-// with the same method to detect it.
+// A truncated search is not reported unless the Client was built
+// WithTruncationErrors; FindEntries reports it too.
 func (c *Client) FetchOTPTokens(owner string) ([]*OTPToken, error) {
 	return c.FetchOTPTokensContext(context.Background(), owner)
 }
@@ -147,7 +147,7 @@ func (c *Client) FetchOTPTokensContext(ctx context.Context, owner string) ([]*OT
 		tokens = append(tokens, tok)
 	}
 
-	return tokens, nil
+	return tokens, c.truncated(res)
 }
 
 // Add OTP token. Returns new OTPToken

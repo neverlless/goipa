@@ -76,8 +76,8 @@ func (c *Client) HostShowContext(ctx context.Context, fqdn string) (*Host, error
 // `fqdn`, `in_hostgroup`, `sizelimit`). Any authenticated user may read hosts
 // (System: Read Hosts). ubccr/goipa#11.
 //
-// A truncated search is not reported (kept for compatibility); use FindEntries
-// with the same method to detect it.
+// A truncated search is not reported unless the Client was built
+// WithTruncationErrors; FindEntries reports it too.
 func (c *Client) HostFind(options Options) ([]*Host, error) {
 	return c.HostFindContext(context.Background(), options)
 }
@@ -103,5 +103,5 @@ func (c *Client) HostFindContext(ctx context.Context, options Options) ([]*Host,
 		}
 		hosts = append(hosts, h)
 	}
-	return hosts, nil
+	return hosts, c.truncated(res)
 }

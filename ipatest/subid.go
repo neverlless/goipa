@@ -95,7 +95,7 @@ func subidFind(s *Server, c Call) (any, *ipa.IpaError) {
 	for _, o := range owners {
 		recs = append(recs, renderSubID(s.subids[o]))
 	}
-	return list(recs), nil
+	return listLimited(c, recs), nil
 }
 
 func subidGenerate(s *Server, c Call) (any, *ipa.IpaError) {

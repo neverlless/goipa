@@ -104,7 +104,9 @@
 //
 // A Find returns ErrTruncated together with the entries it got, when the
 // server cut the search short. This applies to the Finds added in v0.9 and to
-// FindEntries.
+// FindEntries. UserFind, GroupFind, HostFind, StageUserFind, SubIDFind,
+// FetchOTPTokens, HBACRuleFind and SudoRuleFind did not report it in v1.0 and
+// still do not, unless the Client was built WithTruncationErrors.
 //
 // UserAdd keeps upstream's ErrUserExists for 4002.
 //

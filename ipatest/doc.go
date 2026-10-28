@@ -700,6 +700,14 @@
 //     reply only deletes the client's cookie (Q39), and the old cookie sent
 //     again keeps working as before. ExpireSession is the way to end one.
 //     goipa.TestContractStaleSessionCookie.
+//   - Q164: stageuser_find honours sizelimit like user_find (Q40).
+//     goipa.TestContractTruncationOptIn.
+//   - Q165: hbacrule_find and sudorule_find honour sizelimit like Q40.
+//     goipa.TestContractTruncationOptIn.
+//   - Q166: subid_find honours sizelimit like Q40.
+//     goipa.TestContractTruncationOptIn.
+//   - Q167: otptoken_find honours sizelimit like Q40.
+//     goipa.TestContractTruncationOptIn.
 //
 // A response's version is the server release, 4.13.4 unless SetVersion
 // changes it, and its principal is
