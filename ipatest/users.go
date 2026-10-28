@@ -568,6 +568,16 @@ func (s *Server) userAdd(stage bool, c Call) (any, *ipa.IpaError) {
 	if err != nil {
 		return nil, err
 	}
+	ldap := "Could not read UPG Definition originfilter. Check your permissions."
+	if stage {
+		ldap = noAdd("uid=" + uid + "," + stageBaseDN)
+		if str(c.Options["userpassword"]) != "" {
+			ldap = "Insufficient 'add' privilege to the 'userPassword' attribute"
+		}
+	}
+	if err := s.refuse(c, true, ldap); err != nil {
+		return nil, err
+	}
 	if s.store(stage)[uid] != nil { // Q10, Q29
 		return nil, &ipa.IpaError{Code: ipa.CodeDuplicateEntry, Message: fmt.Sprintf("%s with name %q already exists", userObject(stage), uid)}
 	}
@@ -610,6 +620,15 @@ func (s *Server) userMod(stage bool, c Call) (any, *ipa.IpaError) {
 	if err != nil {
 		return nil, err
 	}
+	if !stage && s.denied(c) {
+		attr := firstAttr(c)
+		if uid == c.User { // Q174: self-service attributes only
+			attr = notSelfService(c)
+		}
+		if attr != "" {
+			return nil, s.aciError(true, noWrite(attr, "uid="+uid+","+baseDN))
+		}
+	}
 	if err := emptyHomeDir(c); err != nil {
 		return nil, err
 	}
@@ -650,6 +669,11 @@ func (s *Server) userDel(stage bool, c Call) (any, *ipa.IpaError) {
 			deleted = append(deleted, uid)
 		}
 	}
+	if len(deleted) > 0 {
+		if err := s.refuse(c, true, noDelete("uid="+deleted[0]+","+baseDN)); err != nil {
+			return nil, err
+		}
+	}
 	for _, uid := range deleted {
 		if !stage {
 			for _, g := range s.groups { // referential integrity, also when preserved
@@ -657,6 +681,9 @@ func (s *Server) userDel(stage bool, c Call) (any, *ipa.IpaError) {
 				g.ManagerUsers = slices.DeleteFunc(g.ManagerUsers, func(m string) bool { return m == uid })
 			}
 			s.dropFromRules(uid, false)
+		}
+		if !stage {
+			delete(s.grants, uid) // the role memberships that granted them go too
 		}
 		if !stage && flag(c, "preserve") {
 			users[uid].Preserved, users[uid].Locked = true, true

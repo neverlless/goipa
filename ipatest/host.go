@@ -157,6 +157,9 @@ func hostAdd(s *Server, c Call) (any, *ipa.IpaError) {
 		return nil, required("fqdn")
 	}
 	fqdn := strings.ToLower(c.Args[0])
+	if err := s.refuse(c, true, noAdd("fqdn="+fqdn+","+hostBaseDN)); err != nil {
+		return nil, err
+	}
 	if _, ok := s.hosts[fqdn]; ok {
 		return nil, &ipa.IpaError{Code: ipa.CodeDuplicateEntry, Message: `host with name "` + fqdn + `" already exists`}
 	}
@@ -186,6 +189,9 @@ func hostMod(s *Server, c Call) (any, *ipa.IpaError) {
 	h, ok := s.hosts[fqdn]
 	if !ok {
 		return nil, notFound(c.Args[0], "host")
+	}
+	if err := s.refuse(c, true, noWrite(firstAttr(c), "fqdn="+fqdn+","+hostBaseDN)); err != nil {
+		return nil, err
 	}
 	for k := range c.Options {
 		if !slices.Contains([]string{"all", "raw", "rights", "no_members", "version", "description", "l", "nshostlocation",
@@ -247,6 +253,11 @@ func hostDel(s *Server, c Call) (any, *ipa.IpaError) {
 		deleted[i] = strings.ToLower(fqdn)
 		if _, ok := s.hosts[deleted[i]]; !ok {
 			return nil, notFound(fqdn, "host")
+		}
+	}
+	if len(deleted) > 0 {
+		if err := s.refuse(c, true, noDelete("fqdn="+deleted[0]+","+hostBaseDN)); err != nil {
+			return nil, err
 		}
 	}
 	for _, fqdn := range deleted {

@@ -68,7 +68,7 @@ func renderRule(typ, cn string, r *amRule, all, dn bool) map[string]any {
 		out["objectclass"] = []string{"top", "automemberregexrule"}
 	}
 	if all || dn {
-		out["dn"] = "cn=" + cn + ",cn=" + typ + ",cn=automember,cn=etc,dc=test,dc=local"
+		out["dn"] = "cn=" + cn + ",cn=" + typ + "," + automemberBaseDN
 	}
 	return out
 }
@@ -142,6 +142,9 @@ func automemberAdd(s *Server, c Call) (any, *ipa.IpaError) {
 		return nil, required("cn")
 	}
 	cn := amName(typ, c.Args[0])
+	if err := s.refuse(c, false, noAdd("cn="+cn+",cn="+typ+","+automemberBaseDN)); err != nil { // Q170
+		return nil, err
+	}
 	if s.amRules[typ][cn] != nil {
 		return nil, &ipa.IpaError{Code: ipa.CodeDuplicateEntry, Message: fmt.Sprintf("Automember rule with name %q already exists", cn)}
 	}
@@ -252,7 +255,7 @@ func defaultEntry(s *Server, typ string, all bool) map[string]any {
 		out["automemberdefaultgroup"] = []string{targetDN(typ, g)}
 	}
 	if all {
-		out["dn"] = "cn=" + cn + ",cn=automember,cn=etc,dc=test,dc=local"
+		out["dn"] = "cn=" + cn + "," + automemberBaseDN
 	}
 	return out
 }
