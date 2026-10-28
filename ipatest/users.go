@@ -62,6 +62,9 @@ type userRec struct {
 	id    int // 0 = none yet: a stage user has no uidnumber until activated
 	uuid  string
 	stage bool
+
+	pwHistory []string  // earlier passwords, oldest first
+	pwChanged time.Time // last change by the user; zero = never (seeded users)
 }
 
 // clone also turns empty slices into nil, so Q11's DeepEqual sees
@@ -738,12 +741,11 @@ func passwd(s *Server, c Call) (any, *ipa.IpaError) {
 	if pw == "" {
 		return nil, required("password")
 	}
-	r.Password = pw
-	if c.User == uid { // Q3: a password set by someone else is expired
-		r.PasswdExpire = expiredNow().Add(pwdMaxLife)
-	} else {
-		r.PasswdExpire = expiredNow()
+	self := c.User == uid
+	if msg := s.pwViolation(uid, r, pw, self); msg != "" { // Q180-Q183
+		return nil, &ipa.IpaError{Code: ipa.CodeDatabase, Name: "DatabaseError", Message: msg}
 	}
+	s.setPassword(uid, r, pw, self)
 	return map[string]any{"result": true, "value": uid, "summary": fmt.Sprintf("Changed password for %q", uid)}, nil
 }
 
@@ -778,11 +780,13 @@ func changePassword(s *Server, w http.ResponseWriter, r *http.Request) {
 	switch {
 	case u == nil || u.Password == "" || u.Password != r.FormValue("old_password"):
 		result = "invalid-password"
-	case len(newPw) < s.pwpol[globalPolicy].MinLength:
-		result = "policy-error"
-		w.Header().Set("X-IPA-Pwchange-Policy-Error", "Constraint violation: Password is too short")
 	default:
-		u.Password, u.PasswdExpire = newPw, expiredNow().Add(pwdMaxLife)
+		if msg := s.pwViolation(r.FormValue("user"), u, newPw, true); msg != "" { // Q180-Q183
+			result = "policy-error"
+			w.Header().Set("X-IPA-Pwchange-Policy-Error", msg)
+			break
+		}
+		s.setPassword(r.FormValue("user"), u, newPw, true)
 	}
 	w.Header().Set("X-IPA-Pwchange-Result", result)
 }

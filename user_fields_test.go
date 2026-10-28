@@ -242,6 +242,9 @@ func (c *captureTransport) RoundTrip(r *http.Request) (*http.Response, error) {
 func TestSetPassword_OmitsEmptyOTP(t *testing.T) {
 	s := ipatest.NewServer(t)
 	s.AddUser("jdoe", ipatest.User{Password: "old-password-1"})
+	g, _ := s.PwPolicy("global_policy")
+	g.MinLife = 0 // two changes in a row
+	s.SetPwPolicy("global_policy", g)
 	ct := &captureTransport{rt: s.HTTPClient().Transport}
 	c := ipa.NewClientCustomHttp(s.Host(), s.Realm(), &http.Client{Transport: ct})
 
