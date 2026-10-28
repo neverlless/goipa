@@ -225,6 +225,42 @@ Accept: the listed objects have typed APIs verified nightly on FreeIPA 4.9,
 - [x] Invite authors of active forks to contribute here (README Credits,
       CONTRIBUTING)
 
+## v1.1.0 — Host lifecycle and FreeIPA 4.13.4
+
+FreeIPA 4.13.4 (a security release) added permission checks to every API
+operation, so calls that worked under delegated rights may now be refused.
+
+- [ ] Error mapping and `ipatest` follow the 4.13.4 permission checks;
+      contract tests run them as a non-admin user on 4.9, 4.12 and 4.13
+- [ ] Host writes: `HostAdd` (random or given one-time password, `force`),
+      `HostMod`, `HostDelete` (`updatedns`), `HostDisable`
+- [ ] Kerberos documented: whether each request negotiates or the client
+      keeps a session from `login_kerberos`, and which credential caches
+      gokrb5 can read (KCM and keyring are the RHEL/Fedora defaults)
+- [ ] Runnable examples: tracing through `WithHTTPClient`, testing with
+      `ipatest`
+
+Accept: hosts can be enrolled and removed through typed calls, verified
+nightly on real FreeIPA.
+
+## v1.2.0 — ID views and several servers
+
+- [ ] ID views and overrides (`idview_*`, `idoverrideuser_*`,
+      `idoverridegroup_*`), including views applied to hosts
+- [ ] Several servers with failover (`WithHosts`): the next server is tried
+      when one is unreachable; the session and Kerberos login follow it
+
+Accept: ID overrides are typed and contract-tested; a client keeps working
+when its first server goes down.
+
+## v1.3.0 — Access control writes
+
+- [ ] Role, privilege and permission writes (add, modify, delete, members)
+- [ ] System accounts (`sysaccount_*`, FreeIPA 4.13 and later)
+- [ ] Passkey configuration and stage-user passkeys
+
+Accept: RBAC can be managed end to end through typed calls.
+
 ## Out of scope
 
 - An LDAP backend, a CLI, non-FreeIPA identity systems.
