@@ -234,6 +234,12 @@ operation, so calls that worked under delegated rights may now be refused.
       contract tests run them as a non-admin user on 4.9, 4.12 and 4.13
 - [ ] Host writes: `HostAdd` (random or given one-time password, `force`),
       `HostMod`, `HostDelete` (`updatedns`), `HostDisable`
+- [ ] `StageUserAddWithPassword` sets the initial password on `stageuser_add`;
+      `ipatest` keeps it for `stageuser_activate` and redacts `userpassword`
+      in `Calls()` (#14)
+- [ ] `WithTruncationErrors()`: opt-in client option that makes every Find
+      return `ErrTruncated` with the entries it got; the default stays as in
+      v1.0 (#15)
 - [ ] Kerberos documented: whether each request negotiates or the client
       keeps a session from `login_kerberos`, and which credential caches
       gokrb5 can read (KCM and keyring are the RHEL/Fedora defaults)
