@@ -128,3 +128,19 @@ func TestCalls_RedactsPasswords(t *testing.T) {
 		t.Errorf("server password = %q", u.Password)
 	}
 }
+
+func TestUserMod_SetattrPasswordExpiration(t *testing.T) {
+	s, c := newFake(t)
+	if _, err := c.StageUserAddWithPassword(&ipa.User{Username: "eve", First: "Eve", Last: "E"}, "Secret123"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := c.StageUserActivate("eve"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := c.RPC("user_mod", []string{"eve"}, ipa.Options{"setattr": "krbPasswordExpiration=20371231235959Z"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.Client().RemoteLogin("eve", "Secret123"); err != nil {
+		t.Errorf("login after lifting expiry = %v", err)
+	}
+}

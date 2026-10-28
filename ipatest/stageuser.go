@@ -40,6 +40,9 @@ func stageUserActivate(s *Server, c Call) (any, *ipa.IpaError) {
 	}
 	u := r.User.clone()
 	u.Locked = false
+	if u.Password != "" { // Q160: the copied password is expired
+		u.PasswdExpire = expiredNow()
+	}
 	delete(s.stage, uid)
 	rec := s.putUser(false, uid, u)
 	rec.uuid = r.uuid

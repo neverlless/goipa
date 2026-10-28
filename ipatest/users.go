@@ -327,9 +327,13 @@ func (u *User) apply(opts map[string]any) {
 			u.SSHPubKeys = strs(v)
 		case "ipauserauthtype":
 			u.AuthTypes = strs(v)
+		case "krbpasswordexpiration": // Q41, via setattr only
+			u.PasswdExpire, _ = time.Parse(generalizedTime, str(v))
 		}
 	}
 }
+
+const generalizedTime = "20060102150405Z"
 
 // attrVals is the current values of an attribute apply knows, ok false if it
 // does not know it.
@@ -347,6 +351,11 @@ func (u *User) attrVals(attr string) (vals []string, ok bool) {
 		return u.SSHPubKeys, true
 	case attr == "ipauserauthtype":
 		return u.AuthTypes, true
+	case attr == "krbpasswordexpiration":
+		if u.PasswdExpire.IsZero() {
+			return nil, true
+		}
+		return []string{u.PasswdExpire.UTC().Format(generalizedTime)}, true
 	}
 	return nil, false
 }
