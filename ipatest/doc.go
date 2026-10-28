@@ -252,8 +252,9 @@
 //     also for option user), not 2100. With option user the answer has no
 //     cospriority, as pwpolicy_show asks add_cospriority for a cn of None.
 //     pwpolicy_add needs an existing
-//     group (4001) and cospriority (3007); login_password and change_password
-//     use the global MaxFailures (0 disables lockout) and MinLength.
+//     group (4001) and cospriority (3007); login_password
+//     uses the global MaxFailures (0 disables lockout); a password change
+//     uses the user's effective policy (Q180).
 //     pwpolicy_show takes only all, raw, rights, user and version; any other
 //     option is 3005 OptionError "Unknown option: <name>".
 //     TestContractPwPolicyGlobal, TestUserPwPolicy_Resolution,
@@ -728,6 +729,41 @@
 //     from the zone holding its name. One real 4.9.13 run left the record
 //     (two others removed it); the cause is not known, so the fake always
 //     removes it. goipa.TestContractHostDeleteUpdateDNS.
+//   - Q180: the passwd command and /ipa/session/change_password check a new
+//     password against the policy effective for the user (the Q32
+//     resolution: lowest cospriority among the groups, else global), not the
+//     global policy alone. A refusal of the form is
+//     X-IPA-Pwchange-Result policy-error with the reason in
+//     X-IPA-Pwchange-Policy-Error ("Constraint violation: Password is too
+//     short", "... is too simple", "... Password reuse not permitted",
+//     "... Too soon to change password"); passwd answers 4203 DatabaseError
+//     with the same text as its message. A change by someone else (the admin
+//     resetting a password) skips the length, class and lifetime checks and
+//     keeps the history check. TestChangePassword_GroupPolicyStricter,
+//     TestChangePassword_AdminSkipsLengthAndClasses,
+//     TestContractPasswordPolicyEffective.
+//   - Q181: krbpwdmindiffchars is the number of character classes (lower,
+//     upper, digit, other) the password needs; FreeIPA also refuses a
+//     password of at most that many different characters ("aaaDaaaa1aaa"
+//     with 3), with the same message ("too simple"). Observed only with 3;
+//     other values are extrapolated. The checks run in the order minimum
+//     lifetime (Q183), classes, length, history (Q182); 4.9.13 and 4.12.2
+//     check the length before the classes, so a password that is both short
+//     and simple is "too short" there and "too simple" from 4.13; ipatest
+//     follows 4.13.4. TestChangePassword_CharacterClasses,
+//     TestContractPasswordPolicyEffective, TestContractPasswordCheckOrder.
+//   - Q182: krbpwdhistorylength N refuses the current password and the N-1
+//     before it, by the form and by the admin's passwd alike; the first
+//     change from a password set while the policy kept no history is
+//     allowed even to the same value. TestChangePassword_History,
+//     TestContractPasswordHistory (the real server needs the changes to be
+//     at least a second apart).
+//   - Q183: krbminpwdlife refuses a change by the owner (form and passwd)
+//     within the lifetime of the owner's last change. A password set by an
+//     admin is expired and exempt; seeded users (AddUser) count as changed
+//     long ago. The global policy's default lifetime is one hour, so a
+//     second change in a row needs SetPwPolicy with MinLife 0.
+//     TestChangePassword_MinLife, TestContractPasswordMinLife.
 //
 // A response's version is the server release, 4.13.4 unless SetVersion
 // changes it, and its principal is
