@@ -45,7 +45,7 @@ existing exported identifiers keep their signatures).
   2100 `ACIError` (`ErrACI`) on `user_add`, `user_mod` (other users),
   `user_del`, `stageuser_add`, `group_add`/`_mod`/`_del`,
   `host_add`/`_mod`/`_del`, `hostgroup_add`/`_del`, `service_add`/`_del`,
-  `hbacrule_add`/`_enable`/`_del`, `sudorule_add`/`_del`, `dnszone_add` and
+  `hbacrule_add`/`_enable`/`_disable`/`_del`, `sudorule_add`/`_del`, `dnszone_add` and
   `automember_add`, as FreeIPA 4.13.4 does on every release. The message
   follows `SetVersion`: the API permission text, or the directory's ACI text
   from 4.10 up to 4.13.3. `user_mod` on the caller's own entry stays allowed
