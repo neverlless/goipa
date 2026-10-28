@@ -284,8 +284,8 @@ func (t timingTransport) RoundTrip(r *http.Request) (*http.Response, error) {
 }
 
 // WithHTTPClient wraps the transport; compiled but not run. The caller owns
-// the TLS settings of the client it passes, so copy them from a transport
-// that trusts the FreeIPA CA.
+// the TLS settings of the client it passes: replace http.DefaultTransport
+// with a transport that trusts the FreeIPA CA.
 func ExampleWithHTTPClient() {
 	hc := &http.Client{
 		Timeout:   30 * time.Second,

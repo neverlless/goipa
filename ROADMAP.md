@@ -230,7 +230,7 @@ Accept: the listed objects have typed APIs verified nightly on FreeIPA 4.9,
 FreeIPA 4.13.4 (a security release) added permission checks to every API
 operation, so calls that worked under delegated rights may now be refused.
 
-- [ ] Error mapping and `ipatest` follow the 4.13.4 permission checks;
+- [x] Error mapping and `ipatest` follow the 4.13.4 permission checks;
       contract tests run them as a non-admin user on 4.9, 4.12 and 4.13
 - [x] Host writes: `HostAdd` (random or given one-time password, `force`),
       `HostMod`, `HostDelete` (`updatedns`), `HostDisable`

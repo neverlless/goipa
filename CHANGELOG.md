@@ -21,7 +21,8 @@ existing exported identifiers keep their signatures).
 - Examples for `WithHTTPClient` (timing the requests) and `HostAdd`
 - Kerberos documented: SPNEGO on the first call, then the `ipa_session`
   cookie; `LoginFromCCache` reads file caches only (not `KCM:`)
-<!-- T4 -->
+- `ipatest`: `Server.GrantPrivilege(uid, privilege)` gives a user one FreeIPA
+  privilege, for tests of delegated rights (#18)
 
 ### Changed
 
@@ -34,8 +35,21 @@ existing exported identifiers keep their signatures).
   is refused; tests that change a password twice should call `SetPwPolicy`
   with `MinLife` 0 (users seeded with `AddUser` are exempt for their first
   change) (#19, Q180 to Q183)
-- `ipatest`: `stageuser_find`, `hbacrule_find`, `sudorule_find`,
-  `subid_find` and `otptoken_find` honour `sizelimit` (Q164 to Q167)
+- `ipatest`: `hbacrule_find`, `sudorule_find`, `subid_find` and
+  `otptoken_find` honour `sizelimit` (Q164 to Q167)
+- `ipatest`: a caller outside `admins` who holds no granted privilege gets
+  2100 `ACIError` (`ErrACI`) on `user_add`, `user_mod` (other users),
+  `user_del`, `stageuser_add`, `group_add`/`_mod`/`_del`,
+  `host_add`/`_mod`/`_del`, `hostgroup_add`/`_del`, `service_add`/`_del`,
+  `hbacrule_add`/`_enable`/`_del`, `sudorule_add`/`_del`, `dnszone_add` and
+  `automember_add`, as FreeIPA 4.13.4 does on every release. The message
+  follows `SetVersion`: the API permission text, or the directory's ACI text
+  from 4.10 up to 4.13.3. `user_mod` on the caller's own entry stays allowed
+  for self-service attributes. The checks of Q24, Q32, Q95 and Q122 also pass
+  with the matching granted privilege. Tests that wrote as a plain user must
+  use `admin` or `GrantPrivilege` (Q168 to Q174). Not modelled: the 4001 a
+  plain user gets from `dnsrecord_add` (Q171) and 4.13.4 refusing an own
+  passkey add (Q172)
 - `ipatest`: `host_add`, `host_mod`, `host_disable` and `host_del` with
   `updatedns` (which removes the host's A and AAAA records, Q158); macaddress
   comes back upper-case (Q156); `host_disable` follows the real server's
