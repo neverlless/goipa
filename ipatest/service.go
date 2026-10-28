@@ -164,6 +164,9 @@ func serviceAdd(s *Server, c Call) (any, *ipa.IpaError) {
 		return nil, required("krbcanonicalname")
 	}
 	p := withRealm(c.Args[0])
+	if err := s.refuse(c, true, noAdd("krbprincipalname="+p+","+serviceBaseDN)); err != nil {
+		return nil, err
+	}
 	if s.services[p] != nil {
 		return nil, &ipa.IpaError{Code: ipa.CodeDuplicateEntry, Message: fmt.Sprintf("service with name %q already exists", p)}
 	}
@@ -243,6 +246,11 @@ func serviceDel(s *Server, c Call) (any, *ipa.IpaError) {
 			return nil, notFound(p, "service")
 		}
 		deleted = append(deleted, p)
+	}
+	if len(deleted) > 0 {
+		if err := s.refuse(c, true, noDelete("krbprincipalname="+deleted[0]+","+serviceBaseDN)); err != nil {
+			return nil, err
+		}
 	}
 	for _, p := range deleted {
 		delete(s.services, p)

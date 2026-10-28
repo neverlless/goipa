@@ -116,6 +116,9 @@ func TestCalls_RedactsPasswords(t *testing.T) {
 	if _, err := c.RPC("user_add", []string{"al"}, ipa.Options{"givenname": "A", "sn": "L", "userpassword": "Secret123"}); err != nil {
 		t.Fatal(err)
 	}
+	if _, err := c.HostAddWithPassword(&ipa.Host{FQDN: "web.test.local"}, true, "Secret123"); err != nil {
+		t.Fatal(err)
+	}
 	for _, call := range s.Calls() {
 		if strings.Contains(fmt.Sprint(call.Options), "Secret123") {
 			t.Errorf("%s leaks: %v", call.Method, call.Options)
@@ -126,6 +129,12 @@ func TestCalls_RedactsPasswords(t *testing.T) {
 	}
 	if u, _ := s.User("al"); u.Password == "REDACTED" || u.Password == "" {
 		t.Errorf("server password = %q", u.Password)
+	}
+	if got := s.Calls()[1].Options["userpassword"]; got != "REDACTED" {
+		t.Errorf("host_add userpassword = %v", got)
+	}
+	if h, err := c.HostShow("web.test.local"); err != nil || !h.HasPassword {
+		t.Errorf("host = %+v, %v", h, err)
 	}
 }
 

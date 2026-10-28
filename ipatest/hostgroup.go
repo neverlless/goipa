@@ -212,6 +212,9 @@ func hostGroupAdd(s *Server, c Call) (any, *ipa.IpaError) {
 		return nil, required("cn")
 	}
 	cn := hostGroupKey(c.Args[0])
+	if err := s.refuse(c, true, noAdd("cn="+cn+","+hostGroupBaseDN)); err != nil {
+		return nil, err
+	}
 	if s.hostgroups[cn] != nil {
 		return nil, &ipa.IpaError{Code: ipa.CodeDuplicateEntry, Message: fmt.Sprintf("host group with name %q already exists", cn)}
 	}
@@ -232,6 +235,11 @@ func hostGroupDel(s *Server, c Call) (any, *ipa.IpaError) {
 		deleted[i] = hostGroupKey(cn)
 		if s.hostgroups[deleted[i]] == nil {
 			return nil, notFound(cn, "host group")
+		}
+	}
+	if len(deleted) > 0 {
+		if err := s.refuse(c, true, noDelete("cn="+deleted[0]+","+hostGroupBaseDN)); err != nil {
+			return nil, err
 		}
 	}
 	for _, cn := range deleted {
@@ -294,7 +302,7 @@ func hostGroupMemberCmd(add, managers bool) builtin {
 			}
 		}
 		mine := s.groupsOf(c.User)
-		allowed := s.isAdmin(c.User) || !managers && (slices.Contains(g.ManagerUsers, c.User) ||
+		allowed := s.isAdmin(c.User) || !managers && (s.holds(c.User, "Host Group Administrators") || slices.Contains(g.ManagerUsers, c.User) ||
 			slices.ContainsFunc(g.ManagerGroups, func(n string) bool { return slices.Contains(mine, n) }))
 		attr := map[bool]string{false: "member", true: "memberManager"}[managers]
 		denied := fmt.Sprintf("Insufficient access: Insufficient 'write' privilege to the '%s' attribute of entry 'cn=%s,%s'.", attr, cn, hostGroupBaseDN)

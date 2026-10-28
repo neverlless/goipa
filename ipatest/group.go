@@ -278,6 +278,9 @@ func groupAdd(s *Server, c Call) (any, *ipa.IpaError) {
 		return nil, required("cn")
 	}
 	cn := c.Args[0]
+	if err := s.refuse(c, true, noAdd("cn="+cn+","+groupBaseDN)); err != nil {
+		return nil, err
+	}
 	if s.groups[cn] != nil {
 		return nil, &ipa.IpaError{Code: ipa.CodeDuplicateEntry, Message: fmt.Sprintf("group with name %q already exists", cn)}
 	}
@@ -299,6 +302,9 @@ func groupMod(s *Server, c Call) (any, *ipa.IpaError) {
 	if err != nil {
 		return nil, err
 	}
+	if err := s.refuse(c, true, noWrite(firstAttr(c), "cn="+cn+","+groupBaseDN)); err != nil {
+		return nil, err
+	}
 	next := r.Group.clone()
 	if v, ok := c.Options["description"]; ok {
 		next.Description = str(v)
@@ -317,6 +323,11 @@ func groupDel(s *Server, c Call) (any, *ipa.IpaError) {
 	for _, cn := range c.Args {
 		if s.groups[cn] == nil {
 			return nil, notFound(cn, "group")
+		}
+	}
+	if len(c.Args) > 0 {
+		if err := s.refuse(c, true, noDelete("cn="+c.Args[0]+","+groupBaseDN)); err != nil {
+			return nil, err
 		}
 	}
 	deleted := slices.Clone(c.Args)
@@ -359,7 +370,7 @@ func (s *Server) isAdmin(uid string) bool {
 // canWrite reports whether uid may change the members of r. Member managers
 // may change members; only admins may change the managers.
 func (s *Server) canWrite(uid, cn string, r *groupRec, managers bool) bool {
-	if s.isAdmin(uid) {
+	if s.isAdmin(uid) || !managers && s.holds(uid, "Group Administrators", "Modify Group membership") {
 		return true
 	}
 	mine := s.groupsOf(uid)

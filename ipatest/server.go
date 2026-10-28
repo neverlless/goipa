@@ -126,6 +126,7 @@ type Server struct {
 	amRules    map[string]map[string]*amRule
 	amDefs     map[string]string // default group cn by type
 	sudocmds   map[string]string
+	grants     map[string]map[string]bool // uid -> privilege, from GrantPrivilege
 }
 
 // NewServer starts a server and closes it with tb.Cleanup.
@@ -165,6 +166,7 @@ func New() *Server {
 		amRules:    map[string]map[string]*amRule{"group": {}, "hostgroup": {}},
 		amDefs:     map[string]string{},
 		sudocmds:   map[string]string{},
+		grants:     map[string]map[string]bool{},
 	}
 	mux := http.NewServeMux()
 	mux.HandleFunc("/ipa/session/json", s.serveSessionJSON)
