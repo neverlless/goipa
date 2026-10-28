@@ -710,8 +710,9 @@
 //     master are not modelled. goipa.TestContractHostDisable pins the 4010;
 //     the success path is not verified against a real server.
 //   - Q158: host_del with updatedns removes the host's A and AAAA records
-//     from the zone holding its name on 4.12 and later; 4.9.13 leaves them.
-//     goipa.TestContractHostDeleteUpdateDNS.
+//     from the zone holding its name. One real 4.9.13 run left the record
+//     (two others removed it); the cause is not known, so the fake always
+//     removes it. goipa.TestContractHostDeleteUpdateDNS.
 //
 // A response's version is the server release, 4.13.4 unless SetVersion
 // changes it, and its principal is

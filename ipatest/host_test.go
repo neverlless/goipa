@@ -113,14 +113,3 @@ func TestHostMod_RandomAndPassword(t *testing.T) {
 		t.Errorf("randompassword/has_password = %v/%v", rec["randompassword"], rec["has_password"])
 	}
 }
-
-// Q158: 4.9.13 leaves the records.
-func TestHostDel_UpdateDNSBefore412(t *testing.T) {
-	s := ipatest.NewServer(t)
-	s.SetVersion("4.9.13")
-	c := s.ClientAs("admin")
-	s.AddHost("w.test.local", ipatest.Host{})
-	rpc(t, c, "dnsrecord_add", []string{"test.local.", "w"}, ipa.Options{"arecord": "192.0.2.1"})
-	rpc(t, c, "host_del", []string{"w.test.local"}, ipa.Options{"updatedns": true})
-	rpc(t, c, "dnsrecord_show", []string{"test.local.", "w"}, nil)
-}

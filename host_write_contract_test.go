@@ -10,6 +10,7 @@ import (
 	"slices"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/neverlless/goipa"
 )
@@ -200,8 +201,7 @@ func TestContractHostDisable(t *testing.T) {
 	})
 }
 
-// TestContractHostDeleteUpdateDNS pins Q158: FreeIPA 4.9.13 leaves the
-// records, 4.12 and later remove them.
+// TestContractHostDeleteUpdateDNS pins Q158.
 func TestContractHostDeleteUpdateDNS(t *testing.T) {
 	forEachBackend(t, func(t *testing.T, b backend) {
 		zone := newZone(t, b)
@@ -217,11 +217,19 @@ func TestContractHostDeleteUpdateDNS(t *testing.T) {
 			if err := b.admin.HostDelete(updateDNS, fqdn); err != nil {
 				t.Fatal(err)
 			}
-			_, err := b.admin.DNSRecordShow(zone, name)
-			if updateDNS && serverAtLeast(b.admin.ServerVersion(), 4, 12) {
+			// 4.9.13 once left the record in one run and removed it in the
+			// next, so wait a little before calling it a failure.
+			var err error
+			for i := 0; i < 10; i++ {
+				if _, err = b.admin.DNSRecordShow(zone, name); err != nil || !updateDNS {
+					break
+				}
+				time.Sleep(time.Second)
+			}
+			if updateDNS {
 				wantIs(t, err, ipa.ErrNotFound)
 			} else if err != nil {
-				t.Errorf("record gone (updateDNS=%v): %v", updateDNS, err)
+				t.Errorf("updateDNS=false: the record is gone: %v", err)
 			}
 		}
 	})
