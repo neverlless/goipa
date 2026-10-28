@@ -617,9 +617,13 @@ func (s *Server) userMod(stage bool, c Call) (any, *ipa.IpaError) {
 	if err != nil {
 		return nil, err
 	}
-	if uid != c.User { // the self-service ACI covers the own entry
-		if err := s.refuse(c, true, noWrite(firstAttr(c), "uid="+uid+","+baseDN)); err != nil {
-			return nil, err
+	if !stage && s.denied(c) {
+		attr := firstAttr(c)
+		if uid == c.User { // Q174: self-service attributes only
+			attr = notSelfService(c)
+		}
+		if attr != "" {
+			return nil, s.aciError(true, noWrite(attr, "uid="+uid+","+baseDN))
 		}
 	}
 	if err := emptyHomeDir(c); err != nil {
@@ -674,6 +678,9 @@ func (s *Server) userDel(stage bool, c Call) (any, *ipa.IpaError) {
 				g.ManagerUsers = slices.DeleteFunc(g.ManagerUsers, func(m string) bool { return m == uid })
 			}
 			s.dropFromRules(uid, false)
+		}
+		if !stage {
+			delete(s.grants, uid) // the role memberships that granted them go too
 		}
 		if !stage && flag(c, "preserve") {
 			users[uid].Preserved, users[uid].Locked = true, true

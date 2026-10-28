@@ -5,6 +5,7 @@
 package ipatest_test
 
 import (
+	"encoding/json"
 	"errors"
 	"strings"
 	"testing"
@@ -51,6 +52,7 @@ func permServer(t *testing.T) (*ipatest.Server, []gatedWrite) {
 		{"service_del", []string{"svc/ipa.test.local"}, nil, "Insufficient 'delete' privilege to delete the entry 'krbprincipalname=svc/ipa.test.local@TEST.LOCAL,"},
 		{"hbacrule_add", []string{"nhr"}, nil, "Insufficient 'add' privilege to add the entry 'ipaUniqueID="},
 		{"hbacrule_enable", []string{"hr"}, nil, "Insufficient 'write' privilege to the 'ipaEnabledFlag' attribute of entry 'ipauniqueid="},
+		{"hbacrule_disable", []string{"hr"}, nil, "Insufficient 'write' privilege to the 'ipaEnabledFlag' attribute of entry 'ipauniqueid="},
 		{"hbacrule_del", []string{"hr"}, nil, "Insufficient 'delete' privilege to delete the entry 'ipaUniqueID="},
 		{"sudorule_add", []string{"nsr"}, nil, "Insufficient 'add' privilege to add the entry 'ipaUniqueID="},
 		{"sudorule_del", []string{"sr"}, nil, "Insufficient 'delete' privilege to delete the entry 'ipaUniqueID="},
@@ -60,22 +62,41 @@ func permServer(t *testing.T) (*ipatest.Server, []gatedWrite) {
 
 // ungated is true for the writes whose message does not follow the release
 // (Q170).
-func ungated(method string) bool { return method == "hbacrule_enable" || method == "automember_add" }
+func ungated(method string) bool {
+	return method == "hbacrule_enable" || method == "hbacrule_disable" || method == "automember_add"
+}
+
+// snapshot is what admin sees of w's target: the *_show answer or its error.
+func snapshot(t *testing.T, s *ipatest.Server, w gatedWrite) string {
+	t.Helper()
+	show := w.method[:strings.LastIndex(w.method, "_")] + "_show"
+	opts := ipa.Options{"all": true}
+	if show == "automember_show" {
+		opts["type"] = "group"
+	}
+	res, err := s.ClientAs("admin").RPC(show, w.args[:1], opts)
+	if err != nil {
+		return err.Error()
+	}
+	b, jerr := json.Marshal(res.Result)
+	if jerr != nil {
+		t.Fatal(jerr)
+	}
+	return string(b)
+}
 
 func TestPlainUserWriteRefused(t *testing.T) {
 	s, writes := permServer(t)
 	c := s.ClientAs("bob")
 	for _, w := range writes {
+		before := snapshot(t, s, w)
 		_, err := c.RPC(w.method, w.args, w.opts)
 		if _, bare := err.(*ipa.IpaError); !bare || !errors.Is(err, ipa.ErrACI) {
 			t.Errorf("%s %v: %v, want ACIError", w.method, w.args, err)
 		}
-	}
-	if _, ok := s.User("other"); !ok {
-		t.Error("user_del went through")
-	}
-	if _, ok := s.User("nu"); ok {
-		t.Error("user_add went through")
+		if after := snapshot(t, s, w); after != before {
+			t.Errorf("%s %v changed the target:\n%s\n%s", w.method, w.args, before, after)
+		}
 	}
 }
 
@@ -133,11 +154,47 @@ func TestSelfServiceAllowed(t *testing.T) {
 	if _, err := c.AddOTPToken(nil); err != nil {
 		t.Errorf("own OTP token: %v", err)
 	}
-	if _, err := c.RPC("user_mod", []string{"bob"}, ipa.Options{"title": "x"}); err != nil {
+	if _, err := c.RPC("user_mod", []string{"bob"}, ipa.Options{"title": "x", "setattr": []string{"telephoneNumber=1"}}); err != nil {
 		t.Errorf("own user_mod: %v", err)
 	}
 	if err := c.ChangePassword("bob", "Secret123", "Another-Secret-2", ""); err != nil {
 		t.Errorf("own password: %v", err)
+	}
+}
+
+// TestOwnUserModOutsideSelfService pins Q174.
+func TestOwnUserModOutsideSelfService(t *testing.T) {
+	s, _ := permServer(t)
+	c := s.ClientAs("bob")
+	for _, o := range []ipa.Options{
+		{"mail": []string{"b@example.test"}},
+		{"title": "x", "homedirectory": "/home/x"},
+		{"setattr": []string{"mail=b@example.test"}},
+	} {
+		if _, err := c.RPC("user_mod", []string{"bob"}, o); !errors.Is(err, ipa.ErrACI) {
+			t.Errorf("%v: %v", o, err)
+		}
+	}
+	s.SetVersion("4.12.2")
+	_, err := c.RPC("user_mod", []string{"bob"}, ipa.Options{"title": "x", "mail": []string{"b@example.test"}})
+	if err == nil || !strings.Contains(err.Error(), "'mail' attribute of entry 'uid=bob,") {
+		t.Errorf("4.12.2 text: %v", err)
+	}
+	s.GrantPrivilege("bob", "User Administrators")
+	if _, err := c.RPC("user_mod", []string{"bob"}, ipa.Options{"mail": []string{"b@example.test"}}); err != nil {
+		t.Errorf("granted: %v", err)
+	}
+}
+
+func TestGrantPrivilege_ClearedOnUserDel(t *testing.T) {
+	s, _ := permServer(t)
+	s.GrantPrivilege("bob", "User Administrators")
+	if err := s.ClientAs("admin").UserDelete(false, false, "bob"); err != nil {
+		t.Fatal(err)
+	}
+	s.AddUser("bob", ipatest.User{})
+	if _, err := s.ClientAs("bob").UserAdd(&ipa.User{Username: "nu", First: "N", Last: "U"}, false); !errors.Is(err, ipa.ErrACI) {
+		t.Errorf("re-added bob kept the grant: %v", err)
 	}
 }
 

@@ -259,7 +259,8 @@ func init() {
 		return rbacFind(s.perms, func(*ipa.Permission) string { return "" }, func(p *ipa.Permission) string { return p.Type }, renderPermission)(s, c)
 	}
 	builtins["role_add"] = func(s *Server, c Call) (any, *ipa.IpaError) {
-		return ruleAdd("role", s.roles, c, func(c Call) *ipa.Role { return &ipa.Role{Description: str(c.Options["description"])} }, renderRole)
+		return ruleAdd("role", s.roles, c, func(c Call) *ipa.Role { return &ipa.Role{Description: str(c.Options["description"])} }, renderRole,
+			func() *ipa.IpaError { return nil })
 	}
 	builtins["role_del"] = func(s *Server, c Call) (any, *ipa.IpaError) {
 		return ruleDel("role", s.roles, c, func(*ipa.Role) *ipa.IpaError { return nil })

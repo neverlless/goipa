@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"maps"
 	"slices"
+	"strings"
 
 	ipa "github.com/neverlless/goipa"
 )
@@ -31,30 +32,37 @@ func (s *Server) holds(uid string, privs ...string) bool {
 	return s.isAdmin(uid) || slices.ContainsFunc(privs, func(p string) bool { return s.grants[uid][p] })
 }
 
+const (
+	hbacBaseDN       = "cn=hbac,dc=test,dc=local"
+	sudoBaseDN       = "cn=sudorules,cn=sudo,dc=test,dc=local"
+	automemberBaseDN = "cn=automember,cn=etc,dc=test,dc=local"
+)
+
 // writePrivileges are the default privileges of the managed permissions
 // FreeIPA 4.13.4 binds to each gated write (Q168).
 var writePrivileges = map[string][]string{
-	"user_add":        {"User Administrators"},
-	"user_mod":        {"User Administrators"},
-	"user_del":        {"User Administrators"},
-	"stageuser_add":   {"Stage User Administrators", "Stage User Provisioning"},
-	"group_add":       {"Group Administrators"},
-	"group_mod":       {"Group Administrators"},
-	"group_del":       {"Group Administrators"},
-	"host_add":        {"Host Administrators"},
-	"host_mod":        {"Host Administrators"},
-	"host_del":        {"Host Administrators"},
-	"hostgroup_add":   {"Host Group Administrators"},
-	"hostgroup_del":   {"Host Group Administrators"},
-	"service_add":     {"Service Administrators"},
-	"service_del":     {"Service Administrators"},
-	"hbacrule_add":    {"HBAC Administrator"},
-	"hbacrule_del":    {"HBAC Administrator"},
-	"hbacrule_enable": {"HBAC Administrator"},
-	"sudorule_add":    {"Sudo Administrator"},
-	"sudorule_del":    {"Sudo Administrator"},
-	"dnszone_add":     {"DNS Administrators"},
-	"automember_add":  nil, // no privilege grants adding automember rules
+	"user_add":         {"User Administrators"},
+	"user_mod":         {"User Administrators"},
+	"user_del":         {"User Administrators"},
+	"stageuser_add":    {"Stage User Administrators", "Stage User Provisioning"},
+	"group_add":        {"Group Administrators"},
+	"group_mod":        {"Group Administrators"},
+	"group_del":        {"Group Administrators"},
+	"host_add":         {"Host Administrators"},
+	"host_mod":         {"Host Administrators"},
+	"host_del":         {"Host Administrators"},
+	"hostgroup_add":    {"Host Group Administrators"},
+	"hostgroup_del":    {"Host Group Administrators"},
+	"service_add":      {"Service Administrators"},
+	"service_del":      {"Service Administrators"},
+	"hbacrule_add":     {"HBAC Administrator"},
+	"hbacrule_del":     {"HBAC Administrator"},
+	"hbacrule_enable":  {"HBAC Administrator"},
+	"hbacrule_disable": {"HBAC Administrator"},
+	"sudorule_add":     {"Sudo Administrator"},
+	"sudorule_del":     {"Sudo Administrator"},
+	"dnszone_add":      {"DNS Administrators"},
+	"automember_add":   nil, // no privilege grants adding automember rules
 }
 
 // refuse is the 2100 a gated write gets from a caller without its privilege,
@@ -62,10 +70,19 @@ var writePrivileges = map[string][]string{
 // releases without the API gate answer (4.12.2, Q169); gate false keeps it on
 // every release, for the commands the gate does not cover (Q170).
 func (s *Server) refuse(c Call, gate bool, ldap string) *ipa.IpaError {
-	privs, ok := writePrivileges[c.Method]
-	if !ok || s.holds(c.User, privs...) {
+	if !s.denied(c) {
 		return nil
 	}
+	return s.aciError(gate, ldap)
+}
+
+// denied reports whether c is a gated write its caller may not run.
+func (s *Server) denied(c Call) bool {
+	privs, ok := writePrivileges[c.Method]
+	return ok && !s.holds(c.User, privs...)
+}
+
+func (s *Server) aciError(gate bool, ldap string) *ipa.IpaError {
 	if gate && !ldapACIRelease(s.version) {
 		ldap = "not allowed to perform this operation"
 	}
@@ -89,6 +106,41 @@ func noDelete(dn string) string {
 
 func noWrite(attr, dn string) string {
 	return fmt.Sprintf("Insufficient 'write' privilege to the '%s' attribute of entry '%s'.", attr, dn)
+}
+
+// selfServiceAttrs are the attributes a user may write on the own entry:
+// the ACIs "selfservice:User Self service", "Self can write own password",
+// "Users can manage their own SSH public keys" and "… own X.509
+// certificates" of install/share/default-aci.ldif (release-4-13-4).
+var selfServiceAttrs = []string{"givenname", "sn", "cn", "displayname", "title", "initials", "loginshell", "gecos",
+	"homephone", "mobile", "pager", "facsimiletelephonenumber", "telephonenumber", "street", "roomnumber", "l", "st",
+	"postalcode", "manager", "secretary", "description", "carlicense", "labeleduri", "inetuserhttpurl", "seealso",
+	"employeetype", "businesscategory", "ou", "userpassword", "krbprincipalkey", "sambalmpassword", "sambantpassword",
+	"ipasshpubkey", "usercertificate"}
+
+// notSelfService is the first attribute c changes, in name order, that
+// selfServiceAttrs lacks, or "" (Q174).
+func notSelfService(c Call) string {
+	var attrs []string
+	for k, v := range c.Options {
+		switch k {
+		case "all", "raw", "rights", "no_members", "version":
+		case "setattr", "addattr", "delattr":
+			for _, kv := range strs(v) {
+				a, _, _ := strings.Cut(kv, "=")
+				attrs = append(attrs, strings.ToLower(a))
+			}
+		default:
+			attrs = append(attrs, k)
+		}
+	}
+	slices.Sort(attrs)
+	for _, a := range attrs {
+		if !slices.Contains(selfServiceAttrs, a) {
+			return a
+		}
+	}
+	return ""
 }
 
 // firstAttr is the first attribute option of c in name order.

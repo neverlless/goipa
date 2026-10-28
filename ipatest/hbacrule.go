@@ -50,7 +50,7 @@ func hbacRuleToggle(disable bool) builtin {
 		if err != nil {
 			return nil, err
 		}
-		if err := s.refuse(c, false, noWrite("ipaEnabledFlag", "ipauniqueid="+r.uuid+",cn=hbac,dc=test,dc=local")); err != nil { // Q170
+		if err := s.refuse(c, false, noWrite("ipaEnabledFlag", "ipauniqueid="+r.uuid+","+hbacBaseDN)); err != nil { // Q170
 			return nil, err
 		}
 		r.Disabled = disable

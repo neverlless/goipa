@@ -7,6 +7,7 @@ package ipa_test
 import (
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -49,6 +50,7 @@ func TestContractPlainUserWrites(t *testing.T) {
 			t.Fatal(err)
 		}
 		hbacGone := newHBACRule(t, b, ipa.HBACRule{})
+		hbacOn := newHBACRule(t, b, ipa.HBACRule{})
 		sudo := newSudoRule(t, b)
 		zone := newZone(t, b)
 		autoGroup := newGroup(t, b)
@@ -117,6 +119,8 @@ func TestContractPlainUserWrites(t *testing.T) {
 				func() error { _, err := c.HBACRuleAdd(&ipa.HBACRule{Name: newHBAC}); return err }},
 			{"HBACRuleEnable", "Insufficient 'write' privilege to the 'ipaEnabledFlag' attribute of entry 'ipauniqueid=", false,
 				func() error { return c.HBACRuleEnable(hbac.Name) }},
+			{"HBACRuleDisable", "Insufficient 'write' privilege to the 'ipaEnabledFlag' attribute of entry 'ipauniqueid=", false,
+				func() error { return c.HBACRuleDisable(hbacOn.Name) }},
 			{"HBACRuleDelete", "Insufficient 'delete' privilege to delete the entry 'ipaUniqueID=", true,
 				func() error { return c.HBACRuleDelete(hbacGone.Name) }},
 			{"SudoRuleAdd", "Insufficient 'add' privilege to add the entry 'ipaUniqueID=", true,
@@ -144,7 +148,12 @@ func TestContractPlainUserWrites(t *testing.T) {
 		wantCode(t, "HostDisable", c.HostDisable(host), ipa.CodeAlreadyInactive)
 		wantCode(t, "ServiceDisable", c.ServiceDisable(svc), ipa.CodeAlreadyInactive)
 		// Q171: zones are hidden from a plain user; ipatest does not model it.
-		if _, err := c.DNSRecordAdd(zone, "www", "A", "192.0.2.1"); b.name != "ipatest" {
+		_, err = c.DNSRecordAdd(zone, "www", "A", "192.0.2.1")
+		if b.name == "ipatest" {
+			if err != nil {
+				t.Errorf("ipatest dnsrecord_add: %v", err)
+			}
+		} else {
 			wantIs(t, err, ipa.ErrNotFound)
 		}
 
@@ -161,12 +170,15 @@ func TestContractPlainUserWrites(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
+		// Q174: only the self-service attributes of the own entry are writable;
+		// the typed UserMod sends the whole record.
 		own.First = "Self"
 		_, err = c.UserMod(own)
 		logProbe(t, ver, "own UserMod", err)
-		if b.name != "ipatest" { // Q174: the full record writes attributes outside self-service
-			wantIs(t, err, ipa.ErrACI)
-		}
+		wantIs(t, err, ipa.ErrACI)
+		_, err = c.RPC("user_mod", []string{uid}, ipa.Options{"mail": []string{"self@example.test"}})
+		logProbe(t, ver, "own user_mod mail", err)
+		wantIs(t, err, ipa.ErrACI)
 		_, err = c.RPC("user_mod", []string{uid}, ipa.Options{"title": "self"})
 		logProbe(t, ver, "own user_mod title", err)
 		if err != nil {
@@ -180,12 +192,21 @@ func TestContractPlainUserWrites(t *testing.T) {
 		// The global minimum life (1 hour) would refuse the change as too soon.
 		pol := newGroup(t, b)
 		mustRPC(t, b.admin, "group_add_member", []string{pol}, ipa.Options{"user": []string{uid}})
-		mustRPC(t, b.admin, "pwpolicy_add", []string{pol}, ipa.Options{"cospriority": 900 + int(randHex(t, 1)[0]), "krbminpwdlife": 0})
+		mustRPC(t, b.admin, "pwpolicy_add", []string{pol}, ipa.Options{"cospriority": newPriority(t), "krbminpwdlife": 0})
 		t.Cleanup(func() { _, _ = b.admin.RPC("pwpolicy_del", []string{pol}, nil) })
 		if err := c.ChangePassword(uid, goodPW, "Another-Passw0rd-2", ""); err != nil {
 			t.Errorf("own password: %v", err)
 		}
 	})
+}
+
+// newPriority is a cospriority no other test is likely to hold.
+func newPriority(t *testing.T) int {
+	n, err := strconv.ParseUint(randHex(t, 3), 16, 32)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return 1000 + int(n%1000000)
 }
 
 // ldapACIRelease mirrors ipatest: 4.12.2 answers from the LDAP ACIs, the

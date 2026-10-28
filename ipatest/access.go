@@ -147,7 +147,7 @@ func (r *hbacRec) render(cn string, members, all bool) map[string]any {
 			"memberuser_user": r.Users, "memberuser_group": r.Groups,
 			"memberhost_host": r.Hosts, "memberhost_hostgroup": r.HostGroups,
 			"memberservice_hbacsvc": r.Services, "memberservice_hbacsvcgroup": r.ServiceGroups,
-		}, members, all, "ipaUniqueID="+r.uuid+",cn=hbac,dc=test,dc=local", "ipaassociation", "ipahbacrule")
+		}, members, all, "ipaUniqueID="+r.uuid+","+hbacBaseDN, "ipaassociation", "ipahbacrule")
 }
 
 func (r *sudoRec) render(cn string, members, all bool) map[string]any {
@@ -160,7 +160,7 @@ func (r *sudoRec) render(cn string, members, all bool) map[string]any {
 			"memberallowcmd_sudocmd": r.AllowCommands, "memberallowcmd_sudocmdgroup": r.AllowCommandGroups,
 			"memberdenycmd_sudocmd": r.DenyCommands, "memberdenycmd_sudocmdgroup": r.DenyCommandGroups,
 			"ipasudorunas_user": r.RunAsUsers, "ipasudorunas_group": r.RunAsUserGroups, "ipasudorunasgroup_group": r.RunAsGroups,
-		}, members, all, "ipaUniqueID="+r.uuid+",cn=sudorules,cn=sudo,dc=test,dc=local", "ipaassociation", "ipasudorule")
+		}, members, all, "ipaUniqueID="+r.uuid+","+sudoBaseDN, "ipaassociation", "ipasudorule")
 	if len(r.Options) > 0 {
 		out["ipasudoopt"] = slices.Clone(r.Options)
 	}
@@ -214,9 +214,15 @@ func ruleName(c Call) (string, *ipa.IpaError) {
 	return c.Args[0], nil
 }
 
-func ruleAdd[T any](kind string, rules map[string]*T, c Call, mk func(Call) *T, render func(*T, string, bool, bool) map[string]any) (any, *ipa.IpaError) {
+// ruleAdd adds rule c names; refuse vets the caller once the name is known
+// (Q168).
+func ruleAdd[T any](kind string, rules map[string]*T, c Call, mk func(Call) *T, render func(*T, string, bool, bool) map[string]any,
+	refuse func() *ipa.IpaError) (any, *ipa.IpaError) {
 	cn, err := ruleName(c)
 	if err != nil {
+		return nil, err
+	}
+	if err := refuse(); err != nil {
 		return nil, err
 	}
 	if rules[cn] != nil {
@@ -331,24 +337,17 @@ func init() {
 		return ruleFind(c, s.sudo, sudoDesc, sudoOff, (*sudoRec).render)
 	}
 	builtins["hbacrule_add"] = func(s *Server, c Call) (any, *ipa.IpaError) {
-		if _, err := ruleName(c); err != nil {
-			return nil, err
-		}
-		if err := s.refuse(c, true, noAdd("ipaUniqueID="+newUUID()+",cn=hbac,dc=test,dc=local")); err != nil {
-			return nil, err
-		}
 		return ruleAdd("HBAC rule", s.hbac, c, func(c Call) *hbacRec {
 			return &hbacRec{HBACRule: HBACRule{Description: str(c.Options["description"]), UserCategory: str(c.Options["usercategory"]),
 				HostCategory: str(c.Options["hostcategory"]), ServiceCategory: str(c.Options["servicecategory"])}, uuid: newUUID()}
-		}, (*hbacRec).render)
+		}, (*hbacRec).render, func() *ipa.IpaError {
+			if !s.denied(c) {
+				return nil
+			}
+			return s.aciError(true, noAdd("ipaUniqueID="+newUUID()+","+hbacBaseDN))
+		})
 	}
 	builtins["sudorule_add"] = func(s *Server, c Call) (any, *ipa.IpaError) {
-		if _, err := ruleName(c); err != nil {
-			return nil, err
-		}
-		if err := s.refuse(c, true, noAdd("ipaUniqueID="+newUUID()+",cn=sudorules,cn=sudo,dc=test,dc=local")); err != nil {
-			return nil, err
-		}
 		order, err := sudoOrder(c)
 		if err != nil {
 			return nil, err
@@ -367,16 +366,21 @@ func init() {
 				RunAsGroupCategory: str(c.Options["ipasudorunasgroupcategory"])}, uuid: newUUID()}
 			r.Order = order
 			return r
-		}, (*sudoRec).render)
+		}, (*sudoRec).render, func() *ipa.IpaError {
+			if !s.denied(c) {
+				return nil
+			}
+			return s.aciError(true, noAdd("ipaUniqueID="+newUUID()+","+sudoBaseDN))
+		})
 	}
 	builtins["hbacrule_del"] = func(s *Server, c Call) (any, *ipa.IpaError) {
 		return ruleDel("HBAC rule", s.hbac, c, func(r *hbacRec) *ipa.IpaError {
-			return s.refuse(c, true, noDelete("ipaUniqueID="+r.uuid+",cn=hbac,dc=test,dc=local"))
+			return s.refuse(c, true, noDelete("ipaUniqueID="+r.uuid+","+hbacBaseDN))
 		})
 	}
 	builtins["sudorule_del"] = func(s *Server, c Call) (any, *ipa.IpaError) {
 		return ruleDel("sudo rule", s.sudo, c, func(r *sudoRec) *ipa.IpaError {
-			return s.refuse(c, true, noDelete("ipaUniqueID="+r.uuid+",cn=sudorules,cn=sudo,dc=test,dc=local"))
+			return s.refuse(c, true, noDelete("ipaUniqueID="+r.uuid+","+sudoBaseDN))
 		})
 	}
 	builtins["hbacrule_add_user"] = hbacMembers("user", true)
