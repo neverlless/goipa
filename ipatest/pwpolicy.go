@@ -10,6 +10,7 @@ import (
 	"slices"
 	"strconv"
 	"time"
+	"unicode"
 
 	ipa "github.com/neverlless/goipa"
 )
@@ -150,6 +151,78 @@ func (s *Server) userPolicy(uid string) (string, bool) {
 		}
 	}
 	return best, true
+}
+
+// setPassword stores pw. Q3: a password set by someone else is expired. The
+// history keeps the newest passwords of the user's policy, current included
+// (Q182); a password set while the policy keeps none leaves no entry.
+func (s *Server) setPassword(uid string, r *userRec, pw string, self bool) {
+	r.Password = pw
+	if self {
+		r.PasswdExpire, r.pwChanged = expiredNow().Add(pwdMaxLife), time.Now()
+	} else {
+		r.PasswdExpire = expiredNow()
+	}
+	if n := s.effectivePolicy(uid).HistoryLength; n > 0 {
+		r.pwHistory = append(r.pwHistory, pw)
+		r.pwHistory = r.pwHistory[max(0, len(r.pwHistory)-n):]
+	}
+}
+
+func (s *Server) effectivePolicy(uid string) PwPolicy {
+	cn, _ := s.userPolicy(uid)
+	return s.pwpol[cn]
+}
+
+// pwViolation checks pw against the policy effective for uid (Q180) and
+// returns FreeIPA's message, or "" if pw is acceptable. Only the user's own
+// change is checked for length, classes and minimum lifetime; a change made by
+// someone else is checked against the history alone (Q183).
+func (s *Server) pwViolation(uid string, r *userRec, pw string, self bool) string {
+	p := s.effectivePolicy(uid)
+	const prefix = "Constraint violation: "
+	if self {
+		if p.MinLife > 0 && !r.pwChanged.IsZero() && (r.PasswdExpire.IsZero() || r.PasswdExpire.After(time.Now())) && time.Since(r.pwChanged) < p.MinLife {
+			return prefix + "Too soon to change password"
+		}
+		if p.MinClasses > 0 && !enoughClasses(pw, p.MinClasses) { // Q181
+			return prefix + "Password is too simple"
+		}
+		if len(pw) < p.MinLength {
+			return prefix + "Password is too short"
+		}
+	}
+	if n := p.HistoryLength; n > 0 && slices.Contains(r.pwHistory[max(0, len(r.pwHistory)-n):], pw) {
+		return prefix + "Password reuse not permitted"
+	}
+	return ""
+}
+
+// enoughClasses implements Q181: at least min of lower, upper, digit and other,
+// and more than min different characters.
+func enoughClasses(pw string, min int) bool {
+	var lower, upper, digit, other bool
+	seen := map[rune]bool{}
+	for _, c := range pw {
+		seen[c] = true
+		switch {
+		case unicode.IsLower(c):
+			lower = true
+		case unicode.IsUpper(c):
+			upper = true
+		case unicode.IsDigit(c):
+			digit = true
+		default:
+			other = true
+		}
+	}
+	n := 0
+	for _, b := range []bool{lower, upper, digit, other} {
+		if b {
+			n++
+		}
+	}
+	return n >= min && len(seen) > min
 }
 
 func init() {
