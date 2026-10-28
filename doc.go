@@ -79,6 +79,10 @@
 // session ID as a credential until it expires, and do not log or share it.
 // ClearSession drops the ID on the client side only.
 //
+// A Kerberos client sends its first request to /ipa/json with SPNEGO; FreeIPA
+// answers with an ipa_session cookie and later calls use /ipa/session/json
+// with that cookie, so the KDC sees one ticket request per session.
+//
 // # Errors
 //
 // A FreeIPA error is returned as a bare *IpaError, never wrapped. This applies

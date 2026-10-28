@@ -7,6 +7,43 @@ existing exported identifiers keep their signatures).
 
 ## [Unreleased]
 
+### Added
+
+- Host writes: `HostAdd` (random one-time password, `force`),
+  `HostAddWithPassword`, `HostMod`, `HostDelete` (`updatedns`) and
+  `HostDisable`, with `…Context` twins; `Host.RandomPassword`
+- `StageUserAddWithPassword` sets the initial password on `stageuser_add`
+  (#14)
+- `WithTruncationErrors()`: `UserFind`, `GroupFind`, `HostFind`,
+  `StageUserFind`, `SubIDFind`, `FetchOTPTokens`, `HBACRuleFind` and
+  `SudoRuleFind` return `ErrTruncated` with the entries they got; the
+  default stays silent as in v1.0 (#15)
+- Examples for `WithHTTPClient` (timing the requests) and `HostAdd`
+- Kerberos documented: SPNEGO on the first call, then the `ipa_session`
+  cookie; `LoginFromCCache` reads file caches only (not `KCM:`)
+<!-- T4 -->
+
+### Changed
+
+- `ipatest`: `Calls()` now redacts passwords (`userpassword` and the like)
+  in the recorded options, so tests that asserted the raw values must
+  compare `"REDACTED"` (the server state keeps the password)
+- `ipatest`: password changes by the user now enforce the user's effective
+  policy (group policies by priority, character classes, history) and the
+  minimum lifetime. A second self-change within `MinLife` (1 h by default)
+  is refused; tests that change a password twice should call `SetPwPolicy`
+  with `MinLife` 0 (users seeded with `AddUser` are exempt for their first
+  change) (#19, Q180 to Q183)
+- `ipatest`: `stageuser_find`, `hbacrule_find`, `sudorule_find`,
+  `subid_find` and `otptoken_find` honour `sizelimit` (Q164 to Q167)
+- `ipatest`: `host_add`, `host_mod`, `host_disable` and `host_del` with
+  `updatedns` (which removes the host's A and AAAA records, Q158); macaddress
+  comes back upper-case (Q156); `host_disable` follows the real server's
+  keytab rules (Q157)
+- `ipatest`: `user_add` and `stageuser_add` with `userpassword` keep it,
+  expired; `stageuser_activate` carries it over (Q160, #16); `user_mod`
+  accepts `setattr krbPasswordExpiration` to lift the expiry (#17)
+
 ## [v1.0.0] - 2026-10-24
 
 The v1 API freeze: from v1.0.0 no exported identifier of `ipa` or `ipatest`

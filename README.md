@@ -66,7 +66,8 @@ tokens.
   config, session or Kerberos auth and API version
 - `Call[T]` and `Entry`: typed decoding of any command's result, with
   accessors for FreeIPA's attribute lists, dates and binary values
-- `FindEntries` returns `ErrTruncated` when the server cut a search short
+- `FindEntries` returns `ErrTruncated` when the server cut a search short;
+  the typed Finds do so only with `WithTruncationErrors()`
 - `Modify` changes single attributes (`setattr`/`addattr`/`delattr`) on any
   object; `Batch` sends several commands in one round trip
 - `ServerVersion`; passkey and sub-ID calls return `ErrNotSupported` when the
@@ -116,9 +117,14 @@ calls where noted), checked nightly against FreeIPA 4.9, 4.12 and 4.13. Member
 calls return the updated object and a `*MemberError` for members the server
 refused. Attributes are changed with `Modify` (`HostGroupAdd` and friends only
 create); for automember use `RPC`, since `automember_mod` needs the rule type.
+Finds that hit the server's size limit return what they got without an
+error; create the client with `WithTruncationErrors()` to get `ErrTruncated`
+with those entries instead.
 
 | Object | Methods | FreeIPA commands |
 |---|---|---|
+| Host | `HostAdd`, `HostAddWithPassword`, `HostMod`, `HostDelete`, `HostDisable` (with `HostShow`/`HostFind`) | `host_add`, `_mod`, `_del` (`updatedns`), `_disable`, `_show`, `_find` |
+| Stage user | `StageUserAdd`, `StageUserAddWithPassword`, `StageUserActivate` (with `StageUserShow`/`StageUserFind`) | `stageuser_add` (with `userpassword`), `_activate`, `_show`, `_find` |
 | Host group | `HostGroupShow`, `HostGroupFind`, `HostGroupAdd`, `HostGroupDelete`, `HostGroupAddMember`, `HostGroupRemoveMember`, `HostGroupAddMemberManager`, `HostGroupRemoveMemberManager` | `hostgroup_show`, `_find`, `_add`, `_del`, `_add_member`, `_remove_member`, `_add_member_manager`, `_remove_member_manager` |
 | Service | `ServiceShow`, `ServiceFind`, `ServiceAdd`, `ServiceDelete`, `ServiceDisable`, `ServiceAddHost`, `ServiceRemoveHost`, `ServiceAllow…Keytab`, `ServiceDisallow…Keytab` (retrieve, create) | `service_show`, `_find`, `_add`, `_del`, `_disable`, `_add_host`, `_remove_host`, `_allow_retrieve_keytab`, `_disallow_retrieve_keytab`, `_allow_create_keytab`, `_disallow_create_keytab` |
 | HBAC rule | `HBACRuleShow`, `HBACRuleFind`, `HBACRuleAdd`, `HBACRuleDelete`, `HBACRuleEnable`, `HBACRuleDisable`, `HBACRuleAdd/RemoveUser`, `…Host`, `…Service` | `hbacrule_show`, `_find`, `_add`, `_del`, `_enable`, `_disable`, `_add_user`, `_remove_user`, `_add_host`, `_remove_host`, `_add_service`, `_remove_service` |
@@ -253,6 +259,13 @@ When a session expires (HTTP 401), the call is retried once:
   it too. This needs sticky sessions (the default).
 - A client restored from a saved session ID has neither, so it gets
   `ErrUnauthorized`.
+
+Kerberos clients send the first call to `/ipa/json` with SPNEGO; FreeIPA
+answers with an `ipa_session` cookie and later calls use `/ipa/session/json`
+with it, negotiating again only after a 401. The KDC therefore sees one ticket
+request per session, not one per call. `LoginFromCCache` reads file caches
+only (`FILE:` or a path). RHEL and Fedora default to `KCM:`, so run
+`kinit -c /tmp/krb5cc_app` (or set `KRB5CCNAME=FILE:…`) or use a keytab.
 
 For a host that is not enrolled in FreeIPA, give the host, realm and CA:
 
