@@ -164,7 +164,7 @@ func init() {
 			cn = c.Args[0]
 		}
 		uid := str(c.Options["user"])
-		if !s.isAdmin(c.User) { // Q32: the ACI hides the entries
+		if !s.holds(c.User, "Password Policy Readers", "Password Policy Administrator") { // Q32: the ACI hides the entries
 			name := "None"
 			if len(c.Args) > 0 && c.Args[0] != "" {
 				name = c.Args[0]

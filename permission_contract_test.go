@@ -6,13 +6,15 @@ package ipa_test
 
 import (
 	"errors"
+	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/neverlless/goipa"
 )
 
-// TestContractPlainUserWrites runs the typed writes as a user outside admins
-// with no roles, and the self-service calls that must keep working.
+// TestContractPlainUserWrites pins Q168–Q172: the typed writes as a user
+// outside admins with no roles, and the self-service calls.
 func TestContractPlainUserWrites(t *testing.T) {
 	forEachBackend(t, func(t *testing.T, b backend) {
 		res, err := b.admin.RPC("ping", nil, nil)
@@ -73,67 +75,140 @@ func TestContractPlainUserWrites(t *testing.T) {
 		t.Cleanup(func() { _ = b.admin.AutomemberDelete(ipa.AutomemberGroup, autoGroup) })
 
 		user := func(u string) *ipa.User { return &ipa.User{Username: u, First: "Go", Last: "Test"} }
-		writes := []struct {
-			name string
-			call func() error
+		// ldap is the start of the 4.12.2 text; gate false: every release answers it.
+		// A mod names one of the modified attributes, not always the same (Q169).
+		gated := []struct {
+			name, ldap string
+			gate       bool
+			call       func() error
 		}{
-			{"UserAdd", func() error { _, err := c.UserAdd(user(newUser), false); return err }},
-			{"UserMod", func() error { _, err := c.UserMod(otherRec); return err }},
-			{"UserDelete", func() error { return c.UserDelete(false, false, victim) }},
-			{"StageUserAdd", func() error { _, err := c.StageUserAdd(user(newStage)); return err }},
-			{"StageUserAddWithPassword", func() error {
+			{"UserAdd", "Could not read UPG Definition", true, func() error { _, err := c.UserAdd(user(newUser), false); return err }},
+			{"UserMod", "Insufficient 'write' privilege to the '", true,
+				func() error { _, err := c.UserMod(otherRec); return err }},
+			{"UserDelete", "Insufficient 'delete' privilege to delete the entry 'uid=" + victim + ",", true,
+				func() error { return c.UserDelete(false, false, victim) }},
+			{"StageUserAdd", "Insufficient 'add' privilege to add the entry 'uid=" + newStage + ",cn=staged users,", true,
+				func() error { _, err := c.StageUserAdd(user(newStage)); return err }},
+			{"StageUserAddWithPassword", "Insufficient 'add' privilege to the 'userPassword' attribute", true, func() error {
 				_, err := c.StageUserAddWithPassword(user(newStagePW), goodPW)
 				return err
 			}},
-			{"GroupAdd", func() error { _, err := c.GroupAdd(&ipa.Group{Name: newGroupName}); return err }},
-			{"GroupMod", func() error { _, err := c.GroupMod(&ipa.Group{Name: group, Description: "changed"}); return err }},
-			{"GroupDelete", func() error { return c.GroupDelete(gone) }},
-			{"HostAdd", func() error { _, err := c.HostAdd(&ipa.Host{FQDN: newHost}, true, false); return err }},
-			{"HostMod", func() error { _, err := c.HostMod(&ipa.Host{FQDN: host, Description: "changed"}); return err }},
-			{"HostDisable", func() error { return c.HostDisable(host) }},
-			{"HostDelete", func() error { return c.HostDelete(false, hostGone) }},
-			{"HostGroupAdd", func() error { _, err := c.HostGroupAdd(&ipa.HostGroup{Name: newHG}); return err }},
-			{"HostGroupDelete", func() error { return c.HostGroupDelete(hg) }},
-			{"ServiceAdd", func() error { _, err := c.ServiceAdd(newSvc, true); return err }},
-			{"ServiceDisable", func() error { return c.ServiceDisable(svc) }},
-			{"ServiceDelete", func() error { return c.ServiceDelete(svc) }},
-			{"HBACRuleAdd", func() error { _, err := c.HBACRuleAdd(&ipa.HBACRule{Name: newHBAC}); return err }},
-			{"HBACRuleEnable", func() error { return c.HBACRuleEnable(hbac.Name) }},
-			{"HBACRuleDelete", func() error { return c.HBACRuleDelete(hbacGone.Name) }},
-			{"SudoRuleAdd", func() error { _, err := c.SudoRuleAdd(&ipa.SudoRule{Name: newSudo}); return err }},
-			{"SudoRuleDelete", func() error { return c.SudoRuleDelete(sudo) }},
-			{"DNSZoneAdd", func() error { _, err := c.DNSZoneAdd(newZoneName, false); return err }},
-			{"DNSRecordAdd", func() error { _, err := c.DNSRecordAdd(zone, "www", "A", "192.0.2.1"); return err }},
-			{"AutomemberAdd", func() error { _, err := c.AutomemberAdd(ipa.AutomemberGroup, autoGroup, ""); return err }},
+			{"GroupAdd", "Insufficient 'add' privilege to add the entry 'cn=" + newGroupName + ",", true,
+				func() error { _, err := c.GroupAdd(&ipa.Group{Name: newGroupName}); return err }},
+			{"GroupMod", "Insufficient 'write' privilege to the '", true,
+				func() error { _, err := c.GroupMod(&ipa.Group{Name: group, Description: "changed"}); return err }},
+			{"GroupDelete", "Insufficient 'delete' privilege to delete the entry 'cn=" + gone + ",", true,
+				func() error { return c.GroupDelete(gone) }},
+			{"HostAdd", "Insufficient 'add' privilege to add the entry 'fqdn=" + newHost + ",", true,
+				func() error { _, err := c.HostAdd(&ipa.Host{FQDN: newHost}, true, false); return err }},
+			{"HostMod", "Insufficient 'write' privilege to the '", true,
+				func() error { _, err := c.HostMod(&ipa.Host{FQDN: host, Description: "changed"}); return err }},
+			{"HostDelete", "Insufficient 'delete' privilege to delete the entry 'fqdn=" + hostGone + ",", true,
+				func() error { return c.HostDelete(false, hostGone) }},
+			{"HostGroupAdd", "Insufficient 'add' privilege to add the entry 'cn=" + newHG + ",", true,
+				func() error { _, err := c.HostGroupAdd(&ipa.HostGroup{Name: newHG}); return err }},
+			{"HostGroupDelete", "Insufficient 'delete' privilege to delete the entry 'cn=" + hg + ",", true,
+				func() error { return c.HostGroupDelete(hg) }},
+			{"ServiceAdd", "Insufficient 'add' privilege to add the entry 'krbprincipalname=" + newSvc + ",", true,
+				func() error { _, err := c.ServiceAdd(newSvc, true); return err }},
+			{"ServiceDelete", "Insufficient 'delete' privilege to delete the entry 'krbprincipalname=" + svc + ",", true,
+				func() error { return c.ServiceDelete(svc) }},
+			{"HBACRuleAdd", "Insufficient 'add' privilege to add the entry 'ipaUniqueID=", true,
+				func() error { _, err := c.HBACRuleAdd(&ipa.HBACRule{Name: newHBAC}); return err }},
+			{"HBACRuleEnable", "Insufficient 'write' privilege to the 'ipaEnabledFlag' attribute of entry 'ipauniqueid=", false,
+				func() error { return c.HBACRuleEnable(hbac.Name) }},
+			{"HBACRuleDelete", "Insufficient 'delete' privilege to delete the entry 'ipaUniqueID=", true,
+				func() error { return c.HBACRuleDelete(hbacGone.Name) }},
+			{"SudoRuleAdd", "Insufficient 'add' privilege to add the entry 'ipaUniqueID=", true,
+				func() error { _, err := c.SudoRuleAdd(&ipa.SudoRule{Name: newSudo}); return err }},
+			{"SudoRuleDelete", "Insufficient 'delete' privilege to delete the entry 'ipaUniqueID=", true,
+				func() error { return c.SudoRuleDelete(sudo) }},
+			{"DNSZoneAdd", "Insufficient 'add' privilege to add the entry 'idnsname=" + newZoneName + ",", true,
+				func() error { _, err := c.DNSZoneAdd(newZoneName, false); return err }},
+			{"AutomemberAdd", "Insufficient 'add' privilege to add the entry 'cn=" + autoGroup + ",cn=group,cn=automember,", false,
+				func() error { _, err := c.AutomemberAdd(ipa.AutomemberGroup, autoGroup, ""); return err }},
 		}
-		for _, w := range writes {
-			logProbe(t, ver, w.name, w.call())
+		for _, w := range gated {
+			err := w.call()
+			logProbe(t, ver, w.name, err)
+			want := "ipa: error 2100 - Insufficient access: not allowed to perform this operation"
+			if !w.gate || ldapACIRelease(ver) {
+				want = "ipa: error 2100 - Insufficient access: " + w.ldap
+			}
+			if _, bare := err.(*ipa.IpaError); !bare || !errors.Is(err, ipa.ErrACI) || !strings.HasPrefix(err.Error(), want) {
+				t.Errorf("%s: %v, want %s…", w.name, err, want)
+			}
 		}
 
-		self := []struct {
-			name string
-			call func() error
-		}{
-			{"own UserAddPasskey", func() error {
-				if !serverAtLeast(ver, 4, 11) {
-					return nil
-				}
-				return c.UserAddPasskey(uid, testPasskey)
-			}},
-			{"own AddOTPToken", func() error {
-				tok, err := c.AddOTPToken(nil)
-				if err == nil {
-					t.Cleanup(func() { _ = b.admin.RemoveOTPToken(tok.UUID) })
-				}
-				return err
-			}},
-			{"own ChangePassword", func() error { return c.ChangePassword(uid, goodPW, "Another-Passw0rd-2", "") }},
+		// Not gated: no keytab to remove comes first (Q157), on every release.
+		wantCode(t, "HostDisable", c.HostDisable(host), ipa.CodeAlreadyInactive)
+		wantCode(t, "ServiceDisable", c.ServiceDisable(svc), ipa.CodeAlreadyInactive)
+		// Q171: zones are hidden from a plain user; ipatest does not model it.
+		if _, err := c.DNSRecordAdd(zone, "www", "A", "192.0.2.1"); b.name != "ipatest" {
+			wantIs(t, err, ipa.ErrNotFound)
 		}
-		for _, s := range self {
-			err := s.call()
-			logProbe(t, ver, s.name, err)
-			if err != nil {
-				t.Errorf("%s: %v", s.name, err)
+
+		// Self-service. Q172: 4.13.4 refuses an own passkey; ipatest does not model it.
+		err = c.UserAddPasskey(uid, testPasskey)
+		switch {
+		case !serverAtLeast(ver, 4, 11):
+		case b.name != "ipatest" && !ldapACIRelease(ver):
+			wantIs(t, err, ipa.ErrACI)
+		case err != nil:
+			t.Errorf("own passkey: %v", err)
+		}
+		own, err := c.UserShow(uid)
+		if err != nil {
+			t.Fatal(err)
+		}
+		own.First = "Self"
+		_, err = c.UserMod(own)
+		logProbe(t, ver, "own UserMod", err)
+		if b.name != "ipatest" { // Q174: the full record writes attributes outside self-service
+			wantIs(t, err, ipa.ErrACI)
+		}
+		_, err = c.RPC("user_mod", []string{uid}, ipa.Options{"title": "self"})
+		logProbe(t, ver, "own user_mod title", err)
+		if err != nil {
+			t.Errorf("own user_mod title: %v", err)
+		}
+		if tok, err := c.AddOTPToken(nil); err != nil {
+			t.Errorf("own OTP token: %v", err)
+		} else {
+			t.Cleanup(func() { _ = b.admin.RemoveOTPToken(tok.UUID) })
+		}
+		// The global minimum life (1 hour) would refuse the change as too soon.
+		pol := newGroup(t, b)
+		mustRPC(t, b.admin, "group_add_member", []string{pol}, ipa.Options{"user": []string{uid}})
+		mustRPC(t, b.admin, "pwpolicy_add", []string{pol}, ipa.Options{"cospriority": 900 + int(randHex(t, 1)[0]), "krbminpwdlife": 0})
+		t.Cleanup(func() { _, _ = b.admin.RPC("pwpolicy_del", []string{pol}, nil) })
+		if err := c.ChangePassword(uid, goodPW, "Another-Passw0rd-2", ""); err != nil {
+			t.Errorf("own password: %v", err)
+		}
+	})
+}
+
+// ldapACIRelease mirrors ipatest: 4.12.2 answers from the LDAP ACIs, the
+// 4.9.13 image and 4.13.4 from the API gate.
+func ldapACIRelease(ver string) bool {
+	var ma, mi, pa int
+	_, _ = fmt.Sscanf(ver, "%d.%d.%d", &ma, &mi, &pa)
+	return ma == 4 && mi >= 10 && (mi < 13 || mi == 13 && pa < 4)
+}
+
+// TestContractPrivilegeNames checks that the privileges ipatest's
+// GrantPrivilege acts on exist under these names.
+func TestContractPrivilegeNames(t *testing.T) {
+	forEachBackend(t, func(t *testing.T, b backend) {
+		if b.name == "ipatest" {
+			t.Skip("ipatest seeds User Administrators only")
+		}
+		for _, p := range []string{"User Administrators", "Stage User Administrators", "Stage User Provisioning",
+			"Group Administrators", "Modify Group membership", "Host Administrators", "Host Group Administrators",
+			"Service Administrators", "HBAC Administrator", "Sudo Administrator", "DNS Administrators",
+			"Password Policy Readers", "Password Policy Administrator", "Certificate Administrators", "RBAC Readers"} {
+			if _, err := b.admin.PrivilegeShow(p); err != nil {
+				t.Errorf("%s: %v", p, err)
 			}
 		}
 	})

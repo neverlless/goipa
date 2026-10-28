@@ -142,6 +142,9 @@ func automemberAdd(s *Server, c Call) (any, *ipa.IpaError) {
 		return nil, required("cn")
 	}
 	cn := amName(typ, c.Args[0])
+	if err := s.refuse(c, false, noAdd("cn="+cn+",cn="+typ+",cn=automember,cn=etc,dc=test,dc=local")); err != nil { // Q170
+		return nil, err
+	}
 	if s.amRules[typ][cn] != nil {
 		return nil, &ipa.IpaError{Code: ipa.CodeDuplicateEntry, Message: fmt.Sprintf("Automember rule with name %q already exists", cn)}
 	}

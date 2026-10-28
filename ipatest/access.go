@@ -227,10 +227,16 @@ func ruleAdd[T any](kind string, rules map[string]*T, c Call, mk func(Call) *T, 
 	return entry(cn, render(r, cn, false, flag(c, "all")), fmt.Sprintf("Added %s %q", kind, cn)), nil
 }
 
-func ruleDel[T any](kind string, rules map[string]*T, c Call) (any, *ipa.IpaError) {
+// ruleDel deletes the rules named in c; refuse vets the first of them (Q168).
+func ruleDel[T any](kind string, rules map[string]*T, c Call, refuse func(*T) *ipa.IpaError) (any, *ipa.IpaError) {
 	for _, cn := range c.Args {
 		if rules[cn] == nil {
 			return nil, notFound(cn, kind)
+		}
+	}
+	if len(c.Args) > 0 {
+		if err := refuse(rules[c.Args[0]]); err != nil {
+			return nil, err
 		}
 	}
 	deleted := slices.Clone(c.Args)
@@ -325,12 +331,24 @@ func init() {
 		return ruleFind(c, s.sudo, sudoDesc, sudoOff, (*sudoRec).render)
 	}
 	builtins["hbacrule_add"] = func(s *Server, c Call) (any, *ipa.IpaError) {
+		if _, err := ruleName(c); err != nil {
+			return nil, err
+		}
+		if err := s.refuse(c, true, noAdd("ipaUniqueID="+newUUID()+",cn=hbac,dc=test,dc=local")); err != nil {
+			return nil, err
+		}
 		return ruleAdd("HBAC rule", s.hbac, c, func(c Call) *hbacRec {
 			return &hbacRec{HBACRule: HBACRule{Description: str(c.Options["description"]), UserCategory: str(c.Options["usercategory"]),
 				HostCategory: str(c.Options["hostcategory"]), ServiceCategory: str(c.Options["servicecategory"])}, uuid: newUUID()}
 		}, (*hbacRec).render)
 	}
 	builtins["sudorule_add"] = func(s *Server, c Call) (any, *ipa.IpaError) {
+		if _, err := ruleName(c); err != nil {
+			return nil, err
+		}
+		if err := s.refuse(c, true, noAdd("ipaUniqueID="+newUUID()+",cn=sudorules,cn=sudo,dc=test,dc=local")); err != nil {
+			return nil, err
+		}
 		order, err := sudoOrder(c)
 		if err != nil {
 			return nil, err
@@ -351,8 +369,16 @@ func init() {
 			return r
 		}, (*sudoRec).render)
 	}
-	builtins["hbacrule_del"] = func(s *Server, c Call) (any, *ipa.IpaError) { return ruleDel("HBAC rule", s.hbac, c) }
-	builtins["sudorule_del"] = func(s *Server, c Call) (any, *ipa.IpaError) { return ruleDel("sudo rule", s.sudo, c) }
+	builtins["hbacrule_del"] = func(s *Server, c Call) (any, *ipa.IpaError) {
+		return ruleDel("HBAC rule", s.hbac, c, func(r *hbacRec) *ipa.IpaError {
+			return s.refuse(c, true, noDelete("ipaUniqueID="+r.uuid+",cn=hbac,dc=test,dc=local"))
+		})
+	}
+	builtins["sudorule_del"] = func(s *Server, c Call) (any, *ipa.IpaError) {
+		return ruleDel("sudo rule", s.sudo, c, func(r *sudoRec) *ipa.IpaError {
+			return s.refuse(c, true, noDelete("ipaUniqueID="+r.uuid+",cn=sudorules,cn=sudo,dc=test,dc=local"))
+		})
+	}
 	builtins["hbacrule_add_user"] = hbacMembers("user", true)
 	builtins["sudorule_add_user"] = sudoMember(true, sudoUsers)
 	builtins["sudorule_add_option"] = func(s *Server, c Call) (any, *ipa.IpaError) {

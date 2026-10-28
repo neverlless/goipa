@@ -148,7 +148,7 @@ func rbacShow[T any](kind string, recs map[string]*T, render func(*T, string, bo
 			return nil, err
 		}
 		r := recs[cn]
-		if r == nil || !s.isAdmin(c.User) { // Q122: the read permissions are privilege-bound
+		if r == nil || !s.holds(c.User, "RBAC Readers") { // Q122: the read permissions are privilege-bound
 			return nil, notFound(cn, kind)
 		}
 		all := flag(c, "all")
@@ -172,7 +172,7 @@ func rbacFind[T any](recs map[string]*T, desc, typ func(*T) string, render func(
 		}
 		var cns []string
 		for cn, r := range recs {
-			if !s.isAdmin(c.User) { // Q122
+			if !s.holds(c.User, "RBAC Readers") { // Q122
 				break
 			}
 			d := desc(r)
@@ -261,7 +261,9 @@ func init() {
 	builtins["role_add"] = func(s *Server, c Call) (any, *ipa.IpaError) {
 		return ruleAdd("role", s.roles, c, func(c Call) *ipa.Role { return &ipa.Role{Description: str(c.Options["description"])} }, renderRole)
 	}
-	builtins["role_del"] = func(s *Server, c Call) (any, *ipa.IpaError) { return ruleDel("role", s.roles, c) }
+	builtins["role_del"] = func(s *Server, c Call) (any, *ipa.IpaError) {
+		return ruleDel("role", s.roles, c, func(*ipa.Role) *ipa.IpaError { return nil })
+	}
 	builtins["role_add_member"] = roleAddMember
 }
 

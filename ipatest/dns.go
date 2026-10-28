@@ -155,6 +155,9 @@ func dnszoneAdd(s *Server, c Call) (any, *ipa.IpaError) {
 		return nil, required("idnsname")
 	}
 	name := absName(c.Args[0])
+	if err := s.refuse(c, true, noAdd("idnsname="+name+","+dnsBaseDN)); err != nil {
+		return nil, err
+	}
 	if s.dnsZones[name] != nil {
 		return nil, &ipa.IpaError{Code: ipa.CodeDuplicateEntry, Message: fmt.Sprintf("DNS zone with name %q already exists", name)}
 	}

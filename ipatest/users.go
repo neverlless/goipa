@@ -565,6 +565,16 @@ func (s *Server) userAdd(stage bool, c Call) (any, *ipa.IpaError) {
 	if err != nil {
 		return nil, err
 	}
+	ldap := "Could not read UPG Definition originfilter. Check your permissions."
+	if stage {
+		ldap = noAdd("uid=" + uid + "," + stageBaseDN)
+		if str(c.Options["userpassword"]) != "" {
+			ldap = "Insufficient 'add' privilege to the 'userPassword' attribute"
+		}
+	}
+	if err := s.refuse(c, true, ldap); err != nil {
+		return nil, err
+	}
 	if s.store(stage)[uid] != nil { // Q10, Q29
 		return nil, &ipa.IpaError{Code: ipa.CodeDuplicateEntry, Message: fmt.Sprintf("%s with name %q already exists", userObject(stage), uid)}
 	}
@@ -607,6 +617,11 @@ func (s *Server) userMod(stage bool, c Call) (any, *ipa.IpaError) {
 	if err != nil {
 		return nil, err
 	}
+	if uid != c.User { // the self-service ACI covers the own entry
+		if err := s.refuse(c, true, noWrite(firstAttr(c), "uid="+uid+","+baseDN)); err != nil {
+			return nil, err
+		}
+	}
 	if err := emptyHomeDir(c); err != nil {
 		return nil, err
 	}
@@ -645,6 +660,11 @@ func (s *Server) userDel(stage bool, c Call) (any, *ipa.IpaError) {
 			failed = append(failed, uid)
 		} else {
 			deleted = append(deleted, uid)
+		}
+	}
+	if len(deleted) > 0 {
+		if err := s.refuse(c, true, noDelete("uid="+deleted[0]+","+baseDN)); err != nil {
+			return nil, err
 		}
 	}
 	for _, uid := range deleted {
