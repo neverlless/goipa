@@ -715,6 +715,19 @@
 //     stageuser_activate copies it to the active user, expired again as of
 //     the activation, so the first login is "password expired" until
 //     user_mod setattr krbPasswordExpiration lifts it. goipa.TestContractStageUserAddWithPassword.
+//   - Q156: host_add and host_mod return macaddress upper-case, however it
+//     was sent. goipa.TestContractHostAddShowDelete.
+//   - Q157: host_disable disables the keys of the host's services and of the
+//     host and leaves the one-time password (from the 4.9.13, 4.12.2 and
+//     4.13.4 sources, identical); it is 4010 "This entry is already
+//     disabled" only if there was no keytab to remove, a host with only a
+//     one-time password included. Certificates and the refusal for an IPA
+//     master are not modelled. goipa.TestContractHostDisable pins the 4010;
+//     the success path is not verified against a real server.
+//   - Q158: host_del with updatedns removes the host's A and AAAA records
+//     from the zone holding its name. One real 4.9.13 run left the record
+//     (two others removed it); the cause is not known, so the fake always
+//     removes it. goipa.TestContractHostDeleteUpdateDNS.
 //
 // A response's version is the server release, 4.13.4 unless SetVersion
 // changes it, and its principal is
@@ -726,7 +739,9 @@
 // Certificates are issued (cert_request, cert_show, cert_revoke) for service
 // principals only, with the default profile; user and host certificates,
 // other profiles, sub-CAs, cert_find and the other cert commands are left
-// out, as is host_add's DNS check (every fqdn is accepted, as with force).
+// out, as is host_add's DNS check (every fqdn is accepted, as with force);
+// host_mod models description, l, nshostlocation, nshardwareplatform,
+// nsosversion, macaddress, userclass, random and userpassword only.
 // The *_mod commands of the families modelled since v0.9 (host groups,
 // services, HBAC and sudo rules, DNS, automember, RBAC) are not modelled
 // (sudorule_mod only for description and sudoorder, Q151), nor are role,
