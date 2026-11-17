@@ -32,6 +32,18 @@ func twinCalls() []twinCall {
 		{"CertRevokeContext", func(ctx context.Context, c *ipa.Client) error {
 			return c.CertRevokeContext(ctx, "1", 0)
 		}},
+		{"ConfigShowContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.ConfigShowContext(ctx)
+			return err
+		}},
+		{"SelfServiceFindContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.SelfServiceFindContext(ctx, nil)
+			return err
+		}},
+		{"SelfServiceShowContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.SelfServiceShowContext(ctx, "x")
+			return err
+		}},
 		{"RPCContext", func(ctx context.Context, c *ipa.Client) error {
 			_, err := c.RPCContext(ctx, "ping", nil, nil)
 			return err

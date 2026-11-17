@@ -36,10 +36,10 @@ func TestReplay_Precedence(t *testing.T) {
 	s := ipatest.NewServer(t)
 	s.AddUser("jdoe", ipatest.User{First: "J", Last: "Doe"})
 	s.SetReplay(fstest.MapFS{
-		"4.13.4/user_show.json":   recording("recorded"),
-		"4.13.4/config_show.json": recording("recorded"),
+		"4.13.4/user_show.json":       recording("recorded"),
+		"4.13.4/krbtpolicy_show.json": recording("recorded"),
 	})
-	s.Handle("config_show", func(ipatest.Call) (any, *ipa.IpaError) {
+	s.Handle("krbtpolicy_show", func(ipatest.Call) (any, *ipa.IpaError) {
 		return map[string]any{"result": map[string]any{}, "summary": "handled"}, nil
 	})
 	c := s.ClientAs("admin")
@@ -50,22 +50,22 @@ func TestReplay_Precedence(t *testing.T) {
 	if !strings.Contains(string(res.Result.Data), "jdoe") {
 		t.Errorf("user_show answered %s, want the builtin's entry", res.Result.Data)
 	}
-	res, err = c.RPC("config_show", nil, nil)
+	res, err = c.RPC("krbtpolicy_show", nil, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if got := summary(t, res); got != "handled" {
-		t.Errorf("config_show summary = %q, want the Handle override", got)
+		t.Errorf("krbtpolicy_show summary = %q, want the Handle override", got)
 	}
 }
 
 func TestReplay_PicksRelease(t *testing.T) {
 	s := ipatest.NewServer(t)
 	s.SetReplay(fstest.MapFS{
-		"README.md":               {Data: []byte("x")},
-		"4.9.13/config_show.json": recording("4.9.13"),
-		"4.12.2/config_show.json": recording("4.12.2"),
-		"4.13.4/other_show.json":  recording("4.13.4"),
+		"README.md":                   {Data: []byte("x")},
+		"4.9.13/krbtpolicy_show.json": recording("4.9.13"),
+		"4.12.2/krbtpolicy_show.json": recording("4.12.2"),
+		"4.13.4/other_show.json":      recording("4.13.4"),
 	})
 	c := s.ClientAs("admin")
 	for _, tc := range []struct{ version, want string }{
@@ -76,7 +76,7 @@ func TestReplay_PicksRelease(t *testing.T) {
 		{"4.9.0", "4.9.13"},
 	} {
 		s.SetVersion(tc.version)
-		res, err := c.RPC("config_show", nil, nil)
+		res, err := c.RPC("krbtpolicy_show", nil, nil)
 		if err != nil {
 			t.Fatalf("%s: %v", tc.version, err)
 		}
@@ -88,9 +88,9 @@ func TestReplay_PicksRelease(t *testing.T) {
 
 func TestReplay_Disabled(t *testing.T) {
 	s := ipatest.NewServer(t)
-	s.SetReplay(fstest.MapFS{"4.13.4/config_show.json": recording("recorded")})
+	s.SetReplay(fstest.MapFS{"4.13.4/krbtpolicy_show.json": recording("recorded")})
 	s.SetReplay(nil)
-	_, err := s.ClientAs("admin").RPC("config_show", nil, nil)
+	_, err := s.ClientAs("admin").RPC("krbtpolicy_show", nil, nil)
 	var ierr *ipa.IpaError
 	if !errors.As(err, &ierr) || ierr.Code != ipa.CodeCommand {
 		t.Fatalf("err = %#v, want 905", err)
@@ -111,7 +111,7 @@ func TestReplay_CatalogueChecked(t *testing.T) {
 	s := ipatest.NewServer(t)
 	s.SetReplay(fstest.MapFS{
 		"4.13.4/sysaccount_find.json": recording("recorded"),
-		"4.13.4/config_show.json":     recording("recorded"),
+		"4.13.4/krbtpolicy_show.json": recording("recorded"),
 	})
 	s.SetVersion("4.9.13")
 	c := s.ClientAs("admin")
@@ -120,7 +120,7 @@ func TestReplay_CatalogueChecked(t *testing.T) {
 	if !errors.As(err, &ierr) || ierr.Code != ipa.CodeCommand {
 		t.Errorf("command newer than the release: err = %#v, want 905", err)
 	}
-	_, err = c.RPC("config_show", nil, ipa.Options{"bogus": true})
+	_, err = c.RPC("krbtpolicy_show", nil, ipa.Options{"bogus": true})
 	if !errors.As(err, &ierr) || ierr.Code != ipa.CodeOption {
 		t.Errorf("unknown option: err = %#v, want 3005", err)
 	}
@@ -128,13 +128,13 @@ func TestReplay_CatalogueChecked(t *testing.T) {
 
 func TestReplay_InBatch(t *testing.T) {
 	s := ipatest.NewServer(t)
-	s.SetReplay(fstest.MapFS{"4.13.4/config_show.json": recording("recorded")})
+	s.SetReplay(fstest.MapFS{"4.13.4/krbtpolicy_show.json": recording("recorded")})
 	var out struct {
 		Result struct {
 			Results []map[string]any `json:"results"`
 		} `json:"result"`
 	}
-	body := `{"method":"batch","params":[[{"method":"config_show","params":[[],{}]}],{}]}`
+	body := `{"method":"batch","params":[[{"method":"krbtpolicy_show","params":[[],{}]}],{}]}`
 	resp := post(t, s, body, s.URL()+"/ipa")
 	defer resp.Body.Close()
 	if err := json.NewDecoder(resp.Body).Decode(&out); err != nil {
@@ -266,7 +266,7 @@ func TestRecorder_RoundTrip(t *testing.T) {
 	dir := t.TempDir()
 	src := ipatest.NewServer(t)
 	src.SetVersion("4.12.2")
-	src.Handle("config_show", func(ipatest.Call) (any, *ipa.IpaError) {
+	src.Handle("krbtpolicy_show", func(ipatest.Call) (any, *ipa.IpaError) {
 		return map[string]any{"result": map[string]any{"ipamaxusernamelength": []any{"32"}}, "value": nil, "summary": nil}, nil
 	})
 	hc := src.HTTPClient()
@@ -274,13 +274,13 @@ func TestRecorder_RoundTrip(t *testing.T) {
 	//lint:ignore SA1019 same constructor as Server.Client
 	c := ipa.NewClientCustomHttp(src.Host(), src.Realm(), hc)
 	c.SetSessionID(src.Session("admin"))
-	if _, err := c.RPC("config_show", nil, nil); err != nil {
+	if _, err := c.RPC("krbtpolicy_show", nil, nil); err != nil {
 		t.Fatal(err)
 	}
 
 	dst := ipatest.NewServer(t)
 	dst.SetReplay(os.DirFS(dir))
-	res, err := dst.ClientAs("admin").RPC("config_show", nil, nil)
+	res, err := dst.ClientAs("admin").RPC("krbtpolicy_show", nil, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
