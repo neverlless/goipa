@@ -38,7 +38,8 @@ func subIDFrom(res gjson.Result) *SubID {
 // ErrNotSupported when the server version is known to be older.
 //
 // A truncated search is not reported unless the Client was built
-// WithTruncationErrors; FindEntries reports it too.
+// WithTruncationErrors or ctx comes from ReportTruncation; FindEntries
+// reports it too.
 func (c *Client) SubIDFind(options Options) ([]*SubID, error) {
 	return c.SubIDFindContext(context.Background(), options)
 }
@@ -62,7 +63,7 @@ func (c *Client) SubIDFindContext(ctx context.Context, options Options) ([]*SubI
 	for _, t := range gjson.ParseBytes(res.Result.Data).Array() {
 		subs = append(subs, subIDFrom(t))
 	}
-	return subs, c.truncated(res)
+	return subs, c.truncated(ctx, res)
 }
 
 // SubIDGenerate allocates a range with `subid_generate`; owner "" means the

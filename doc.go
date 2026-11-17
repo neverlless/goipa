@@ -114,7 +114,8 @@
 // server cut the search short. This applies to the Finds added in v0.9 and to
 // FindEntries. UserFind, GroupFind, HostFind, StageUserFind, SubIDFind,
 // FetchOTPTokens, HBACRuleFind and SudoRuleFind did not report it in v1.0 and
-// still do not, unless the Client was built WithTruncationErrors.
+// still do not, unless the Client was built WithTruncationErrors or the call
+// gets a ctx from ReportTruncation.
 //
 // UserAdd keeps upstream's ErrUserExists for 4002.
 //

@@ -166,3 +166,77 @@ func TestBatch_SessionExpiredRelogin(t *testing.T) {
 		t.Errorf("logins = %d, want 2", n)
 	}
 }
+
+func batchOne(t *testing.T, c *ipa.Client, bc ipa.BatchCall) ipa.BatchResult {
+	t.Helper()
+	rs, err := c.Batch(context.Background(), bc)
+	if err != nil || len(rs) != 1 {
+		t.Fatalf("%v, %v", rs, err)
+	}
+	return rs[0]
+}
+
+func TestDecodeUser_MatchesUserShow(t *testing.T) {
+	c := ipatest.NewServer(t).ClientAs("admin")
+	addUsers(t, c, "u1")
+	r := batchOne(t, c, ipa.BatchCall{Method: "user_show", Args: []string{"u1"}, Options: ipa.Options{"all": true, "no_members": false}})
+	got, err := ipa.DecodeUser(r)
+	want, werr := c.UserShow("u1")
+	if err != nil || werr != nil || !reflect.DeepEqual(got, want) {
+		t.Errorf("%+v, %v; want %+v, %v", got, err, want, werr)
+	}
+}
+
+func TestDecodeGroups_MatchesGroupFind(t *testing.T) {
+	c := ipatest.NewServer(t).ClientAs("admin")
+	for _, n := range []string{"g1", "g2"} {
+		if _, err := c.GroupAdd(&ipa.Group{Name: n}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	r := batchOne(t, c, ipa.BatchCall{Method: "group_find", Args: []string{""}, Options: ipa.Options{"all": true, "no_members": false}})
+	got, err := ipa.DecodeGroups(r)
+	want, werr := c.GroupFind(nil)
+	if err != nil || werr != nil || len(got) < 2 || !reflect.DeepEqual(got, want) {
+		t.Errorf("%+v, %v; want %+v, %v", got, err, want, werr)
+	}
+}
+
+func TestDecodeOTPTokens_MatchesFetch(t *testing.T) {
+	s := ipatest.NewServer(t)
+	c := s.ClientAs("admin")
+	s.AddUser("u1", ipatest.User{})
+	s.AddOTPToken(ipatest.OTPToken{Owner: "u1"})
+	r := batchOne(t, c, ipa.BatchCall{Method: "otptoken_find", Args: []string{""}, Options: ipa.Options{"ipatokenowner": "u1", "all": true}})
+	got, err := ipa.DecodeOTPTokens(r)
+	want, werr := c.FetchOTPTokens("u1")
+	if err != nil || werr != nil || len(got) != 1 || !reflect.DeepEqual(got, want) {
+		t.Errorf("%+v, %v; want %+v, %v", got, err, want, werr)
+	}
+}
+
+func TestDecode_ErrIsBareIpaError(t *testing.T) {
+	c := ipatest.NewServer(t).ClientAs("admin")
+	r := batchOne(t, c, ipa.BatchCall{Method: "user_show", Args: []string{"nobody"}})
+	for _, err := range []error{
+		func() error { _, err := ipa.DecodeUser(r); return err }(),
+		func() error { _, err := ipa.DecodeGroups(r); return err }(),
+		func() error { _, err := ipa.DecodeOTPTokens(r); return err }(),
+	} {
+		if e, ok := err.(*ipa.IpaError); !ok || e.Code != ipa.CodeNotFound {
+			t.Errorf("err = %#v", err)
+		}
+	}
+}
+
+func TestDecode_NilResult(t *testing.T) {
+	if _, err := ipa.DecodeUser(ipa.BatchResult{}); err == nil {
+		t.Error("DecodeUser: nil error")
+	}
+	if _, err := ipa.DecodeGroups(ipa.BatchResult{}); err == nil {
+		t.Error("DecodeGroups: nil error")
+	}
+	if _, err := ipa.DecodeOTPTokens(ipa.BatchResult{}); err == nil {
+		t.Error("DecodeOTPTokens: nil error")
+	}
+}

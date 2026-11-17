@@ -84,7 +84,8 @@ func (c *Client) StageUserShowContext(ctx context.Context, username string) (*Us
 // privilege.
 //
 // A truncated search is not reported unless the Client was built
-// WithTruncationErrors; FindEntries reports it too.
+// WithTruncationErrors or ctx comes from ReportTruncation; FindEntries
+// reports it too.
 func (c *Client) StageUserFind(options Options) ([]*User, error) {
 	return c.StageUserFindContext(context.Background(), options)
 }
@@ -110,7 +111,7 @@ func (c *Client) StageUserFindContext(ctx context.Context, options Options) ([]*
 		}
 		users = append(users, u)
 	}
-	return users, c.truncated(res)
+	return users, c.truncated(ctx, res)
 }
 
 // StageUserMod modifies a stage user with `stageuser_mod`, sending the same
