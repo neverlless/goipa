@@ -38,13 +38,9 @@ func (s *Server) selfServices() []selfRule {
 	return selfRules
 }
 
-// selfVisible is Q201: from 4.13 the rules are readable only with System:
-// Read ACIs, bound to RBAC Readers; an older release is taken to show them
-// to everyone.
-func (s *Server) selfVisible(uid string) bool {
-	v, ok := parseRelease(s.version)
-	return s.holds(uid, "RBAC Readers") || ok && slices.Compare(v[:], []int{4, 13, 0}) < 0
-}
+// selfVisible is Q201: the rules are readable only with System: Read ACIs,
+// bound to RBAC Readers.
+func (s *Server) selfVisible(uid string) bool { return s.holds(uid, "RBAC Readers") }
 
 func (r selfRule) render() map[string]any {
 	return map[string]any{"aciname": r.name, "attrs": r.attrs, "permissions": []string{"write"}, "selfaci": true}

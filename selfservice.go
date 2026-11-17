@@ -24,7 +24,7 @@ func selfServiceFrom(e Entry) *SelfService {
 // are passed through (`aciname`, `attrs`, `permissions`, `sizelimit`).
 // FreeIPA always ships default rules, so an unfiltered find that returns
 // nothing means the caller lacks System: Read ACIs (privilege "RBAC
-// Readers", FreeIPA 4.13): the server hides the rules without an error.
+// Readers"): the server hides the rules without an error.
 func (c *Client) SelfServiceFind(options Options) ([]*SelfService, error) {
 	return c.SelfServiceFindContext(context.Background(), options)
 }

@@ -46,13 +46,9 @@ func TestContractSelfService(t *testing.T) {
 			t.Fatal(err)
 		}
 		_, showErr := plain.SelfServiceShow("User Self service")
-		if serverAtLeast(res.Version, 4, 13) {
-			if len(seen) != 0 {
-				t.Errorf("plain user sees %d rules on %s", len(seen), res.Version)
-			}
-			wantIs(t, showErr, ipa.ErrNotFound)
-		} else if len(seen) != want || showErr != nil {
-			t.Errorf("plain user on %s: %d rules, show %v", res.Version, len(seen), showErr)
+		if len(seen) != 0 {
+			t.Errorf("plain user sees %d rules on %s", len(seen), res.Version)
 		}
+		wantIs(t, showErr, ipa.ErrNotFound)
 	})
 }

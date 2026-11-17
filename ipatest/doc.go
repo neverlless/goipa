@@ -865,9 +865,9 @@
 //     passkey mappings" from it. The criteria match the name; aciname is
 //     exact, attrs and permissions must all be held by the rule.
 //     TestSelfServiceFind_Defaults, goipa.TestContractSelfService.
-//   - Q201: from 4.13 the rules are visible only with System: Read ACIs,
-//     bound to RBAC Readers (as Q122): for any other caller the find has
-//     count 0 and no error. Before 4.13 every caller sees them.
+//   - Q201: on every release the rules are visible only with System: Read
+//     ACIs, bound to RBAC Readers (as Q122): for any other caller the find
+//     has count 0 and no error.
 //     TestSelfServiceFind_PlainUserHidden, goipa.TestContractSelfService.
 //   - Q202: selfservice_show of a missing or hidden rule is 4001 NotFound
 //     `ACI with name "<name>" not found`. TestSelfServiceShow_NotFound.
