@@ -131,7 +131,9 @@ func TestWithDomain_Empty(t *testing.T) {
 }
 
 func TestNew_SharesDefaultTransport(t *testing.T) {
-	swapDefaults(t, ipaDefaults{host: "h", realm: "T.TEST", pool: x509.NewCertPool()})
+	pool := x509.NewCertPool()
+	forgetShared(t, pool)
+	swapDefaults(t, ipaDefaults{host: "h", realm: "T.TEST", pool: pool})
 	a, err := New()
 	require.NoError(t, err)
 	b, err := New(WithRealm("X"))
@@ -139,6 +141,37 @@ func TestNew_SharesDefaultTransport(t *testing.T) {
 	require.Same(t, a.httpClient.Transport, b.httpClient.Transport)
 	require.Nil(t, a.httpClient.Jar)
 	require.Equal(t, 100, a.httpClient.Transport.(*http.Transport).MaxIdleConnsPerHost)
+}
+
+func forgetShared(t *testing.T, pools ...*x509.CertPool) {
+	t.Helper()
+	t.Cleanup(func() {
+		sharedMu.Lock()
+		defer sharedMu.Unlock()
+		for _, p := range pools {
+			delete(sharedClients, p)
+		}
+	})
+}
+
+func TestSharedHTTPClient_Cap(t *testing.T) {
+	var pools []*x509.CertPool
+	for range maxSharedClients + 1 {
+		pools = append(pools, x509.NewCertPool())
+	}
+	forgetShared(t, pools...)
+	sharedMu.Lock()
+	room := maxSharedClients - len(sharedClients)
+	sharedMu.Unlock()
+	for i := 0; i < room; i++ { // fill the cache to the cap
+		sharedHTTPClient(pools[i])
+	}
+	extra := pools[room]
+	a, b := sharedHTTPClient(extra), sharedHTTPClient(extra)
+	require.NotSame(t, a, b)
+	sharedMu.Lock()
+	defer sharedMu.Unlock()
+	require.Len(t, sharedClients, maxSharedClients)
 }
 
 func TestNew_CACertOwnTransport(t *testing.T) {
@@ -160,7 +193,6 @@ func TestSharedTransport_SessionsSeparate(t *testing.T) {
 		mu.Lock()
 		got = append(got, r.Header.Get("Cookie"))
 		mu.Unlock()
-		http.SetCookie(w, &http.Cookie{Name: "ipa_session", Value: "srv"})
 		_, _ = w.Write([]byte(`{"result":{"summary":"ok"}}`))
 	}))
 	defer srv.Close()
@@ -171,13 +203,17 @@ func TestSharedTransport_SessionsSeparate(t *testing.T) {
 	sharedClients[nil] = hc
 	sharedMu.Unlock()
 	t.Cleanup(func() { sharedMu.Lock(); delete(sharedClients, nil); sharedMu.Unlock() })
-	a, _ := New()
-	b, _ := New()
+	a, err := New()
+	require.NoError(t, err)
+	b, err := New()
+	require.NoError(t, err)
 	a.SetSessionID("A")
 	b.SetSessionID("B")
-	_, _ = a.Ping()
-	_, _ = b.Ping()
-	_, _ = a.Ping()
+	for _, c := range []*Client{a, b, a} {
+		if _, err := c.Ping(); err != nil {
+			t.Fatal(err)
+		}
+	}
 	mu.Lock()
 	defer mu.Unlock()
 	require.Equal(t, []string{"ipa_session=A", "ipa_session=B", "ipa_session=A"}, got)
