@@ -10,6 +10,7 @@ package ipa
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -18,6 +19,7 @@ import (
 
 	"github.com/jcmturner/gokrb5/v8/client"
 	"github.com/jcmturner/gokrb5/v8/config"
+	"github.com/jcmturner/gokrb5/v8/keytab"
 )
 
 // Run with -race: replacing the Kerberos client must not race with an rpc
@@ -53,5 +55,29 @@ func TestSetKrbClientConcurrentWithSPNEGO(t *testing.T) {
 		default:
 			c.setKrbClient(newKrb())
 		}
+	}
+}
+
+func TestLoginKeytab_NoCanonicalize(t *testing.T) {
+	c := NewClient("h", "EXAMPLE.COM")
+	c.krb5Data = "[libdefaults]\n default_realm = EXAMPLE.COM\n canonicalize = true\n"
+	cl, err := c.keytabClient(keytab.New(), "u")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cl.Config.LibDefaults.Canonicalize {
+		t.Fatal("canonicalize must be off for keytab login")
+	}
+}
+
+func TestCanonicalNameError(t *testing.T) {
+	base := errors.New("CName in response does not match what was requested")
+	err := canonicalNameError("alias", base)
+	if !errors.Is(err, base) || !strings.Contains(err.Error(), `"alias"`) {
+		t.Fatalf("got %v", err)
+	}
+	other := errors.New("other")
+	if canonicalNameError("a", other) != other || canonicalNameError("a", nil) != nil {
+		t.Fatal("unrelated errors must pass through")
 	}
 }
