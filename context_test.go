@@ -40,6 +40,10 @@ func twinCalls() []twinCall {
 			_, err := c.PwPolicyShowContext(ctx, "")
 			return err
 		}},
+		{"PwPolicyFindContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.PwPolicyFindContext(ctx, nil)
+			return err
+		}},
 		{"UserPwPolicyContext", func(ctx context.Context, c *ipa.Client) error {
 			_, err := c.UserPwPolicyContext(ctx, "bob")
 			return err

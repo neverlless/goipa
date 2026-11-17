@@ -5,10 +5,13 @@
 package ipatest
 
 import (
+	"cmp"
 	"fmt"
 	"maps"
+	"math"
 	"slices"
 	"strconv"
+	"strings"
 	"time"
 	"unicode"
 
@@ -255,6 +258,40 @@ func init() {
 			return nil, notFound(cn, "password policy")
 		}
 		return entry(cn, p.render(cn, uid == ""), ""), nil
+	}
+	builtins["pwpolicy_find"] = func(s *Server, c Call) (any, *ipa.IpaError) {
+		if !s.holds(c.User, "Password Policy Readers", "Password Policy Administrator") { // Q32, Q192
+			return list([]map[string]any{}), nil
+		}
+		needle := ""
+		if len(c.Args) > 0 {
+			needle = strings.ToLower(c.Args[0])
+		}
+		var cns []string
+		for cn, p := range s.pwpol {
+			if strings.Contains(strings.ToLower(cn), needle) && matches(c, "cn", cn) {
+				if v, ok := c.Options["cospriority"]; ok && fmt.Sprint(v) != strconv.Itoa(p.Priority) {
+					continue
+				}
+				cns = append(cns, cn)
+			}
+		}
+		// Q193: ascending cospriority; the global policy has none and comes last.
+		slices.SortFunc(cns, func(a, b string) int {
+			pa, pb := s.pwpol[a].Priority, s.pwpol[b].Priority
+			if a == globalPolicy {
+				pa = math.MaxInt
+			}
+			if b == globalPolicy {
+				pb = math.MaxInt
+			}
+			return cmp.Or(cmp.Compare(pa, pb), cmp.Compare(a, b))
+		})
+		recs := make([]map[string]any, len(cns))
+		for i, cn := range cns {
+			recs[i] = s.pwpol[cn].render(cn, true)
+		}
+		return listLimited(c, recs), nil
 	}
 	builtins["pwpolicy_add"] = func(s *Server, c Call) (any, *ipa.IpaError) {
 		if len(c.Args) == 0 || c.Args[0] == "" {

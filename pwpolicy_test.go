@@ -269,3 +269,13 @@ func TestPwPolicyShow_HiddenFromPlainUser(t *testing.T) {
 		t.Errorf("member of admins: %v", err)
 	}
 }
+
+func TestPwPolicyFind_Truncated(t *testing.T) {
+	s := ipatest.NewServer(t)
+	s.AddGroup("g", ipatest.Group{})
+	s.SetPwPolicy("g", ipatest.PwPolicy{Priority: 1})
+	ps, err := s.ClientAs("admin").PwPolicyFind(ipa.Options{"sizelimit": 1})
+	if !errors.Is(err, ipa.ErrTruncated) || len(ps) != 1 {
+		t.Errorf("got %d policies, err %v; want 1 and ErrTruncated", len(ps), err)
+	}
+}
