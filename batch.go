@@ -9,6 +9,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+
+	"github.com/tidwall/gjson"
 )
 
 // BatchCall is one command of a Batch: what RPC would take.
@@ -87,4 +89,64 @@ func (c *Client) Batch(ctx context.Context, calls ...BatchCall) ([]BatchResult, 
 		}
 	}
 	return results, nil
+}
+
+// DecodeUser decodes the result of a batched user_show (or stageuser_show)
+// into a User, as UserShow does. Send UserShow's options (all: true,
+// no_members: false) so the result matches. r.Err is returned as it is.
+func DecodeUser(r BatchResult) (*User, error) {
+	if err := batchData(r); err != nil {
+		return nil, err
+	}
+	u := new(User)
+	if err := u.fromJSON(r.Result.Data); err != nil {
+		return nil, err
+	}
+	return u, nil
+}
+
+// DecodeGroups decodes the result of a batched group_find into Groups, as
+// GroupFind does. Send GroupFind's options (all: true, no_members: false).
+// A truncated search is flagged in r.Result.Truncated, not as an error.
+func DecodeGroups(r BatchResult) ([]*Group, error) {
+	if err := batchData(r); err != nil {
+		return nil, err
+	}
+	groups := make([]*Group, 0)
+	for _, t := range gjson.ParseBytes(r.Result.Data).Array() {
+		g := new(Group)
+		if err := g.fromJSON([]byte(t.Raw)); err != nil {
+			return nil, err
+		}
+		groups = append(groups, g)
+	}
+	return groups, nil
+}
+
+// DecodeOTPTokens decodes the result of a batched otptoken_find into
+// OTPTokens, as FetchOTPTokens does. Send its options (ipatokenowner,
+// all: true). A truncated search is flagged in r.Result.Truncated.
+func DecodeOTPTokens(r BatchResult) ([]*OTPToken, error) {
+	if err := batchData(r); err != nil {
+		return nil, err
+	}
+	tokens := make([]*OTPToken, 0)
+	for _, t := range gjson.ParseBytes(r.Result.Data).Array() {
+		tok := new(OTPToken)
+		if err := tok.fromJSON([]byte(t.Raw)); err != nil {
+			return nil, err
+		}
+		tokens = append(tokens, tok)
+	}
+	return tokens, nil
+}
+
+func batchData(r BatchResult) error {
+	if r.Err != nil {
+		return r.Err
+	}
+	if r.Result == nil {
+		return errors.New("ipa: batch result is empty")
+	}
+	return nil
 }

@@ -117,8 +117,9 @@ func WithPasswordRelogin() Option {
 // WithTruncationErrors makes UserFind, GroupFind, HostFind, StageUserFind,
 // SubIDFind, FetchOTPTokens, HBACRuleFind and SudoRuleFind (and their Context
 // twins) return ErrTruncated together with the entries they got when the
-// server cut the search short. Off by default, so a caller that treats any
-// error as failure keeps getting its results.
+// server cut the search short. ReportTruncation does it for one call. Off by
+// default, so a caller that treats any error as failure keeps getting its
+// results.
 func WithTruncationErrors() Option {
 	return func(s *settings) error {
 		s.truncErrors = true

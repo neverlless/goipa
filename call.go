@@ -37,10 +37,20 @@ func Call[T any](ctx context.Context, c *Client, method string, args []string, o
 // server cut the search short.
 var ErrTruncated = errors.New("ipa: search truncated; raise sizelimit or narrow the search")
 
+type reportTruncKey struct{}
+
+// ReportTruncation returns a context that makes the …Context finds (UserFind,
+// GroupFind, HostFind, StageUserFind, SubIDFind, FetchOTPTokens, HBACRuleFind,
+// SudoRuleFind) return ErrTruncated with the entries when the server cut the
+// search short, as WithTruncationErrors does for the whole Client.
+func ReportTruncation(ctx context.Context) context.Context {
+	return context.WithValue(ctx, reportTruncKey{}, true)
+}
+
 // truncated is ErrTruncated for a response the server cut short, when the
-// Client was built WithTruncationErrors.
-func (c *Client) truncated(res *Response) error {
-	if c.truncErrors && res.Result.Truncated {
+// Client was built WithTruncationErrors or ctx comes from ReportTruncation.
+func (c *Client) truncated(ctx context.Context, res *Response) error {
+	if (c.truncErrors || ctx.Value(reportTruncKey{}) != nil) && res.Result.Truncated {
 		return ErrTruncated
 	}
 	return nil

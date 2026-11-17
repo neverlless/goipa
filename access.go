@@ -65,7 +65,8 @@ type SudoRule struct {
 // limit (100 by default) unless `sizelimit` is set.
 //
 // A truncated search is not reported unless the Client was built
-// WithTruncationErrors; FindEntries reports it too.
+// WithTruncationErrors or ctx comes from ReportTruncation; FindEntries
+// reports it too.
 func (c *Client) HBACRuleFind(options Options) ([]*HBACRule, error) {
 	return c.HBACRuleFindContext(context.Background(), options)
 }
@@ -81,7 +82,8 @@ func (c *Client) HBACRuleFindContext(ctx context.Context, options Options) ([]*H
 // limit (100 by default) unless `sizelimit` is set.
 //
 // A truncated search is not reported unless the Client was built
-// WithTruncationErrors; FindEntries reports it too.
+// WithTruncationErrors or ctx comes from ReportTruncation; FindEntries
+// reports it too.
 func (c *Client) SudoRuleFind(options Options) ([]*SudoRule, error) {
 	return c.SudoRuleFindContext(context.Background(), options)
 }
@@ -133,7 +135,7 @@ func findRules[T any](ctx context.Context, c *Client, method string, options Opt
 	for _, r := range gjson.ParseBytes(res.Result.Data).Array() {
 		out = append(out, parse(r))
 	}
-	return out, c.truncated(res)
+	return out, c.truncated(ctx, res)
 }
 
 // HBACTestResult is the outcome of HBACTest.

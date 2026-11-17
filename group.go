@@ -107,7 +107,8 @@ func (c *Client) GroupShowContext(ctx context.Context, name string) (*Group, err
 // groups (System: Read Groups).
 //
 // A truncated search is not reported unless the Client was built
-// WithTruncationErrors; FindEntries reports it too.
+// WithTruncationErrors or ctx comes from ReportTruncation; FindEntries
+// reports it too.
 func (c *Client) GroupFind(options Options) ([]*Group, error) {
 	return c.GroupFindContext(context.Background(), options)
 }
@@ -133,7 +134,7 @@ func (c *Client) GroupFindContext(ctx context.Context, options Options) ([]*Grou
 		}
 		groups = append(groups, g)
 	}
-	return groups, c.truncated(res)
+	return groups, c.truncated(ctx, res)
 }
 
 func groupResult(res *Response) (*Group, error) {
