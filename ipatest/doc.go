@@ -734,9 +734,9 @@
 //     master are not modelled. goipa.TestContractHostDisable pins the 4010;
 //     the success path is not verified against a real server.
 //   - Q158: host_del with updatedns removes the host's A and AAAA records
-//     from the zone holding its name. One real 4.9.13 run left the record
-//     (two others removed it); the cause is not known, so the fake always
-//     removes it. goipa.TestContractHostDeleteUpdateDNS.
+//     from the zone holding its name. 4.9.13 keeps the record in about half of
+//     the runs, even after waiting 10 s; the cause is not known, so the fake
+//     always removes it and the contract test accepts both on 4.9. goipa.TestContractHostDeleteUpdateDNS.
 //   - Q160: stageuser_add and user_add with userpassword store it, so
 //     has_password is true; the password is expired (set by an admin), and
 //     stageuser_activate copies it to the active user, expired again as of
