@@ -112,9 +112,10 @@ func (c *Client) UserPwPolicyContext(ctx context.Context, username string) (*PwP
 // PwPolicyFind lists password policies with `pwpolicy_find`; options are
 // passed through (e.g. `cn`, `cospriority`, `sizelimit`). It needs the same
 // privilege as PwPolicyShow. The global policy has no Priority. The policy
-// that applies to a user is the one with the lowest Priority among their
-// groups' policies, else the global one, so callers can resolve it from the
-// groups of UserShow instead of calling UserPwPolicy per user.
+// that applies to a user is the one with the lowest Priority among the
+// policies of their Groups and IndirectGroups, else the global one, so
+// callers can resolve it from UserShow instead of calling UserPwPolicy per
+// user.
 //
 // A truncated search is reported as ErrTruncated, with the policies found.
 func (c *Client) PwPolicyFind(options Options) ([]*PwPolicy, error) {

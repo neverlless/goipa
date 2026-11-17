@@ -5,6 +5,7 @@
 package ipa_test
 
 import (
+	"context"
 	"errors"
 	"strings"
 	"testing"
@@ -35,6 +36,20 @@ func TestContractUserManager(t *testing.T) {
 		u, err := b.admin.UserShow(uid)
 		if err != nil || u.Manager != boss {
 			t.Fatalf("Manager = %q, %v; want %q", u.Manager, err, boss)
+		}
+		rawShow, _, err := ipa.Call[ipa.Entry](context.Background(), b.admin, "user_show", []string{uid}, ipa.Options{"all": true})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got := rawShow.Str("manager"); got != boss {
+			t.Errorf("raw user_show manager = %q, want the uid %q", got, boss)
+		}
+		rawFind, _, err := ipa.Call[[]ipa.Entry](context.Background(), b.admin, "user_find", []string{}, ipa.Options{"uid": uid, "all": true})
+		if err != nil || len(rawFind) != 1 {
+			t.Fatal(rawFind, err)
+		}
+		if got := rawFind[0].Str("manager"); got != boss {
+			t.Errorf("raw user_find manager = %q, want the uid %q", got, boss)
 		}
 		found, err := b.admin.UserFind(ipa.Options{"manager": boss})
 		if err != nil || len(found) != 1 || found[0].Username != uid || found[0].Manager != boss {
@@ -74,6 +89,13 @@ func TestContractPrincipalExpiration(t *testing.T) {
 		wantIs(t, b.client().RemoteLogin(uid, goodPW), ipa.ErrUnauthorized)
 		if got := rawLogin(t, b, uid, goodPW).Header.Get("X-IPA-Rejection-Reason"); got != "krbprincipal-expired" {
 			t.Errorf("rejection reason %q, want krbprincipal-expired", got)
+		}
+
+		before, _ := b.admin.UserShow(uid)
+		reason := rawLogin(t, b, uid, "wrong").Header.Get("X-IPA-Rejection-Reason")
+		afterU, _ := b.admin.UserShow(uid)
+		if reason != "krbprincipal-expired" || afterU.LoginFailedCount != before.LoginFailedCount {
+			t.Errorf("wrong password on an expired principal: reason %q, failed count %d -> %d; want krbprincipal-expired, unchanged", reason, before.LoginFailedCount, afterU.LoginFailedCount)
 		}
 
 		if err := b.admin.SetPrincipalExpiration(uid, time.Time{}); err != nil {

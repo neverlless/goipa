@@ -24,7 +24,7 @@ existing exported identifiers keep their signatures).
 
 - Command catalogue regenerated: FreeIPA 4.13.5 added to the known releases
   (no command changes)
-- Toolchain go1.27.4 (already on main)
+- Toolchain go1.27.4
 - Clients built by `New` with the default transport share one HTTP client,
   so they reuse connections (#30); `MaxIdleConnsPerHost` is 100
 - Keytab logins turn Kerberos canonicalization off; an alias principal works
@@ -39,12 +39,14 @@ existing exported identifiers keep their signatures).
 - A user's first own passkey needs the `ipapasskeyuser` class from 4.13.4
   (`UserAddObjectClass` adds it); `objectclass` renders with `all` (Q195 to
   Q198) (#25)
-- `manager` and `krbprincipalexpiration` are written and found by; an expired
+- `manager` and `krbprincipalexpiration` are stored; `user_find` filters on
+  `manager`; an expired
   principal cannot log in; login counters show with `all` to User
   Administrators only (Q185 to Q188) (#26, #31)
 - `pwpolicy_find`; the lockout follows the user's effective policy: duration,
   count interval, renewal after a failure (Q190 to Q194). The seeded global
-  policy now locks for 600 s, not for good (#26)
+  policy now locks for 600 s, not for good (#26). A seeded `User.FailedLogins`
+  locks only with `LastFailedLogin` set
 
 ## [v1.1.0] - 2026-10-28
 
