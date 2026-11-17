@@ -5,7 +5,11 @@
 package ipatest_test
 
 import (
+	"errors"
+	"strings"
 	"testing"
+
+	"github.com/tidwall/gjson"
 
 	ipa "github.com/neverlless/goipa"
 	"github.com/neverlless/goipa/ipatest"
@@ -74,5 +78,79 @@ func TestService_AuthIndVersion(t *testing.T) {
 	}
 	if v, ok := s.Service("HTTP/ipa.test.local"); !ok || len(v.AuthIndicators) != 1 || v.AuthIndicators[0] != "passkey" {
 		t.Errorf("Service = %+v, %v", v, ok)
+	}
+}
+
+const ownMapping = "passkey:Z29pcGEtdGVzdC1pZA==," + spki
+
+// TestOwnPasskey_NeedsClass pins Q195.
+func TestOwnPasskey_NeedsClass(t *testing.T) {
+	for _, v := range []string{"4.12.2", "4.13.4"} {
+		s := ipatest.NewServer(t)
+		s.SetVersion(v)
+		s.AddUser("bob", ipatest.User{})
+		err := s.ClientAs("bob").UserAddPasskey("bob", ownMapping)
+		if v == "4.12.2" {
+			if err != nil {
+				t.Errorf("%s: %v", v, err)
+			}
+			continue
+		}
+		if !errors.Is(err, ipa.ErrACI) || !strings.Contains(err.Error(), "not allowed to perform this operation") {
+			t.Fatalf("%s: err = %v", v, err)
+		}
+		if err := s.ClientAs("admin").UserAddObjectClass("bob", "ipapasskeyuser"); err != nil {
+			t.Fatal(err)
+		}
+		if err := s.ClientAs("bob").UserAddPasskey("bob", ownMapping); err != nil {
+			t.Errorf("%s after class: %v", v, err)
+		}
+	}
+}
+
+// TestAdminPasskey_AddsClass pins Q195.
+func TestAdminPasskey_AddsClass(t *testing.T) {
+	s := ipatest.NewServer(t)
+	s.AddUser("bob", ipatest.User{})
+	c := s.ClientAs("admin")
+	if err := c.UserAddPasskey("bob", ownMapping); err != nil {
+		t.Fatal(err)
+	}
+	res := rpc(t, c, "user_show", []string{"bob"}, ipa.Options{"all": true})
+	if !strings.Contains(string(res.Result.Data), `"ipapasskeyuser"`) {
+		t.Errorf("objectclass: %s", res.Result.Data)
+	}
+}
+
+// TestUserShow_ObjectClassWithAll pins Q196 and Q197.
+func TestUserShow_ObjectClassWithAll(t *testing.T) {
+	s := ipatest.NewServer(t)
+	s.AddUser("bob", ipatest.User{})
+	c := s.ClientAs("admin")
+	oc := func(all bool) string {
+		o := ipa.Options{}
+		if all {
+			o["all"] = true
+		}
+		return gjson.GetBytes(rpc(t, c, "user_show", []string{"bob"}, o).Result.Data, "objectclass").Raw
+	}
+	if got := oc(false); got != "" {
+		t.Errorf("without all: %s", got)
+	}
+	if got := oc(true); !strings.Contains(got, `"posixaccount"`) || strings.Contains(got, "ipapasskeyuser") {
+		t.Errorf("with all: %s", got)
+	}
+	if err := c.UserAddObjectClass("bob", "IPAPasskeyUser"); err != nil {
+		t.Fatal(err)
+	}
+	if err := c.UserAddObjectClass("bob", "ipapasskeyuser"); err != nil { // Q198
+		t.Errorf("again: %v", err)
+	}
+	if got := oc(true); strings.Count(strings.ToLower(got), "ipapasskeyuser") != 1 {
+		t.Errorf("after add: %s", got)
+	}
+	rpc(t, c, "user_mod", []string{"bob"}, ipa.Options{"delattr": "objectclass=IPAPASSKEYUSER"})
+	if got := oc(true); strings.Contains(got, "ipapasskeyuser") {
+		t.Errorf("after del: %s", got)
 	}
 }

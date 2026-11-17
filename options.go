@@ -17,14 +17,14 @@ import (
 )
 
 type settings struct {
-	host, realm string
-	caPEM       []byte
-	httpClient  *http.Client
-	krb5Path    string
-	krb5Data    []byte
-	relogin     bool
-	validate    bool
-	truncErrors bool
+	host, realm, domain string
+	caPEM               []byte
+	httpClient          *http.Client
+	krb5Path            string
+	krb5Data            []byte
+	relogin             bool
+	validate            bool
+	truncErrors         bool
 }
 
 // Option configures a Client built by New.
@@ -54,6 +54,17 @@ func WithRealm(realm string) Option {
 	}
 }
 
+// WithDomain sets the IPA DNS domain reported by Client.Domain.
+func WithDomain(domain string) Option {
+	return func(s *settings) error {
+		if domain == "" {
+			return needsValue("WithDomain")
+		}
+		s.domain = domain
+		return nil
+	}
+}
+
 // WithCACert trusts the PEM-encoded CA certificate(s) instead of
 // /etc/ipa/ca.crt. It cannot be combined with WithHTTPClient.
 func WithCACert(pem []byte) Option {
@@ -67,7 +78,9 @@ func WithCACert(pem []byte) Option {
 }
 
 // WithHTTPClient makes the Client use hc. The caller owns its timeouts, proxy
-// and transport; it cannot be combined with WithCACert.
+// and transport; it cannot be combined with WithCACert. A client shared
+// between sessions must have no cookie jar: goipa sends ipa_session as a
+// header, a jar would mix sessions.
 func WithHTTPClient(hc *http.Client) Option {
 	return func(s *settings) error {
 		if hc == nil {
@@ -117,8 +130,9 @@ func WithPasswordRelogin() Option {
 // WithTruncationErrors makes UserFind, GroupFind, HostFind, StageUserFind,
 // SubIDFind, FetchOTPTokens, HBACRuleFind and SudoRuleFind (and their Context
 // twins) return ErrTruncated together with the entries they got when the
-// server cut the search short. Off by default, so a caller that treats any
-// error as failure keeps getting its results.
+// server cut the search short. ReportTruncation does it for one call. Off by
+// default, so a caller that treats any error as failure keeps getting its
+// results.
 func WithTruncationErrors() Option {
 	return func(s *settings) error {
 		s.truncErrors = true
@@ -128,8 +142,9 @@ func WithTruncationErrors() Option {
 
 // New builds a Client from options. Without WithHost and WithRealm it takes
 // them from /etc/ipa/default.conf; without WithCACert or WithHTTPClient it
-// trusts /etc/ipa/ca.crt (else the system roots); without a Kerberos option it
-// reads DefaultKerbConf. /etc/ipa is read only when an option is missing.
+// trusts /etc/ipa/ca.crt (else the system roots) through one HTTP client
+// shared by all such Clients; without a Kerberos option it reads
+// DefaultKerbConf. /etc/ipa is read only when an option is missing.
 //
 // It fails when no host is known, when WithCACert holds no certificate, when
 // WithCACert and WithHTTPClient are both given, or when an option gets an
@@ -158,6 +173,9 @@ func New(opts ...Option) (*Client, error) {
 		}
 		if s.realm == "" {
 			s.realm = d.realm
+			if s.domain == "" {
+				s.domain = d.domain
+			}
 		}
 		if pool == nil {
 			pool = d.pool
@@ -167,17 +185,21 @@ func New(opts ...Option) (*Client, error) {
 		return nil, errors.New("ipa: no FreeIPA host: use WithHost or /etc/ipa/default.conf")
 	}
 	if s.httpClient == nil {
-		s.httpClient = newHTTPClient(pool)
+		if s.caPEM != nil {
+			s.httpClient = newHTTPClient(pool)
+		} else {
+			s.httpClient = sharedHTTPClient(pool)
+		}
 	}
 	return &Client{
-		host: s.host, realm: s.realm, httpClient: s.httpClient, sticky: true,
+		host: s.host, realm: s.realm, domain: s.domain, httpClient: s.httpClient, sticky: true,
 		krb5Path: s.krb5Path, krb5Data: string(s.krb5Data), relogin: s.relogin, validate: s.validate, truncErrors: s.truncErrors,
 	}, nil
 }
 
 type ipaDefaults struct {
-	host, realm string
-	pool        *x509.CertPool
+	host, realm, domain string
+	pool                *x509.CertPool
 }
 
 // loadIPADefaults ignores missing or unparsable files: callers then get zero
@@ -196,6 +218,7 @@ func loadIPADefaults(confPath, caPath string) ipaDefaults {
 			d.host = u.Host
 		}
 		d.realm = g.Key("realm").MustString("LOCAL")
+		d.domain = g.Key("domain").String()
 	}
 	return d
 }

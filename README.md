@@ -53,7 +53,7 @@ tokens.
   [Typed objects](#typed-objects)
 - Lockout: per-replica failed logins and unlock (`UserStatus`, `UserUnlock`)
 - Password policy: group, global and effective per user (`PwPolicyShow`,
-  `UserPwPolicy`)
+  `PwPolicyFind`, `UserPwPolicy`)
 - Sub-IDs: find, generate (`SubIDFind`, `SubIDGenerate`)
 - HBAC and sudo: rule lookups and access checks (`HBACRuleFind`,
   `SudoRuleFind`, `HBACTest`)
@@ -67,7 +67,8 @@ tokens.
 - `Call[T]` and `Entry`: typed decoding of any command's result, with
   accessors for FreeIPA's attribute lists, dates and binary values
 - `FindEntries` returns `ErrTruncated` when the server cut a search short;
-  the typed Finds do so only with `WithTruncationErrors()`
+  the typed Finds do so only with `WithTruncationErrors()` or, for one call,
+  a context from `ReportTruncation`
 - `Modify` changes single attributes (`setattr`/`addattr`/`delattr`) on any
   object; `Batch` sends several commands in one round trip
 - `ServerVersion`; passkey and sub-ID calls return `ErrNotSupported` when the
@@ -119,7 +120,20 @@ refused. Attributes are changed with `Modify` (`HostGroupAdd` and friends only
 create); for automember use `RPC`, since `automember_mod` needs the rule type.
 Finds that hit the server's size limit return what they got without an
 error; create the client with `WithTruncationErrors()` to get `ErrTruncated`
-with those entries instead.
+with those entries instead; `ReportTruncation(ctx)` does the same for a
+single `…Context` call.
+
+`DecodeUser`, `DecodeGroups` and `DecodeOTPTokens` turn `Batch` results of
+`user_show`, `group_find` and `otptoken_find` into the typed objects (send the
+options of the single call).
+
+Beyond the table: `ConfigShow` (server configuration), `SelfServiceFind` and
+`SelfServiceShow` (self-service rules), `PwPolicyFind`, `SetManager` and
+`SetPrincipalExpiration` (a manager uid or a date; empty or zero clears), and
+`UserAddObjectClass`, which a user needs for the first passkey of their own
+(`ipapasskeyuser`) on FreeIPA 4.13.4 and later. `User` carries `Manager` and
+`LoginFailedCount`; `Client.Domain()` returns the IPA DNS domain next to
+`Realm()` (`WithDomain` overrides it).
 
 | Object | Methods | FreeIPA commands |
 |---|---|---|
@@ -264,7 +278,10 @@ Kerberos clients send the first call to `/ipa/json` with SPNEGO; FreeIPA
 answers with an `ipa_session` cookie and later calls use `/ipa/session/json`
 with it, negotiating again only after a 401. The KDC therefore sees one ticket
 request per session, not one per call; after `StickySession(false)` every
-call negotiates SPNEGO. `LoginFromCCache` takes the path of a file cache, so
+call negotiates SPNEGO. Keytab logins turn Kerberos canonicalization off, so
+a service principal alias such as `mokey/mokey` works only when the KDC
+echoes the alias back; otherwise log in with the canonical principal.
+`LoginFromCCache` takes the path of a file cache, so
 strip a `FILE:` prefix taken from `KRB5CCNAME`. KCM caches are not read: RHEL
 and Fedora default to `KCM:`, so run `kinit -c /tmp/krb5cc_app` or use a
 keytab.

@@ -7,10 +7,48 @@ existing exported identifiers keep their signatures).
 
 ## [Unreleased]
 
+## [v1.2.0] - 2026-11-17
+
+### Added
+
+- `ReportTruncation(ctx)`: one `…Context` find returns `ErrTruncated` with
+  its entries, without `WithTruncationErrors()` (#21)
+- `ConfigShow` (#23)
+- `Client.Domain()` and `WithDomain` (#24)
+- `UserAddObjectClass`, for the first own passkey (#25)
+- `PwPolicyFind`, `User.LoginFailedCount` (#26)
+- `DecodeUser`, `DecodeGroups` and `DecodeOTPTokens` for `Batch` results
+  (#29)
+- `User.Manager`, `SetManager` and `SetPrincipalExpiration` (#31)
+- `SelfServiceFind` and `SelfServiceShow` (#32)
+
 ### Changed
 
 - Command catalogue regenerated: FreeIPA 4.13.5 added to the known releases
   (no command changes)
+- Toolchain go1.27.4
+- Clients built by `New` with the default transport share one HTTP client,
+  so they reuse connections (#30); `MaxIdleConnsPerHost` is 100
+- Keytab logins turn Kerberos canonicalization off; an alias principal works
+  when the KDC echoes it; otherwise the error says to log in with the
+  canonical principal (#27)
+
+### ipatest
+
+- `config_show` and `Server.SetConfig` (Q199); `selfservice_find` and
+  `selfservice_show` with FreeIPA's default rules, hidden from callers
+  without RBAC Readers (Q200 to Q202) (#23, #32)
+- A user's first own passkey needs the `ipapasskeyuser` class from 4.13.4
+  (`UserAddObjectClass` adds it); `objectclass` renders with `all` (Q195 to
+  Q198) (#25)
+- `manager` and `krbprincipalexpiration` are stored; `user_find` filters on
+  `manager`; an expired
+  principal cannot log in; login counters show with `all` to User
+  Administrators only (Q185 to Q188) (#26, #31)
+- `pwpolicy_find`; the lockout follows the user's effective policy: duration,
+  count interval, renewal after a failure (Q190 to Q194). The seeded global
+  policy now locks for 600 s, not for good (#26). A seeded `User.FailedLogins`
+  locks only with `LastFailedLogin` set
 
 ## [v1.1.0] - 2026-10-28
 
@@ -506,7 +544,8 @@ v0.0.1 – v0.0.7 were released by Andrew E. Bruno as
 [ubccr/goipa](https://github.com/ubccr/goipa/tags). This repository keeps
 that history.
 
-[Unreleased]: https://github.com/neverlless/goipa/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/neverlless/goipa/compare/v1.2.0...HEAD
+[v1.2.0]: https://github.com/neverlless/goipa/compare/v1.1.0...v1.2.0
 [v1.1.0]: https://github.com/neverlless/goipa/compare/v1.0.0...v1.1.0
 [v1.0.0]: https://github.com/neverlless/goipa/compare/v0.9.1...v1.0.0
 [v0.9.1]: https://github.com/neverlless/goipa/compare/v0.9.0...v0.9.1

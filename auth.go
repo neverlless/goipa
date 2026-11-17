@@ -229,11 +229,29 @@ func (c *Client) loginKeytab(kt *keytab.Keytab, username string) error {
 	if c.realm == "" {
 		return errNoRealm
 	}
-	cfg, err := c.krb5Config()
+	cl, err := c.keytabClient(kt, username)
 	if err != nil {
 		return err
 	}
-	return c.krbLogin(client.NewWithKeytab(username, c.realm, kt, cfg))
+	return canonicalNameError(username, c.krbLogin(cl))
+}
+
+func canonicalNameError(username string, err error) error {
+	if err != nil && strings.Contains(err.Error(), "CName in response does not match") {
+		return fmt.Errorf("ipa: the KDC answered for another name than %q (principal alias with canonicalization); log in with the canonical principal: %w", username, err)
+	}
+	return err
+}
+
+func (c *Client) keytabClient(kt *keytab.Keytab, username string) (*client.Client, error) {
+	cfg, err := c.krb5Config()
+	if err != nil {
+		return nil, err
+	}
+	// gokrb5 rejects an AS-REP whose CName differs from the request; without
+	// the canonicalize option an RFC 6806 KDC answers with the requested alias.
+	cfg.LibDefaults.Canonicalize = false
+	return client.NewWithKeytab(username, c.realm, kt, cfg), nil
 }
 
 // Login to FreeIPA using credentials cache

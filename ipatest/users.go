@@ -51,10 +51,18 @@ type User struct {
 	PreferredLanguage string
 	Title             string
 	OrgUnit           string
-	FailedLogins      int
+	FailedLogins      int       // a seeded lockout also needs LastFailedLogin: it lasts the policy's LockoutDuration (600 s by default) after it
 	LastFailedLogin   time.Time // krblastfailedauth, set by a wrong password
 	PasswdExpire      time.Time // krbpasswordexpiration; non-zero and not after now = expired
+	Manager           string    // uid of the manager; user_add and user_mod refuse an unknown uid (Q185)
+	PrincipalExpire   time.Time // krbprincipalexpiration; non-zero and not after now = login refused (Q187)
+
+	classes []string // objectclass; nil = the classes FreeIPA gives a new user, Q195
 }
+
+// defaultClasses are the object classes of a user FreeIPA 4.13.4 just added
+// (replay user_show); ipapasskeyuser is not among them.
+var defaultClasses = []string{"top", "person", "organizationalperson", "inetorgperson", "inetuser", "posixaccount", "krbprincipalaux", "krbticketpolicyaux", "ipaobject", "ipasshuser", "ipaSshGroupOfPubKeys", "mepOriginEntry", "ipantuserattrs"}
 
 // userRec is a stored user plus the attributes the server assigns.
 type userRec struct {
@@ -75,6 +83,7 @@ func (u User) clone() User {
 	u.SSHPubKeys = cloneStrs(u.SSHPubKeys)
 	u.Emails = cloneStrs(u.Emails)
 	u.Passkeys = cloneStrs(u.Passkeys)
+	u.classes = cloneStrs(u.classes)
 	return u
 }
 
@@ -117,6 +126,9 @@ func (s *Server) putUser(stage bool, uid string, u User) *userRec {
 	def(&u.Last, "User")
 	def(&u.HomeDir, "/home/"+uid)
 	def(&u.Shell, "/bin/sh")
+	if u.classes == nil {
+		u.classes = slices.Clone(defaultClasses)
+	}
 	r := s.store(stage)[uid]
 	if r == nil {
 		r = &userRec{uuid: newUUID(), stage: stage}
@@ -220,6 +232,9 @@ func (r *userRec) render(s *Server, uid string, find, all bool) map[string]any {
 			out[k] = v
 		}
 	}
+	if all {
+		out["objectclass"] = slices.Clone(r.classes)
+	}
 	if all { // U4
 		for k, v := range map[string]string{"street": r.Street, "l": r.City, "st": r.State,
 			"postalcode": r.PostalCode, "preferredlanguage": r.PreferredLanguage} {
@@ -245,6 +260,20 @@ func (r *userRec) render(s *Server, uid string, find, all bool) map[string]any {
 	}
 	if len(indirect) > 0 {
 		out["memberofindirect_group"] = indirect
+	}
+	if r.Manager != "" {
+		out["manager"] = []string{r.Manager}
+	}
+	if !r.PrincipalExpire.IsZero() {
+		out["krbprincipalexpiration"] = []map[string]string{{"__datetime__": r.PrincipalExpire.UTC().Format(ipa.IpaDatetimeFormat)}}
+	}
+	if all { // Q186
+		if r.FailedLogins != 0 {
+			out["krbloginfailedcount"] = []string{strconv.Itoa(r.FailedLogins)}
+		}
+		if !r.LastFailedLogin.IsZero() {
+			out["krblastfailedauth"] = []map[string]string{{"__datetime__": r.LastFailedLogin.UTC().Format(ipa.IpaDatetimeFormat)}}
+		}
 	}
 	if !r.PasswdExpire.IsZero() {
 		out["krbpasswordexpiration"] = []map[string]string{{"__datetime__": r.PasswdExpire.UTC().Format(ipa.IpaDatetimeFormat)}}
@@ -331,6 +360,20 @@ func (u *User) apply(opts map[string]any) *ipa.IpaError {
 			u.SSHPubKeys = strs(v)
 		case "ipauserauthtype":
 			u.AuthTypes = strs(v)
+		case "objectclass":
+			u.classes = strs(v)
+		case "manager":
+			u.Manager = strings.TrimPrefix(str(v), "uid=")
+			u.Manager, _, _ = strings.Cut(u.Manager, ",")
+		case "krbprincipalexpiration":
+			if m, ok := v.(map[string]any); ok {
+				v = m["__datetime__"]
+			}
+			t, ok := parseDateTime(str(v))
+			if !ok {
+				return &ipa.IpaError{Code: ipa.CodeConversion, Name: "ConversionError", Message: "invalid 'krbprincipalexpiration': does not match any of accepted formats: %Y%m%d%H%M%SZ, %Y-%m-%dT%H:%M:%SZ, %Y-%m-%dT%H:%MZ, %Y-%m-%dZ, %Y-%m-%d %H:%M:%SZ, %Y-%m-%d %H:%MZ"}
+			}
+			u.PrincipalExpire = t
 		case "krbpasswordexpiration": // Q41, Q184
 			if m, ok := v.(map[string]any); ok { // the JSON form of a DateTime
 				v = m["__datetime__"]
@@ -377,6 +420,8 @@ func (u *User) attrVals(attr string) (vals []string, ok bool) {
 		return u.SSHPubKeys, true
 	case attr == "ipauserauthtype":
 		return u.AuthTypes, true
+	case attr == "objectclass":
+		return u.classes, true
 	case attr == "krbpasswordexpiration":
 		if u.PasswdExpire.IsZero() {
 			return nil, true
@@ -389,7 +434,7 @@ func (u *User) attrVals(attr string) (vals []string, ok bool) {
 // multiValued is the attributes applyAttrOpts lets hold several values. FreeIPA
 // also allows it for telephonenumber, mobile and userclass, which the fake
 // keeps as one string (Q41).
-var multiValued = map[string]bool{"mail": true, "ipasshpubkey": true, "ipauserauthtype": true}
+var multiValued = map[string]bool{"mail": true, "ipasshpubkey": true, "ipauserauthtype": true, "objectclass": true}
 
 // applyAttrOpts is Q41 for a user.
 func (u *User) applyAttrOpts(opts map[string]any) *ipa.IpaError {
@@ -426,6 +471,13 @@ func attrOpts(opts map[string]any, attrVals func(string) ([]string, bool), multi
 			return nil, &ipa.IpaError{Code: ipa.CodeValidation, Name: "ValidationError", Message: fmt.Sprintf("invalid '%s': No such attribute on this entry", e.attr)}
 		}
 	}
+	// objectclass names compare case-insensitively (Q196)
+	idx := func(attr string, v []string, val string) int {
+		if attr == "objectclass" {
+			return slices.IndexFunc(v, func(o string) bool { return strings.EqualFold(o, val) })
+		}
+		return slices.Index(v, val)
+	}
 	vals := map[string][]string{}
 	cur := func(attr string) []string {
 		if v, ok := vals[attr]; ok {
@@ -443,14 +495,14 @@ func attrOpts(opts map[string]any, attrVals func(string) ([]string, bool), multi
 		}
 	}
 	for _, e := range add {
-		if slices.Contains(cur(e.attr), e.val) { // a no-op; alone it ends as EmptyModlist
+		if idx(e.attr, cur(e.attr), e.val) >= 0 { // a no-op; alone it ends as EmptyModlist
 			continue
 		}
 		vals[e.attr] = append(cur(e.attr), e.val)
 	}
 	for _, e := range del {
 		v := cur(e.attr)
-		i := slices.Index(v, e.val)
+		i := idx(e.attr, v, e.val)
 		if i < 0 {
 			return nil, &ipa.IpaError{Code: ipa.CodeAttrValueNotFound, Name: "AttrValueNotFound", Message: fmt.Sprintf("'%s' does not contain '%s'", e.attr, e.val)}
 		}
@@ -516,6 +568,7 @@ func (r *userRec) withRandom(s *Server, c Call, uid string) map[string]any {
 		r.Password, r.PasswdExpire = randomPassword(), expiredNow()
 	}
 	rec := r.render(s, uid, false, flag(c, "all"))
+	s.hideCounters(c, uid, rec)
 	if random {
 		rec["randompassword"] = r.Password
 	}
@@ -531,7 +584,9 @@ func (s *Server) userShow(stage bool, c Call) (any, *ipa.IpaError) {
 	if err != nil {
 		return nil, err
 	}
-	return entry(uid, r.render(s, uid, false, flag(c, "all")), ""), nil
+	rec := r.render(s, uid, false, flag(c, "all"))
+	s.hideCounters(c, uid, rec)
+	return entry(uid, rec, ""), nil
 }
 
 func userFind(stage bool) builtin {
@@ -554,7 +609,7 @@ func (s *Server) userFind(stage bool, c Call) (any, *ipa.IpaError) {
 		}) {
 			continue
 		}
-		if !matches(c, "uid", uid) || !matchesAny(c, "mail", r.mails()) || !matches(c, "givenname", r.First) || !matches(c, "sn", r.Last) {
+		if !matches(c, "uid", uid) || !matchesAny(c, "mail", r.mails()) || !matches(c, "givenname", r.First) || !matches(c, "sn", r.Last) || !matches(c, "manager", r.Manager) {
 			continue
 		}
 		uids = append(uids, uid)
@@ -563,12 +618,30 @@ func (s *Server) userFind(stage bool, c Call) (any, *ipa.IpaError) {
 	recs := make([]map[string]any, 0, len(uids))
 	for _, uid := range uids {
 		rec := s.store(stage)[uid].render(s, uid, true, all)
+		s.hideCounters(c, uid, rec)
 		if !all { // Q1, Q28
 			delete(rec, "userclass")
 		}
 		recs = append(recs, rec)
 	}
 	return listLimited(c, recs), nil
+}
+
+// hideCounters is Q186: the login counters are not readable, not even the
+// caller's own, without User Administrators.
+func (s *Server) hideCounters(c Call, uid string, rec map[string]any) {
+	if !s.holds(c.User, "User Administrators") {
+		delete(rec, "krbloginfailedcount")
+		delete(rec, "krblastfailedauth")
+	}
+}
+
+// checkManager is Q185: the manager must be an active user.
+func (s *Server) checkManager(uid string) *ipa.IpaError {
+	if uid != "" && s.users[uid] == nil {
+		return &ipa.IpaError{Code: ipa.CodeNotFound, Name: "NotFound", Message: "manager " + uid + " not found"}
+	}
+	return nil
 }
 
 func matches(c Call, opt, have string) bool {
@@ -615,6 +688,9 @@ func (s *Server) userAdd(stage bool, c Call) (any, *ipa.IpaError) {
 	}
 	if u.Last == "" {
 		return nil, required("sn")
+	}
+	if err := s.checkManager(u.Manager); err != nil {
+		return nil, err
 	}
 	r := s.putUser(stage, uid, u)
 	if pw := str(c.Options["userpassword"]); pw != "" { // Q160
@@ -668,6 +744,11 @@ func (s *Server) userMod(stage bool, c Call) (any, *ipa.IpaError) {
 	}
 	if next.Last == "" {
 		return nil, required("sn")
+	}
+	if next.Manager != r.Manager {
+		if err := s.checkManager(next.Manager); err != nil {
+			return nil, err
+		}
 	}
 	random := flag(c, "random")
 	if !random && reflect.DeepEqual(next, r.User) { // Q11
@@ -785,11 +866,12 @@ func loginPassword(s *Server, w http.ResponseWriter, r *http.Request) {
 	switch {
 	case u == nil || u.Password == "":
 		reject("invalid-password")
-	case u.Locked || u.Preserved || (s.pwpol[globalPolicy].MaxFailures > 0 && u.FailedLogins >= s.pwpol[globalPolicy].MaxFailures): // Q6, Q32
+	case u.Locked || u.Preserved || s.lockedOut(uid, u): // Q6, Q32, Q190
 		reject("user-locked")
+	case !u.PrincipalExpire.IsZero() && !u.PrincipalExpire.After(time.Now()): // Q187
+		reject("krbprincipal-expired")
 	case u.Password != pw:
-		u.FailedLogins++
-		u.LastFailedLogin = time.Now()
+		s.countFailure(uid, u)
 		reject("invalid-password")
 	case !u.PasswdExpire.IsZero() && !u.PasswdExpire.After(time.Now()): // Q5
 		reject("password-expired")

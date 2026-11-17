@@ -77,7 +77,9 @@
 // On FreeIPA (seen on 4.9.13, 4.12.2 and 4.13.4) the server keeps accepting an ipa_session cookie
 // after session_logout: logout only makes the client forget it. Treat a
 // session ID as a credential until it expires, and do not log or share it.
-// ClearSession drops the ID on the client side only.
+// ClearSession drops the ID on the client side only. Clients built by New
+// without WithCACert or WithHTTPClient share one HTTP client (and its
+// connections); sessions stay separate because ipa_session travels as a header.
 //
 // A Kerberos client sends its first request to /ipa/json with SPNEGO; FreeIPA
 // answers with an ipa_session cookie and later calls use /ipa/session/json
@@ -112,7 +114,8 @@
 // server cut the search short. This applies to the Finds added in v0.9 and to
 // FindEntries. UserFind, GroupFind, HostFind, StageUserFind, SubIDFind,
 // FetchOTPTokens, HBACRuleFind and SudoRuleFind did not report it in v1.0 and
-// still do not, unless the Client was built WithTruncationErrors.
+// still do not, unless the Client was built WithTruncationErrors or the call
+// gets a ctx from ReportTruncation.
 //
 // UserAdd keeps upstream's ErrUserExists for 4002.
 //

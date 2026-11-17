@@ -46,3 +46,29 @@ func (c *Client) passkey(ctx context.Context, method, username, mapping string) 
 	_, err := c.rpc(ctx, method, []string{username, mapping}, Options{})
 	return err
 }
+
+// UserAddObjectClass adds an object class to a user with `user_mod --addattr
+// objectclass=<class>`. A class the entry already has is success
+// (ErrEmptyModlist is swallowed). It needs System: Modify Users (User
+// Administrators). FreeIPA 4.13's self-service passkey rule grants only
+// ipapasskey, so a user's first own passkey needs UserAddObjectClass(uid,
+// "ipapasskeyuser") from an administrator first, else UserAddPasskey answers
+// 2100 (ErrACI).
+func (c *Client) UserAddObjectClass(username, class string) error {
+	return c.UserAddObjectClassContext(context.Background(), username, class)
+}
+
+// UserAddObjectClassContext is like UserAddObjectClass but bounds the request with ctx.
+func (c *Client) UserAddObjectClassContext(ctx context.Context, username, class string) error {
+	if username == "" {
+		return errors.New("ipa: username is required")
+	}
+	if class == "" {
+		return errors.New("ipa: object class is required")
+	}
+	_, err := c.rpc(ctx, "user_mod", []string{username}, Options{"addattr": "objectclass=" + class})
+	if errors.Is(err, ErrEmptyModlist) {
+		return nil
+	}
+	return err
+}

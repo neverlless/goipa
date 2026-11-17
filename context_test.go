@@ -10,6 +10,7 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+	"time"
 
 	ipa "github.com/neverlless/goipa"
 )
@@ -32,12 +33,28 @@ func twinCalls() []twinCall {
 		{"CertRevokeContext", func(ctx context.Context, c *ipa.Client) error {
 			return c.CertRevokeContext(ctx, "1", 0)
 		}},
+		{"ConfigShowContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.ConfigShowContext(ctx)
+			return err
+		}},
+		{"SelfServiceFindContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.SelfServiceFindContext(ctx, nil)
+			return err
+		}},
+		{"SelfServiceShowContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.SelfServiceShowContext(ctx, "x")
+			return err
+		}},
 		{"RPCContext", func(ctx context.Context, c *ipa.Client) error {
 			_, err := c.RPCContext(ctx, "ping", nil, nil)
 			return err
 		}},
 		{"PwPolicyShowContext", func(ctx context.Context, c *ipa.Client) error {
 			_, err := c.PwPolicyShowContext(ctx, "")
+			return err
+		}},
+		{"PwPolicyFindContext", func(ctx context.Context, c *ipa.Client) error {
+			_, err := c.PwPolicyFindContext(ctx, nil)
 			return err
 		}},
 		{"UserPwPolicyContext", func(ctx context.Context, c *ipa.Client) error {
@@ -81,6 +98,12 @@ func twinCalls() []twinCall {
 		}},
 		{"SetAuthTypesContext", func(ctx context.Context, c *ipa.Client) error {
 			return c.SetAuthTypesContext(ctx, "bob", []string{"otp"})
+		}},
+		{"SetManagerContext", func(ctx context.Context, c *ipa.Client) error {
+			return c.SetManagerContext(ctx, "bob", "walter")
+		}},
+		{"SetPrincipalExpirationContext", func(ctx context.Context, c *ipa.Client) error {
+			return c.SetPrincipalExpirationContext(ctx, "bob", time.Now())
 		}},
 		{"UserDisableContext", func(ctx context.Context, c *ipa.Client) error {
 			return c.UserDisableContext(ctx, "bob")
@@ -237,6 +260,9 @@ func twinCalls() []twinCall {
 		}},
 		{"UserRemovePasskeyContext", func(ctx context.Context, c *ipa.Client) error {
 			return c.UserRemovePasskeyContext(ctx, "bob", testPasskey)
+		}},
+		{"UserAddObjectClassContext", func(ctx context.Context, c *ipa.Client) error {
+			return c.UserAddObjectClassContext(ctx, "bob", "ipapasskeyuser")
 		}},
 		{"HostGroupShowContext", func(ctx context.Context, c *ipa.Client) error {
 			_, err := c.HostGroupShowContext(ctx, "hg")
@@ -544,7 +570,7 @@ func TestContextCancelReachesTransport(t *testing.T) {
 }
 
 // Methods that do no network I/O, take ctx themselves, or cannot honour ctx (gokrb5).
-var noTwin = map[string]bool{"Modify": true, "Host": true, "Realm": true, "SessionID": true, "SetSessionID": true,
+var noTwin = map[string]bool{"Modify": true, "Host": true, "Realm": true, "Domain": true, "SessionID": true, "SetSessionID": true,
 	"ClearSession": true, "StickySession": true, "Login": true, "LoginWithKeytab": true, "LoginFromCCache": true,
 	"LoginWithKeytabData": true, "LoginFromCCacheData": true,
 	"ServerVersion": true, "Batch": true}

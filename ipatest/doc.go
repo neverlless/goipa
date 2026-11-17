@@ -788,7 +788,7 @@
 //   - Q172: not modelled: 4.13.4 refuses user_add_passkey on the caller's
 //     own entry with "Insufficient access: not allowed to perform this
 //     operation" (4.12.2 allows it); ipatest allows it on every release.
-//     goipa.TestContractPlainUserWrites.
+//     goipa.TestContractPlainUserWrites. Superseded by Q195.
 //   - Q173: GrantPrivilege(uid, privilege) lets uid pass the checks bound to
 //     privilege (see # Auth model); any other name is kept and grants
 //     nothing, as AddUser takes any input; user_del (preserve too) drops the
@@ -854,6 +854,78 @@
 //     not match any of accepted formats: ...", never read as "no expiry".
 //     TestUserMod_MalformedPasswordExpiration,
 //     goipa.TestContractStageUserAddWithPassword (setattr only).
+//   - Q185: user's manager is stored and rendered as the bare uid, in
+//     user_show and user_find, with and without all (a DN input is read
+//     as its uid); user_add and user_mod with an unknown manager
+//     are 4001 "manager <uid> not found". user_find filters on manager.
+//     TestContractUserManager, TestUserFind_ByManager.
+//   - Q186: user_show and user_find with all render krbloginfailedcount
+//     (["n"], absent at zero) and krblastfailedauth. A caller without User
+//     Administrators does not get them, not even for the own entry.
+//     TestContractLoginCounters, TestUserShow_LoginCounters.
+//   - Q187: a login with the right password for a user whose
+//     krbprincipalexpiration has passed is 401 with X-IPA-Rejection-Reason
+//     krbprincipal-expired (ipa.ErrUnauthorized). A wrong password on an
+//     expired principal gets the same reason and is not counted as a failed
+//     login: the expiry is checked before the password. The attribute is a
+//     one-element DateTime list. TestContractPrincipalExpiration,
+//     TestLogin_PrincipalExpired.
+//   - Q188: krbprincipalexpiration is outside the self-service attributes:
+//     a plain user changing the own value is ErrACI, as no system permission
+//     grants write on it. TestContractPrincipalExpiration.
+//   - Q190: login_password locks the account by the policy effective for
+//     the user (Q180), not the global one: krbpwdmaxfailure wrong passwords
+//     in a row refuse even the right one until krbpwdlockoutduration after
+//     the last failure (0 = until user_unlock). Supersedes Q6 for the
+//     global-only case: the seeded global policy locks for 600 s, not for good.
+//     TestLockout_GroupPolicyStricter, TestLockout_DurationExpires,
+//     TestLockout_UnlockClears, goipa.TestContractLockoutGroupPolicy.
+//   - Q191: a wrong password after a lockout has ended is an ordinary
+//     invalid-password; it leaves krbloginfailedcount at krbpwdmaxfailure and
+//     sets krblastfailedauth, which starts the lockout again.
+//     TestLockout_FailureAfterLockoutRenews, goipa.TestContractLockoutGroupPolicy.
+//   - Q192: pwpolicy_find is hidden as pwpolicy_show is (Q32), but answers an
+//     empty list, not NotFound. TestPwPolicyFind_PlainUserHidden,
+//     goipa.TestContractPwPolicyFind.
+//   - Q193: pwpolicy_find lists the group policies by ascending cospriority,
+//     the global policy (no cospriority) last.
+//     TestPwPolicyFind_GlobalAndGroup, goipa.TestContractPwPolicyFind.
+//   - Q194: a failure older than krbpwdfailurecountinterval restarts the
+//     count at 1 (a successful login resets it to 0, as in Q6).
+//     TestLockout_IntervalResetsCount, goipa.TestContractLockoutInterval.
+//   - Q195: a user carries the object classes FreeIPA gives a new user
+//     (replay user_show; no ipapasskeyuser), rendered as objectclass with all.
+//     user_add_passkey adds ipapasskeyuser; from 4.13.4 a caller without
+//     Passkey Administrators or User Administrators who adds a first passkey
+//     to the own entry lacking it gets 2100 "Insufficient access: not allowed
+//     to perform this operation", the self-service rule granting ipapasskey
+//     only. UserAddObjectClass (user_mod addattr objectclass) as an
+//     administrator lifts it. Earlier releases allow it (Q172).
+//     TestOwnPasskey_NeedsClass, TestAdminPasskey_AddsClass,
+//     goipa.TestContractFirstOwnPasskey.
+//   - Q196: objectclass values match case-insensitively in addattr and
+//     delattr, the stored spelling kept. TestUserShow_ObjectClassWithAll.
+//   - Q197: objectclass is rendered only with all. TestUserShow_ObjectClassWithAll.
+//   - Q198: adding a class the entry has is a no-op, 4202 EmptyModlist when
+//     alone; UserAddObjectClass returns nil. TestUserShow_ObjectClassWithAll,
+//     goipa.TestContractFirstOwnPasskey.
+//   - Q199: config_show is modelled: the response is the SetConfig value,
+//     seeded with a fresh 4.13.4 install (email domain test.local);
+//     ipauserauthtype is absent until set, as unset attributes are, and the
+//     result has no value or summary. Any authenticated user may read it.
+//     TestConfigShow_Fields, TestConfigShow_SetConfigAuthTypes,
+//     goipa.TestContractConfigShow.
+//   - Q200: selfservice_find and selfservice_show serve FreeIPA's default
+//     rules: five before 4.11.0, six with "Users can manage their own
+//     passkey mappings" from it. The criteria match the name; aciname is
+//     exact, attrs and permissions must all be held by the rule.
+//     TestSelfServiceFind_Defaults, goipa.TestContractSelfService.
+//   - Q201: on every release the rules are visible only with System: Read
+//     ACIs, bound to RBAC Readers (as Q122): for any other caller the find
+//     has count 0 and no error.
+//     TestSelfServiceFind_PlainUserHidden, goipa.TestContractSelfService.
+//   - Q202: selfservice_show of a missing or hidden rule is 4001 NotFound
+//     `ACI with name "<name>" not found`. TestSelfServiceShow_NotFound.
 //
 // A response's version is the server release, 4.13.4 unless SetVersion
 // changes it, and its principal is
@@ -873,7 +945,7 @@
 // (sudorule_mod only for description and sudoorder, Q151), nor are role,
 // privilege and permission changes other than role_add,
 // role_del and role_add_member, HBAC services and service groups, or sudo
-// command groups; Handle is the way to reach the rest, as for config_*,
+// command groups; Handle is the way to reach the rest, as for config_mod,
 // subid_show, stageuser_add_passkey and stageuser_remove_passkey.
 // Of DNS, only master zones and the record commands above: dnszone_add
 // ignores its SOA, TTL and policy options and the name server and overlap

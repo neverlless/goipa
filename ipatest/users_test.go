@@ -71,6 +71,7 @@ func TestUserFieldsRoundTrip(t *testing.T) {
 		SSHPubKeys: []string{sshLine(t)}, PasswdExpire: expire,
 		Emails: []string{"j@example.org", "j2@example.org"}, Street: "1 Main", City: "Town", State: "ST",
 		PostalCode: "12345", PreferredLanguage: "en", Title: "Dr", OrgUnit: "Lab", Passkeys: []string{"passkey:a,b"},
+		Manager: "walter", PrincipalExpire: expire, FailedLogins: 2, LastFailedLogin: expire,
 	})
 	got, err := s.ClientAs("admin").UserShow("jesse")
 	if err != nil {
@@ -82,9 +83,7 @@ func TestUserFieldsRoundTrip(t *testing.T) {
 		"Preserved":        "false for a live user",
 		"SudoRules":        "v0.5",
 		"HbacRules":        "v0.5",
-		"PrincipalExpire":  "not modelled",
 		"LastLoginSuccess": "not modelled",
-		"LastLoginFail":    "not modelled",
 		"LastPasswdChange": "not modelled",
 		"RandomPassword":   "only in add/mod responses",
 		"IndirectGroups":   "derived from group records",
@@ -563,5 +562,65 @@ func TestStageUserDuplicateAndDelete(t *testing.T) {
 	}
 	if u, err := c.UserShow("y"); err != nil || u.Uid == "" {
 		t.Errorf("uidnumber after activate: %+v, %v", u, err)
+	}
+}
+
+func TestUserManagerAndExpiry(t *testing.T) {
+	s := ipatest.NewServer(t)
+	s.AddUser("walter", ipatest.User{})
+	s.AddUser("amy", ipatest.User{})
+	c := s.ClientAs("admin")
+	if err := c.SetManager("amy", "nobody"); !errors.Is(err, ipa.ErrNotFound) {
+		t.Errorf("unknown manager: %v", err)
+	}
+	if err := c.SetManager("amy", "walter"); err != nil {
+		t.Fatal(err)
+	}
+	exp := time.Now().Add(time.Hour).UTC().Truncate(time.Second)
+	if err := c.SetPrincipalExpiration("amy", exp); err != nil {
+		t.Fatal(err)
+	}
+	u, err := c.UserShow("amy")
+	if err != nil || u.Manager != "walter" || !u.PrincipalExpire.Equal(exp) {
+		t.Fatalf("UserShow = %+v, %v", u, err)
+	}
+	if err := c.SetManager("amy", ""); err != nil {
+		t.Fatal(err)
+	}
+	if err := c.SetPrincipalExpiration("amy", time.Time{}); err != nil {
+		t.Fatal(err)
+	}
+	if su, _ := s.User("amy"); su.Manager != "" || !su.PrincipalExpire.IsZero() {
+		t.Errorf("not cleared: %+v", su)
+	}
+}
+
+func TestUserFind_ByManager(t *testing.T) {
+	s := ipatest.NewServer(t)
+	s.AddUser("walter", ipatest.User{})
+	s.AddUser("bob", ipatest.User{Manager: "walter"})
+	s.AddUser("amy", ipatest.User{})
+	got, err := s.ClientAs("admin").UserFind(ipa.Options{"manager": "walter"})
+	if err != nil || len(got) != 1 || got[0].Username != "bob" || got[0].Manager != "walter" {
+		t.Fatalf("UserFind(manager) = %v, %v", got, err)
+	}
+}
+
+func TestLogin_PrincipalExpired(t *testing.T) {
+	s := ipatest.NewServer(t)
+	s.AddUser("bob", ipatest.User{Password: "pw", PrincipalExpire: time.Now().Add(-time.Hour)})
+	if err := s.ClientAs("").RemoteLogin("bob", "pw"); err == nil {
+		t.Error("login with an expired principal succeeded")
+	}
+}
+
+func TestUserShow_LoginCounters(t *testing.T) {
+	s := ipatest.NewServer(t)
+	s.AddUser("bob", ipatest.User{Password: "pw"})
+	c := s.ClientAs("admin")
+	_ = s.ClientAs("").RemoteLogin("bob", "wrong")
+	u, err := c.UserShow("bob")
+	if err != nil || u.LoginFailedCount != 1 || u.LastLoginFail.IsZero() {
+		t.Errorf("UserShow = %+v, %v", u, err)
 	}
 }

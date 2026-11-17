@@ -7,6 +7,7 @@ package ipa
 import (
 	"context"
 	"errors"
+	"maps"
 	"time"
 
 	"github.com/tidwall/gjson"
@@ -106,4 +107,29 @@ func (c *Client) UserPwPolicyContext(ctx context.Context, username string) (*PwP
 		return nil, errors.New("ipa: username is required")
 	}
 	return c.pwPolicyShow(ctx, []string{}, Options{"user": username})
+}
+
+// PwPolicyFind lists password policies with `pwpolicy_find`; options are
+// passed through (e.g. `cn`, `cospriority`, `sizelimit`). It needs the same
+// privilege as PwPolicyShow. The global policy has no Priority. The policy
+// that applies to a user is the one with the lowest Priority among the
+// policies of their Groups and IndirectGroups, else the global one, so
+// callers can resolve it from UserShow instead of calling UserPwPolicy per
+// user.
+//
+// A truncated search is reported as ErrTruncated, with the policies found.
+func (c *Client) PwPolicyFind(options Options) ([]*PwPolicy, error) {
+	return c.PwPolicyFindContext(context.Background(), options)
+}
+
+// PwPolicyFindContext is like PwPolicyFind but bounds the request with ctx.
+func (c *Client) PwPolicyFindContext(ctx context.Context, options Options) ([]*PwPolicy, error) {
+	options = maps.Clone(options)
+	if options == nil {
+		options = Options{}
+	}
+	options["all"] = true
+	return findTyped(ctx, c, "pwpolicy_find", []string{""}, options, func(e Entry) *PwPolicy {
+		return pwPolicyFrom(gjson.ParseBytes(e.raw))
+	})
 }

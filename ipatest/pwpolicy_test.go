@@ -114,3 +114,127 @@ func TestChangePassword_MinLife(t *testing.T) {
 		t.Errorf("admin: %v", err)
 	}
 }
+
+func TestPwPolicyFind_GlobalAndGroup(t *testing.T) {
+	s := ipatest.NewServer(t)
+	s.AddGroup("b", ipatest.Group{})
+	s.AddGroup("a", ipatest.Group{})
+	s.SetPwPolicy("b", ipatest.PwPolicy{Priority: 5, MinLength: 12})
+	s.SetPwPolicy("a", ipatest.PwPolicy{Priority: 20})
+	ps, err := s.ClientAs("admin").PwPolicyFind(nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var got []string
+	for _, p := range ps {
+		got = append(got, p.Name)
+	}
+	if strings.Join(got, ",") != "b,a,global_policy" || ps[2].Priority != 0 || ps[0].Priority != 5 || ps[0].MinLength != 12 {
+		t.Errorf("policies = %v %+v", got, ps)
+	}
+	if ps, _ = s.ClientAs("admin").PwPolicyFind(ipa.Options{"cn": "a"}); len(ps) != 1 || ps[0].Name != "a" {
+		t.Errorf("cn filter: %+v", ps)
+	}
+	ps, err = s.ClientAs("admin").PwPolicyFind(ipa.Options{"sizelimit": 1})
+	if len(ps) != 1 || err != nil && !errors.Is(err, ipa.ErrTruncated) {
+		t.Errorf("sizelimit: %d %v", len(ps), err)
+	}
+}
+
+func TestPwPolicyFind_PlainUserHidden(t *testing.T) {
+	s := ipatest.NewServer(t)
+	s.AddUser("bob", ipatest.User{Password: "x"})
+	if ps, err := s.ClientAs("bob").PwPolicyFind(nil); err != nil || len(ps) != 0 {
+		t.Errorf("plain user: %v %v", ps, err)
+	}
+}
+
+func failLogins(t *testing.T, s *ipatest.Server, uid, pw string, n int) {
+	t.Helper()
+	for range n {
+		postForm(t, s, "/ipa/session/login_password", url.Values{"user": {uid}, "password": {pw}}, true)
+	}
+}
+
+func loginReason(t *testing.T, s *ipatest.Server, uid, pw string) string {
+	t.Helper()
+	res := postForm(t, s, "/ipa/session/login_password", url.Values{"user": {uid}, "password": {pw}}, true)
+	return res.Header.Get("X-IPA-Rejection-Reason")
+}
+
+func TestLockout_GroupPolicyStricter(t *testing.T) {
+	s := strictGroup(t, ipatest.PwPolicy{MaxFailures: 2, LockoutDuration: time.Hour})
+	s.AddUser("carol", ipatest.User{Password: "Oldpass-12x"})
+	failLogins(t, s, "bob", "wrong", 2)
+	failLogins(t, s, "carol", "wrong", 2)
+	if got := loginReason(t, s, "bob", "Oldpass-12x"); got != "user-locked" {
+		t.Errorf("bob: %q", got)
+	}
+	if got := loginReason(t, s, "carol", "Oldpass-12x"); got != "" { // global allows 6
+		t.Errorf("carol: %q", got)
+	}
+}
+
+func TestLockout_DurationExpires(t *testing.T) {
+	s := strictGroup(t, ipatest.PwPolicy{MaxFailures: 1, LockoutDuration: time.Second})
+	failLogins(t, s, "bob", "wrong", 1)
+	if got := loginReason(t, s, "bob", "Oldpass-12x"); got != "user-locked" {
+		t.Fatalf("before expiry: %q", got)
+	}
+	time.Sleep(1100 * time.Millisecond)
+	if got := loginReason(t, s, "bob", "Oldpass-12x"); got != "" {
+		t.Errorf("after expiry: %q", got)
+	}
+}
+
+func TestLockout_NoDurationUntilUnlock(t *testing.T) {
+	s := strictGroup(t, ipatest.PwPolicy{MaxFailures: 1})
+	failLogins(t, s, "bob", "wrong", 1)
+	if got := loginReason(t, s, "bob", "Oldpass-12x"); got != "user-locked" {
+		t.Fatalf("locked: %q", got)
+	}
+	if err := s.ClientAs("admin").UserUnlock("bob"); err != nil {
+		t.Fatal(err)
+	}
+	if got := loginReason(t, s, "bob", "Oldpass-12x"); got != "" {
+		t.Errorf("after unlock: %q", got)
+	}
+}
+
+func TestLockout_IntervalResetsCount(t *testing.T) {
+	s := strictGroup(t, ipatest.PwPolicy{MaxFailures: 2, FailureInterval: time.Second, LockoutDuration: time.Hour})
+	failLogins(t, s, "bob", "wrong", 1)
+	time.Sleep(1100 * time.Millisecond)
+	failLogins(t, s, "bob", "wrong", 1)
+	if u, _ := s.User("bob"); u.FailedLogins != 1 {
+		t.Errorf("FailedLogins = %d, want 1", u.FailedLogins)
+	}
+	if got := loginReason(t, s, "bob", "Oldpass-12x"); got != "" {
+		t.Errorf("not locked yet: %q", got)
+	}
+}
+
+func TestLockout_UnlockClears(t *testing.T) {
+	s := strictGroup(t, ipatest.PwPolicy{MaxFailures: 2, LockoutDuration: time.Hour})
+	failLogins(t, s, "bob", "wrong", 2)
+	if err := s.ClientAs("admin").UserUnlock("bob"); err != nil {
+		t.Fatal(err)
+	}
+	failLogins(t, s, "bob", "wrong", 1)
+	if got := loginReason(t, s, "bob", "Oldpass-12x"); got != "" {
+		t.Errorf("one failure after unlock locked: %q", got)
+	}
+}
+
+func TestLockout_FailureAfterLockoutRenews(t *testing.T) {
+	s := strictGroup(t, ipatest.PwPolicy{MaxFailures: 1, LockoutDuration: time.Second})
+	failLogins(t, s, "bob", "wrong", 1)
+	time.Sleep(1100 * time.Millisecond)
+	failLogins(t, s, "bob", "wrong", 1)
+	if u, _ := s.User("bob"); u.FailedLogins != 1 {
+		t.Errorf("FailedLogins = %d, want 1", u.FailedLogins)
+	}
+	if got := loginReason(t, s, "bob", "Oldpass-12x"); got != "user-locked" {
+		t.Errorf("right password: %q, want a renewed lockout", got)
+	}
+}

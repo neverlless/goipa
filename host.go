@@ -81,7 +81,8 @@ func (c *Client) HostShowContext(ctx context.Context, fqdn string) (*Host, error
 // (System: Read Hosts). ubccr/goipa#11.
 //
 // A truncated search is not reported unless the Client was built
-// WithTruncationErrors; FindEntries reports it too.
+// WithTruncationErrors or ctx comes from ReportTruncation; FindEntries
+// reports it too.
 func (c *Client) HostFind(options Options) ([]*Host, error) {
 	return c.HostFindContext(context.Background(), options)
 }
@@ -107,7 +108,7 @@ func (c *Client) HostFindContext(ctx context.Context, options Options) ([]*Host,
 		}
 		hosts = append(hosts, h)
 	}
-	return hosts, c.truncated(res)
+	return hosts, c.truncated(ctx, res)
 }
 
 var errHostFQDN = errors.New("ipa: host fqdn is required")
