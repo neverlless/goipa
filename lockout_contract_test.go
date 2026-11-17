@@ -151,11 +151,11 @@ func TestContractLockoutGroupPolicy(t *testing.T) {
 		uid := newUserWithPassword(t, b, goodPW)
 		newPolicyGroup(t, b, uid, ipa.Options{"krbpwdmaxfailure": 2, "krbpwdlockoutduration": 3, "krbpwdfailurecountinterval": 60})
 		count := func() string {
-			raw, err := b.admin.RPC("user_status", []string{uid}, nil)
+			u, err := b.admin.UserShow(uid)
 			if err != nil {
 				t.Fatal(err)
 			}
-			return gjson.GetBytes(raw.Result.Data, "0.krbloginfailedcount").Array()[0].String() // scalar when 0, else a list (Q31)
+			return strconv.Itoa(u.LoginFailedCount)
 		}
 		for range 2 {
 			wantIs(t, b.client().RemoteLogin(uid, "wrong"), ipa.ErrInvalidPassword)
@@ -202,11 +202,11 @@ func TestContractLockoutInterval(t *testing.T) {
 		uid := newUserWithPassword(t, b, goodPW)
 		newPolicyGroup(t, b, uid, ipa.Options{"krbpwdmaxfailure": 3, "krbpwdlockoutduration": 60, "krbpwdfailurecountinterval": 2})
 		count := func() string {
-			raw, err := b.admin.RPC("user_status", []string{uid}, nil)
+			u, err := b.admin.UserShow(uid)
 			if err != nil {
 				t.Fatal(err)
 			}
-			return gjson.GetBytes(raw.Result.Data, "0.krbloginfailedcount").Array()[0].String() // scalar when 0, else a list (Q31)
+			return strconv.Itoa(u.LoginFailedCount)
 		}
 		for i, want := range []string{"1", "1", "2"} { // the second failure comes after the interval
 			if i == 1 {
