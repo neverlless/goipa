@@ -145,7 +145,7 @@ func TestValidation_UnknownVersion(t *testing.T) {
 }
 
 func TestValidation_NewerServerSkips(t *testing.T) {
-	for _, v := range []string{"4.13.5", "4.14.0", "4.13.5.dev1"} {
+	for _, v := range []string{"4.13.99", "4.99.0", "4.13.99.dev1"} {
 		t.Run(v, func(t *testing.T) {
 			s := ipatest.NewServer(t)
 			c := validatingClient(t, s)

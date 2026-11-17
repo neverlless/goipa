@@ -7,6 +7,11 @@ existing exported identifiers keep their signatures).
 
 ## [Unreleased]
 
+### Changed
+
+- Command catalogue regenerated: FreeIPA 4.13.5 added to the known releases
+  (no command changes)
+
 ## [v1.1.0] - 2026-10-28
 
 ### Added
