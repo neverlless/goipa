@@ -866,11 +866,10 @@ func loginPassword(s *Server, w http.ResponseWriter, r *http.Request) {
 	switch {
 	case u == nil || u.Password == "":
 		reject("invalid-password")
-	case u.Locked || u.Preserved || (s.pwpol[globalPolicy].MaxFailures > 0 && u.FailedLogins >= s.pwpol[globalPolicy].MaxFailures): // Q6, Q32
+	case u.Locked || u.Preserved || s.lockedOut(uid, u): // Q6, Q32, Q190
 		reject("user-locked")
 	case u.Password != pw:
-		u.FailedLogins++
-		u.LastFailedLogin = time.Now()
+		s.countFailure(uid, u)
 		reject("invalid-password")
 	case !u.PrincipalExpire.IsZero() && !u.PrincipalExpire.After(time.Now()): // Q187
 		reject("krbprincipal-expired")

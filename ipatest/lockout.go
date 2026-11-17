@@ -61,3 +61,30 @@ func init() {
 	builtins["user_status"] = userStatus
 	builtins["user_unlock"] = userUnlock
 }
+
+// lockedOut reports whether the effective policy of uid refuses logins now:
+// MaxFailures wrong passwords in a row, until LockoutDuration after the last
+// one (0 = until user_unlock), Q190.
+func (s *Server) lockedOut(uid string, u *userRec) bool {
+	p := s.effectivePolicy(uid)
+	if p.MaxFailures <= 0 || u.FailedLogins < p.MaxFailures {
+		return false
+	}
+	return p.LockoutDuration == 0 || time.Since(u.LastFailedLogin) < p.LockoutDuration
+}
+
+// countFailure records a wrong password. After a lockout has ended the count
+// stays at MaxFailures and the failure only renews the lockout, Q191. A count
+// older than FailureInterval restarts at 1, Q194.
+func (s *Server) countFailure(uid string, u *userRec) {
+	p := s.effectivePolicy(uid)
+	if p.MaxFailures > 0 && u.FailedLogins >= p.MaxFailures {
+		u.LastFailedLogin = time.Now()
+		return
+	}
+	if p.FailureInterval > 0 && time.Since(u.LastFailedLogin) > p.FailureInterval {
+		u.FailedLogins = 0
+	}
+	u.FailedLogins++
+	u.LastFailedLogin = time.Now()
+}

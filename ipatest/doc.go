@@ -903,6 +903,26 @@
 //   - Q188: krbprincipalexpiration is outside the self-service attributes:
 //     a plain user changing the own value is ErrACI, as no system permission
 //     grants write on it. TestContractPrincipalExpiration.
+//   - Q190: login_password locks the account by the policy effective for
+//     the user (Q180), not the global one: krbpwdmaxfailure wrong passwords
+//     in a row refuse even the right one until krbpwdlockoutduration after
+//     the last failure (0 = until user_unlock). Supersedes Q6 for the
+//     global-only case: the seeded global policy locks for 600 s, not for good.
+//     TestLockout_GroupPolicyStricter, TestLockout_DurationExpires,
+//     TestLockout_UnlockClears, goipa.TestContractLockoutGroupPolicy.
+//   - Q191: a wrong password after a lockout has ended is an ordinary
+//     invalid-password; it leaves krbloginfailedcount at krbpwdmaxfailure and
+//     sets krblastfailedauth, which starts the lockout again.
+//     TestLockout_FailureAfterLockoutRenews, goipa.TestContractLockoutGroupPolicy.
+//   - Q192: pwpolicy_find is hidden as pwpolicy_show is (Q32), but answers an
+//     empty list, not NotFound. TestPwPolicyFind_PlainUserHidden,
+//     goipa.TestContractPwPolicyFind.
+//   - Q193: pwpolicy_find lists the group policies by ascending cospriority,
+//     the global policy (no cospriority) last.
+//     TestPwPolicyFind_GlobalAndGroup, goipa.TestContractPwPolicyFind.
+//   - Q194: a failure older than krbpwdfailurecountinterval restarts the
+//     count at 1 (a successful login resets it to 0, as in Q6).
+//     TestLockout_IntervalResetsCount, goipa.TestContractLockoutInterval.
 //
 // A response's version is the server release, 4.13.4 unless SetVersion
 // changes it, and its principal is
