@@ -249,7 +249,27 @@ operation, so calls that worked under delegated rights may now be refused.
 Accept: hosts can be enrolled and removed through typed calls, verified
 nightly on real FreeIPA.
 
-## v1.2.0 — ID views and several servers
+## v1.2.0 — What mokey asks for
+
+- [ ] Per-call truncation errors, next to the client-wide
+      `WithTruncationErrors()` (#21)
+- [ ] Typed `config_show`, `ipatest.Server.SetConfig` (#23)
+- [ ] `Client.Domain()` from `default.conf`, `WithDomain` (#24)
+- [ ] Add an object class to a user; ipatest refuses a plain user's first
+      passkey without `ipapasskeyuser` (#25)
+- [ ] Kerberos login attributes on `User`, lockout in ipatest, `PwPolicyFind`
+      (#26)
+- [ ] Keytab login with a principal alias when krb5.conf canonicalizes (#27)
+- [ ] Decoders for `Batch` results (#29)
+- [ ] One shared HTTP transport across clients built by `New` (#30)
+- [ ] `User.Manager`, writing `manager` and `krbprincipalexpiration`, find by
+      manager (#31)
+- [ ] Self-service rules: find and show (#32)
+
+Accept: mokey drops its raw RPC calls for these; each is contract-tested
+against the three FreeIPA releases.
+
+## v1.3.0 — ID views and several servers
 
 - [ ] ID views and overrides (`idview_*`, `idoverrideuser_*`,
       `idoverridegroup_*`), including views applied to hosts
@@ -259,7 +279,7 @@ nightly on real FreeIPA.
 Accept: ID overrides are typed and contract-tested; a client keeps working
 when its first server goes down.
 
-## v1.3.0 — Access control writes
+## v1.4.0 — Access control writes
 
 - [ ] Role, privilege and permission writes (add, modify, delete, members)
 - [ ] System accounts (`sysaccount_*`, FreeIPA 4.13 and later)
