@@ -51,7 +51,7 @@ type User struct {
 	PreferredLanguage string
 	Title             string
 	OrgUnit           string
-	FailedLogins      int
+	FailedLogins      int       // a seeded lockout also needs LastFailedLogin: it lasts the policy's LockoutDuration (600 s by default) after it
 	LastFailedLogin   time.Time // krblastfailedauth, set by a wrong password
 	PasswdExpire      time.Time // krbpasswordexpiration; non-zero and not after now = expired
 	Manager           string    // uid of the manager; user_add and user_mod refuse an unknown uid (Q185)
@@ -262,7 +262,7 @@ func (r *userRec) render(s *Server, uid string, find, all bool) map[string]any {
 		out["memberofindirect_group"] = indirect
 	}
 	if r.Manager != "" {
-		out["manager"] = []string{"uid=" + r.Manager + "," + baseDN}
+		out["manager"] = []string{r.Manager}
 	}
 	if !r.PrincipalExpire.IsZero() {
 		out["krbprincipalexpiration"] = []map[string]string{{"__datetime__": r.PrincipalExpire.UTC().Format(ipa.IpaDatetimeFormat)}}
@@ -868,11 +868,11 @@ func loginPassword(s *Server, w http.ResponseWriter, r *http.Request) {
 		reject("invalid-password")
 	case u.Locked || u.Preserved || s.lockedOut(uid, u): // Q6, Q32, Q190
 		reject("user-locked")
+	case !u.PrincipalExpire.IsZero() && !u.PrincipalExpire.After(time.Now()): // Q187
+		reject("krbprincipal-expired")
 	case u.Password != pw:
 		s.countFailure(uid, u)
 		reject("invalid-password")
-	case !u.PrincipalExpire.IsZero() && !u.PrincipalExpire.After(time.Now()): // Q187
-		reject("krbprincipal-expired")
 	case !u.PasswdExpire.IsZero() && !u.PasswdExpire.After(time.Now()): // Q5
 		reject("password-expired")
 	default:

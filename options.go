@@ -142,8 +142,9 @@ func WithTruncationErrors() Option {
 
 // New builds a Client from options. Without WithHost and WithRealm it takes
 // them from /etc/ipa/default.conf; without WithCACert or WithHTTPClient it
-// trusts /etc/ipa/ca.crt (else the system roots) through one HTTP client shared by all such Clients; without a Kerberos option it
-// reads DefaultKerbConf. /etc/ipa is read only when an option is missing.
+// trusts /etc/ipa/ca.crt (else the system roots) through one HTTP client
+// shared by all such Clients; without a Kerberos option it reads
+// DefaultKerbConf. /etc/ipa is read only when an option is missing.
 //
 // It fails when no host is known, when WithCACert holds no certificate, when
 // WithCACert and WithHTTPClient are both given, or when an option gets an
