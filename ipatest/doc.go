@@ -854,6 +854,23 @@
 //     not match any of accepted formats: ...", never read as "no expiry".
 //     TestUserMod_MalformedPasswordExpiration,
 //     goipa.TestContractStageUserAddWithPassword (setattr only).
+//   - Q199: config_show is modelled: the response is the SetConfig value,
+//     seeded with a fresh 4.13.4 install (email domain test.local);
+//     ipauserauthtype is absent until set, as unset attributes are, and the
+//     result has no value or summary. Any authenticated user may read it.
+//     TestConfigShow_Fields, TestConfigShow_SetConfigAuthTypes,
+//     goipa.TestContractConfigShow.
+//   - Q200: selfservice_find and selfservice_show serve FreeIPA's default
+//     rules: five before 4.11.0, six with "Users can manage their own
+//     passkey mappings" from it. The criteria match the name; aciname is
+//     exact, attrs and permissions must all be held by the rule.
+//     TestSelfServiceFind_Defaults, goipa.TestContractSelfService.
+//   - Q201: on every release the rules are visible only with System: Read
+//     ACIs, bound to RBAC Readers (as Q122): for any other caller the find
+//     has count 0 and no error.
+//     TestSelfServiceFind_PlainUserHidden, goipa.TestContractSelfService.
+//   - Q202: selfservice_show of a missing or hidden rule is 4001 NotFound
+//     `ACI with name "<name>" not found`. TestSelfServiceShow_NotFound.
 //
 // A response's version is the server release, 4.13.4 unless SetVersion
 // changes it, and its principal is
@@ -873,7 +890,7 @@
 // (sudorule_mod only for description and sudoorder, Q151), nor are role,
 // privilege and permission changes other than role_add,
 // role_del and role_add_member, HBAC services and service groups, or sudo
-// command groups; Handle is the way to reach the rest, as for config_*,
+// command groups; Handle is the way to reach the rest, as for config_mod,
 // subid_show, stageuser_add_passkey and stageuser_remove_passkey.
 // Of DNS, only master zones and the record commands above: dnszone_add
 // ignores its SOA, TTL and policy options and the name server and overlap
