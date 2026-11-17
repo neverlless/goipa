@@ -544,7 +544,7 @@ func TestContextCancelReachesTransport(t *testing.T) {
 }
 
 // Methods that do no network I/O, take ctx themselves, or cannot honour ctx (gokrb5).
-var noTwin = map[string]bool{"Modify": true, "Host": true, "Realm": true, "SessionID": true, "SetSessionID": true,
+var noTwin = map[string]bool{"Modify": true, "Host": true, "Realm": true, "Domain": true, "SessionID": true, "SetSessionID": true,
 	"ClearSession": true, "StickySession": true, "Login": true, "LoginWithKeytab": true, "LoginFromCCache": true,
 	"LoginWithKeytabData": true, "LoginFromCCacheData": true,
 	"ServerVersion": true, "Batch": true}

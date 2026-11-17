@@ -9,6 +9,7 @@ import (
 	"crypto/x509"
 	"net"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -42,6 +43,7 @@ const (
 type Client struct {
 	host       string
 	realm      string
+	domain     string // empty means lower(realm)
 	httpClient *http.Client
 
 	// krbMu keeps Destroy of a replaced Kerberos client out of an in-flight
@@ -71,6 +73,29 @@ type Client struct {
 // FreeIPA api options map
 type Options map[string]interface{}
 
+// sharedClients holds the HTTP client New hands out per CA pool, so clients
+// built per request reuse connections. Keyed by pool pointer: tests that swap
+// systemDefaults get their own; past the cap callers get an unshared client.
+var (
+	sharedMu      sync.Mutex
+	sharedClients = map[*x509.CertPool]*http.Client{}
+)
+
+const maxSharedClients = 16
+
+func sharedHTTPClient(pool *x509.CertPool) *http.Client {
+	sharedMu.Lock()
+	defer sharedMu.Unlock()
+	if hc, ok := sharedClients[pool]; ok {
+		return hc
+	}
+	hc := newHTTPClient(pool)
+	if len(sharedClients) < maxSharedClients {
+		sharedClients[pool] = hc
+	}
+	return hc
+}
+
 func newHTTPClient(pool *x509.CertPool) *http.Client {
 	return &http.Client{
 		Timeout: 1 * time.Minute,
@@ -81,6 +106,7 @@ func newHTTPClient(pool *x509.CertPool) *http.Client {
 			}).DialContext,
 			ForceAttemptHTTP2:     true,
 			MaxIdleConns:          100,
+			MaxIdleConnsPerHost:   100,
 			IdleConnTimeout:       90 * time.Second,
 			TLSHandshakeTimeout:   10 * time.Second,
 			ExpectContinueTimeout: 1 * time.Second,
@@ -96,7 +122,7 @@ func newHTTPClient(pool *x509.CertPool) *http.Client {
 // there is no host.
 func NewDefaultClient() *Client {
 	d := systemDefaults()
-	return &Client{host: d.host, realm: d.realm, sticky: true, httpClient: newHTTPClient(d.pool)}
+	return &Client{host: d.host, realm: d.realm, domain: d.domain, sticky: true, httpClient: newHTTPClient(d.pool)}
 }
 
 // New default IPA Client with existing sessionID using host and realm from /etc/ipa/default.conf, read on first use
@@ -104,7 +130,7 @@ func NewDefaultClient() *Client {
 // Deprecated: use New, then SetSessionID.
 func NewDefaultClientWithSession(sessionID string) *Client {
 	d := systemDefaults()
-	return &Client{host: d.host, realm: d.realm, sticky: true, sessionID: sessionID, httpClient: newHTTPClient(d.pool)}
+	return &Client{host: d.host, realm: d.realm, domain: d.domain, sticky: true, sessionID: sessionID, httpClient: newHTTPClient(d.pool)}
 }
 
 // New IPA Client with host and realm
@@ -139,4 +165,14 @@ func (c *Client) Host() string {
 // Returns FreeIPA realm
 func (c *Client) Realm() string {
 	return c.realm
+}
+
+// Domain returns the IPA DNS domain: from WithDomain, else the domain in
+// /etc/ipa/default.conf when the realm came from there too, else the
+// lower-cased realm. WebAuthn relying party IDs use it.
+func (c *Client) Domain() string {
+	if c.domain != "" {
+		return c.domain
+	}
+	return strings.ToLower(c.realm)
 }
