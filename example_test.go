@@ -216,6 +216,48 @@ func ExampleClient_Batch() {
 	}
 }
 
+// DecodeUser and DecodeOTPTokens turn batch results into the typed objects the
+// single calls return; send the same options as those calls.
+func ExampleDecodeUser() {
+	s := ipatest.New()
+	defer s.Close()
+	s.AddUser("jesse", ipatest.User{})
+	s.AddOTPToken(ipatest.OTPToken{Owner: "jesse", Description: "phone"})
+
+	res, err := s.ClientAs("admin").Batch(context.Background(),
+		ipa.BatchCall{Method: "user_show", Args: []string{"jesse"}, Options: ipa.Options{"all": true, "no_members": false}},
+		ipa.BatchCall{Method: "otptoken_find", Options: ipa.Options{"ipatokenowner": "jesse", "all": true}},
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+	u, err := ipa.DecodeUser(res[0])
+	if err != nil {
+		log.Fatal(err)
+	}
+	tokens, err := ipa.DecodeOTPTokens(res[1])
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(u.Username, len(tokens), tokens[0].Description)
+	// Output: jesse 1 phone
+}
+
+// ReportTruncation makes one call return ErrTruncated with the entries it got,
+// without WithTruncationErrors on the whole client.
+func ExampleReportTruncation() {
+	s := ipatest.New()
+	defer s.Close()
+	for _, uid := range []string{"a", "b", "c"} {
+		s.AddUser(uid, ipatest.User{})
+	}
+
+	c := s.ClientAs("admin")
+	users, err := c.UserFindContext(ipa.ReportTruncation(context.Background()), ipa.Options{"sizelimit": 2})
+	fmt.Println(len(users), errors.Is(err, ipa.ErrTruncated))
+	// Output: 2 true
+}
+
 // Commands lists what a server version supports; the sysaccount_* commands
 // came with FreeIPA 4.13.0.
 func ExampleCommands() {

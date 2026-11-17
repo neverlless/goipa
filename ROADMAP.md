@@ -251,20 +251,20 @@ nightly on real FreeIPA.
 
 ## v1.2.0 — What mokey asks for
 
-- [ ] Per-call truncation errors, next to the client-wide
+- [x] Per-call truncation errors, next to the client-wide
       `WithTruncationErrors()` (#21)
-- [ ] Typed `config_show`, `ipatest.Server.SetConfig` (#23)
-- [ ] `Client.Domain()` from `default.conf`, `WithDomain` (#24)
-- [ ] Add an object class to a user; ipatest refuses a plain user's first
+- [x] Typed `config_show`, `ipatest.Server.SetConfig` (#23)
+- [x] `Client.Domain()` from `default.conf`, `WithDomain` (#24)
+- [x] Add an object class to a user; ipatest refuses a plain user's first
       passkey without `ipapasskeyuser` (#25)
-- [ ] Kerberos login attributes on `User`, lockout in ipatest, `PwPolicyFind`
+- [x] Kerberos login attributes on `User`, lockout in ipatest, `PwPolicyFind`
       (#26)
-- [ ] Keytab login with a principal alias when krb5.conf canonicalizes (#27)
-- [ ] Decoders for `Batch` results (#29)
-- [ ] One shared HTTP transport across clients built by `New` (#30)
-- [ ] `User.Manager`, writing `manager` and `krbprincipalexpiration`, find by
+- [x] Keytab login with a principal alias when krb5.conf canonicalizes (#27)
+- [x] Decoders for `Batch` results (#29)
+- [x] One shared HTTP transport across clients built by `New` (#30)
+- [x] `User.Manager`, writing `manager` and `krbprincipalexpiration`, find by
       manager (#31)
-- [ ] Self-service rules: find and show (#32)
+- [x] Self-service rules: find and show (#32)
 
 Accept: mokey drops its raw RPC calls for these; each is contract-tested
 against the three FreeIPA releases.
