@@ -148,6 +148,9 @@ func TestSelfServiceAllowed(t *testing.T) {
 	s, _ := permServer(t)
 	s.AddUser("bob", ipatest.User{Password: "Secret123"})
 	c := s.ClientAs("bob")
+	if err := s.ClientAs("admin").UserAddObjectClass("bob", "ipapasskeyuser"); err != nil { // Q195
+		t.Fatal(err)
+	}
 	if err := c.UserAddPasskey("bob", "passkey:Z29pcGEtdGVzdC1pZA==,MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEgJ0OGh7RCx0W7lUgaq4bbkS5+r9uuEXFc8lWWhNH0uphy0Xv4/2mTD9h4KbXWYcpr0bxLYvifagCSgDbVZZlcg=="); err != nil {
 		t.Errorf("own passkey: %v", err)
 	}

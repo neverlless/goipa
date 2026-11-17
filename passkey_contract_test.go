@@ -48,3 +48,39 @@ func TestContractPasskeys(t *testing.T) {
 		wantCode(t, "invalid mapping", b.admin.UserAddPasskey(uid, "passkey:notbase64,x"), ipa.CodeValidation)
 	})
 }
+
+// TestContractFirstOwnPasskey pins Q195: from 4.13.4 the self-service rule
+// does not cover the class a first passkey adds.
+func TestContractFirstOwnPasskey(t *testing.T) {
+	forEachBackend(t, func(t *testing.T, b backend) {
+		res, err := b.admin.RPC("ping", nil, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !serverAtLeast(res.Version, 4, 11) {
+			t.Skipf("passkeys need FreeIPA 4.11, server is %s", res.Version)
+		}
+		uid := newUserWithPassword(t, b, goodPW)
+		c := mustLogin(t, b, uid, goodPW)
+		err = c.UserAddPasskey(uid, testPasskey)
+		if ldapACIRelease(res.Version) { // Q172: 4.12.2 allows it
+			if err != nil {
+				t.Fatalf("own add: %v", err)
+			}
+			if err := c.UserRemovePasskey(uid, testPasskey); err != nil {
+				t.Fatal(err)
+			}
+		} else {
+			wantIs(t, err, ipa.ErrACI)
+		}
+		if err := b.admin.UserAddObjectClass(uid, "ipapasskeyuser"); err != nil {
+			t.Fatal(err)
+		}
+		if err := c.UserAddPasskey(uid, testPasskey); err != nil {
+			t.Errorf("own add after class: %v", err)
+		}
+		if err := b.admin.UserAddObjectClass(uid, "ipapasskeyuser"); err != nil {
+			t.Errorf("repeat class add: %v", err)
+		}
+	})
+}

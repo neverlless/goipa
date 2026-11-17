@@ -788,7 +788,7 @@
 //   - Q172: not modelled: 4.13.4 refuses user_add_passkey on the caller's
 //     own entry with "Insufficient access: not allowed to perform this
 //     operation" (4.12.2 allows it); ipatest allows it on every release.
-//     goipa.TestContractPlainUserWrites.
+//     goipa.TestContractPlainUserWrites. Superseded by Q195.
 //   - Q173: GrantPrivilege(uid, privilege) lets uid pass the checks bound to
 //     privilege (see # Auth model); any other name is kept and grants
 //     nothing, as AddUser takes any input; user_del (preserve too) drops the
@@ -854,6 +854,22 @@
 //     not match any of accepted formats: ...", never read as "no expiry".
 //     TestUserMod_MalformedPasswordExpiration,
 //     goipa.TestContractStageUserAddWithPassword (setattr only).
+//   - Q195: a user carries the object classes FreeIPA gives a new user
+//     (replay user_show; no ipapasskeyuser), rendered as objectclass with all.
+//     user_add_passkey adds ipapasskeyuser; from 4.13.4 a caller without
+//     Passkey Administrators or User Administrators who adds a first passkey
+//     to the own entry lacking it gets 2100 "Insufficient access: not allowed
+//     to perform this operation", the self-service rule granting ipapasskey
+//     only. UserAddObjectClass (user_mod addattr objectclass) as an
+//     administrator lifts it. Earlier releases allow it (Q172).
+//     TestOwnPasskey_NeedsClass, TestAdminPasskey_AddsClass,
+//     goipa.TestContractFirstOwnPasskey.
+//   - Q196: objectclass values match case-insensitively in addattr and
+//     delattr, the stored spelling kept. TestUserShow_ObjectClassWithAll.
+//   - Q197: objectclass is rendered only with all. TestUserShow_ObjectClassWithAll.
+//   - Q198: adding a class the entry has is a no-op, 4202 EmptyModlist when
+//     alone; UserAddObjectClass returns nil. TestUserShow_ObjectClassWithAll,
+//     goipa.TestContractFirstOwnPasskey.
 //
 // A response's version is the server release, 4.13.4 unless SetVersion
 // changes it, and its principal is

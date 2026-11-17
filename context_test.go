@@ -238,6 +238,9 @@ func twinCalls() []twinCall {
 		{"UserRemovePasskeyContext", func(ctx context.Context, c *ipa.Client) error {
 			return c.UserRemovePasskeyContext(ctx, "bob", testPasskey)
 		}},
+		{"UserAddObjectClassContext", func(ctx context.Context, c *ipa.Client) error {
+			return c.UserAddObjectClassContext(ctx, "bob", "ipapasskeyuser")
+		}},
 		{"HostGroupShowContext", func(ctx context.Context, c *ipa.Client) error {
 			_, err := c.HostGroupShowContext(ctx, "hg")
 			return err

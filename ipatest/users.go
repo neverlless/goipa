@@ -54,7 +54,13 @@ type User struct {
 	FailedLogins      int
 	LastFailedLogin   time.Time // krblastfailedauth, set by a wrong password
 	PasswdExpire      time.Time // krbpasswordexpiration; non-zero and not after now = expired
+
+	classes []string // objectclass; nil = the classes FreeIPA gives a new user, Q195
 }
+
+// defaultClasses are the object classes of a user FreeIPA 4.13.4 just added
+// (replay user_show); ipapasskeyuser is not among them.
+var defaultClasses = []string{"top", "person", "organizationalperson", "inetorgperson", "inetuser", "posixaccount", "krbprincipalaux", "krbticketpolicyaux", "ipaobject", "ipasshuser", "ipaSshGroupOfPubKeys", "mepOriginEntry", "ipantuserattrs"}
 
 // userRec is a stored user plus the attributes the server assigns.
 type userRec struct {
@@ -75,6 +81,7 @@ func (u User) clone() User {
 	u.SSHPubKeys = cloneStrs(u.SSHPubKeys)
 	u.Emails = cloneStrs(u.Emails)
 	u.Passkeys = cloneStrs(u.Passkeys)
+	u.classes = cloneStrs(u.classes)
 	return u
 }
 
@@ -117,6 +124,9 @@ func (s *Server) putUser(stage bool, uid string, u User) *userRec {
 	def(&u.Last, "User")
 	def(&u.HomeDir, "/home/"+uid)
 	def(&u.Shell, "/bin/sh")
+	if u.classes == nil {
+		u.classes = slices.Clone(defaultClasses)
+	}
 	r := s.store(stage)[uid]
 	if r == nil {
 		r = &userRec{uuid: newUUID(), stage: stage}
@@ -219,6 +229,9 @@ func (r *userRec) render(s *Server, uid string, find, all bool) map[string]any {
 		if len(v) > 0 {
 			out[k] = v
 		}
+	}
+	if all {
+		out["objectclass"] = slices.Clone(r.classes)
 	}
 	if all { // U4
 		for k, v := range map[string]string{"street": r.Street, "l": r.City, "st": r.State,
@@ -331,6 +344,8 @@ func (u *User) apply(opts map[string]any) *ipa.IpaError {
 			u.SSHPubKeys = strs(v)
 		case "ipauserauthtype":
 			u.AuthTypes = strs(v)
+		case "objectclass":
+			u.classes = strs(v)
 		case "krbpasswordexpiration": // Q41, Q184
 			if m, ok := v.(map[string]any); ok { // the JSON form of a DateTime
 				v = m["__datetime__"]
@@ -377,6 +392,8 @@ func (u *User) attrVals(attr string) (vals []string, ok bool) {
 		return u.SSHPubKeys, true
 	case attr == "ipauserauthtype":
 		return u.AuthTypes, true
+	case attr == "objectclass":
+		return u.classes, true
 	case attr == "krbpasswordexpiration":
 		if u.PasswdExpire.IsZero() {
 			return nil, true
@@ -389,7 +406,7 @@ func (u *User) attrVals(attr string) (vals []string, ok bool) {
 // multiValued is the attributes applyAttrOpts lets hold several values. FreeIPA
 // also allows it for telephonenumber, mobile and userclass, which the fake
 // keeps as one string (Q41).
-var multiValued = map[string]bool{"mail": true, "ipasshpubkey": true, "ipauserauthtype": true}
+var multiValued = map[string]bool{"mail": true, "ipasshpubkey": true, "ipauserauthtype": true, "objectclass": true}
 
 // applyAttrOpts is Q41 for a user.
 func (u *User) applyAttrOpts(opts map[string]any) *ipa.IpaError {
@@ -426,6 +443,13 @@ func attrOpts(opts map[string]any, attrVals func(string) ([]string, bool), multi
 			return nil, &ipa.IpaError{Code: ipa.CodeValidation, Name: "ValidationError", Message: fmt.Sprintf("invalid '%s': No such attribute on this entry", e.attr)}
 		}
 	}
+	// objectclass names compare case-insensitively (Q196)
+	idx := func(attr string, v []string, val string) int {
+		if attr == "objectclass" {
+			return slices.IndexFunc(v, func(o string) bool { return strings.EqualFold(o, val) })
+		}
+		return slices.Index(v, val)
+	}
 	vals := map[string][]string{}
 	cur := func(attr string) []string {
 		if v, ok := vals[attr]; ok {
@@ -443,14 +467,14 @@ func attrOpts(opts map[string]any, attrVals func(string) ([]string, bool), multi
 		}
 	}
 	for _, e := range add {
-		if slices.Contains(cur(e.attr), e.val) { // a no-op; alone it ends as EmptyModlist
+		if idx(e.attr, cur(e.attr), e.val) >= 0 { // a no-op; alone it ends as EmptyModlist
 			continue
 		}
 		vals[e.attr] = append(cur(e.attr), e.val)
 	}
 	for _, e := range del {
 		v := cur(e.attr)
-		i := slices.Index(v, e.val)
+		i := idx(e.attr, v, e.val)
 		if i < 0 {
 			return nil, &ipa.IpaError{Code: ipa.CodeAttrValueNotFound, Name: "AttrValueNotFound", Message: fmt.Sprintf("'%s' does not contain '%s'", e.attr, e.val)}
 		}

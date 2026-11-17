@@ -43,3 +43,37 @@ func TestUserAddPasskey_Empty(t *testing.T) {
 		t.Errorf("%d calls", n)
 	}
 }
+
+func TestUserAddObjectClass_SendsAddattr(t *testing.T) {
+	c, f := newFakeIPA(t, 200, envelope(`{}`))
+	if err := c.UserAddObjectClass("bob", "ipapasskeyuser"); err != nil {
+		t.Fatal(err)
+	}
+	calls := f.Calls()
+	if len(calls) != 1 || calls[0].Method != "user_mod" {
+		t.Fatalf("calls = %+v", calls)
+	}
+	if string(calls[0].Args) != `["bob"]` || calls[0].Options["addattr"] != "objectclass=ipapasskeyuser" {
+		t.Errorf("args %s options %v", calls[0].Args, calls[0].Options)
+	}
+}
+
+func TestUserAddObjectClass_AlreadyPresentIsNil(t *testing.T) {
+	c, _ := newFakeIPA(t, 200, errorBody(4202, "EmptyModlist", "no modifications to be performed"))
+	if err := c.UserAddObjectClass("bob", "ipapasskeyuser"); err != nil {
+		t.Errorf("err = %v", err)
+	}
+}
+
+func TestUserAddObjectClass_RequiresArgs(t *testing.T) {
+	c, f := newFakeIPA(t, 200, envelope(`{}`))
+	if err := c.UserAddObjectClass("", "x"); err == nil || err.Error() != "ipa: username is required" {
+		t.Errorf("err = %v", err)
+	}
+	if err := c.UserAddObjectClass("bob", ""); err == nil || err.Error() != "ipa: object class is required" {
+		t.Errorf("err = %v", err)
+	}
+	if n := len(f.Calls()); n != 0 {
+		t.Errorf("%d calls", n)
+	}
+}

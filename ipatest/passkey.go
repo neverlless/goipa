@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"regexp"
 	"slices"
+	"strings"
 
 	ipa "github.com/neverlless/goipa"
 )
@@ -48,6 +49,11 @@ func passkeyCmd(add bool) builtin {
 			return nil, required("ipapasskey")
 		}
 		m := c.Args[1]
+		priv := s.holds(c.User, "Passkey Administrators", "User Administrators")
+		// Q195: the self-service rule grants ipapasskey, not the objectclass the first mapping adds
+		if add && !priv && uid == c.User && !ldapACIRelease(s.version) && !slices.ContainsFunc(r.classes, func(o string) bool { return strings.EqualFold(o, "ipapasskeyuser") }) {
+			return nil, s.aciError(true, "")
+		}
 		has := slices.Contains(r.Passkeys, m)
 		summary := fmt.Sprintf("Removed passkey mappings from user %q", uid)
 		switch {
@@ -59,6 +65,9 @@ func passkeyCmd(add bool) builtin {
 				return nil, &ipa.IpaError{Code: ipa.CodeAlreadyContainsValue, Name: "AlreadyContainsValueError", Message: fmt.Sprintf("'ipapasskey' already contains '%s'", m)}
 			}
 			r.Passkeys = append(r.Passkeys, m)
+			if !slices.ContainsFunc(r.classes, func(o string) bool { return strings.EqualFold(o, "ipapasskeyuser") }) {
+				r.classes = append(r.classes, "ipapasskeyuser")
+			}
 			summary = fmt.Sprintf("Added passkey mappings to user %q", uid)
 		case !has:
 			return nil, &ipa.IpaError{Code: ipa.CodeAttrValueNotFound, Name: "AttrValueNotFound", Message: fmt.Sprintf("'ipapasskey' does not contain '%s'", m)}

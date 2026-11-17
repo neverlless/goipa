@@ -157,11 +157,11 @@ func TestContractPlainUserWrites(t *testing.T) {
 			wantIs(t, err, ipa.ErrNotFound)
 		}
 
-		// Self-service. Q172: 4.13.4 refuses an own passkey; ipatest does not model it.
+		// Self-service. Q172, Q195: 4.13.4 refuses a first own passkey.
 		err = c.UserAddPasskey(uid, testPasskey)
 		switch {
 		case !serverAtLeast(ver, 4, 11):
-		case b.name != "ipatest" && !ldapACIRelease(ver):
+		case !ldapACIRelease(ver):
 			wantIs(t, err, ipa.ErrACI)
 		case err != nil:
 			t.Errorf("own passkey: %v", err)
