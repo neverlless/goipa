@@ -54,6 +54,8 @@ type User struct {
 	FailedLogins      int
 	LastFailedLogin   time.Time // krblastfailedauth, set by a wrong password
 	PasswdExpire      time.Time // krbpasswordexpiration; non-zero and not after now = expired
+	Manager           string    // uid of the manager; user_add and user_mod refuse an unknown uid (Q185)
+	PrincipalExpire   time.Time // krbprincipalexpiration; non-zero and not after now = login refused (Q187)
 }
 
 // userRec is a stored user plus the attributes the server assigns.
@@ -246,6 +248,20 @@ func (r *userRec) render(s *Server, uid string, find, all bool) map[string]any {
 	if len(indirect) > 0 {
 		out["memberofindirect_group"] = indirect
 	}
+	if r.Manager != "" {
+		out["manager"] = []string{"uid=" + r.Manager + "," + baseDN}
+	}
+	if !r.PrincipalExpire.IsZero() {
+		out["krbprincipalexpiration"] = []map[string]string{{"__datetime__": r.PrincipalExpire.UTC().Format(ipa.IpaDatetimeFormat)}}
+	}
+	if all { // Q186
+		if r.FailedLogins != 0 {
+			out["krbloginfailedcount"] = []string{strconv.Itoa(r.FailedLogins)}
+		}
+		if !r.LastFailedLogin.IsZero() {
+			out["krblastfailedauth"] = []map[string]string{{"__datetime__": r.LastFailedLogin.UTC().Format(ipa.IpaDatetimeFormat)}}
+		}
+	}
 	if !r.PasswdExpire.IsZero() {
 		out["krbpasswordexpiration"] = []map[string]string{{"__datetime__": r.PasswdExpire.UTC().Format(ipa.IpaDatetimeFormat)}}
 	}
@@ -331,6 +347,18 @@ func (u *User) apply(opts map[string]any) *ipa.IpaError {
 			u.SSHPubKeys = strs(v)
 		case "ipauserauthtype":
 			u.AuthTypes = strs(v)
+		case "manager":
+			u.Manager = strings.TrimPrefix(str(v), "uid=")
+			u.Manager, _, _ = strings.Cut(u.Manager, ",")
+		case "krbprincipalexpiration":
+			if m, ok := v.(map[string]any); ok {
+				v = m["__datetime__"]
+			}
+			t, ok := parseDateTime(str(v))
+			if !ok {
+				return &ipa.IpaError{Code: ipa.CodeConversion, Name: "ConversionError", Message: "invalid 'krbprincipalexpiration': does not match any of accepted formats: %Y%m%d%H%M%SZ, %Y-%m-%dT%H:%M:%SZ, %Y-%m-%dT%H:%MZ, %Y-%m-%dZ, %Y-%m-%d %H:%M:%SZ, %Y-%m-%d %H:%MZ"}
+			}
+			u.PrincipalExpire = t
 		case "krbpasswordexpiration": // Q41, Q184
 			if m, ok := v.(map[string]any); ok { // the JSON form of a DateTime
 				v = m["__datetime__"]
@@ -516,6 +544,7 @@ func (r *userRec) withRandom(s *Server, c Call, uid string) map[string]any {
 		r.Password, r.PasswdExpire = randomPassword(), expiredNow()
 	}
 	rec := r.render(s, uid, false, flag(c, "all"))
+	s.hideCounters(c, uid, rec)
 	if random {
 		rec["randompassword"] = r.Password
 	}
@@ -531,7 +560,9 @@ func (s *Server) userShow(stage bool, c Call) (any, *ipa.IpaError) {
 	if err != nil {
 		return nil, err
 	}
-	return entry(uid, r.render(s, uid, false, flag(c, "all")), ""), nil
+	rec := r.render(s, uid, false, flag(c, "all"))
+	s.hideCounters(c, uid, rec)
+	return entry(uid, rec, ""), nil
 }
 
 func userFind(stage bool) builtin {
@@ -554,7 +585,7 @@ func (s *Server) userFind(stage bool, c Call) (any, *ipa.IpaError) {
 		}) {
 			continue
 		}
-		if !matches(c, "uid", uid) || !matchesAny(c, "mail", r.mails()) || !matches(c, "givenname", r.First) || !matches(c, "sn", r.Last) {
+		if !matches(c, "uid", uid) || !matchesAny(c, "mail", r.mails()) || !matches(c, "givenname", r.First) || !matches(c, "sn", r.Last) || !matches(c, "manager", r.Manager) {
 			continue
 		}
 		uids = append(uids, uid)
@@ -563,12 +594,30 @@ func (s *Server) userFind(stage bool, c Call) (any, *ipa.IpaError) {
 	recs := make([]map[string]any, 0, len(uids))
 	for _, uid := range uids {
 		rec := s.store(stage)[uid].render(s, uid, true, all)
+		s.hideCounters(c, uid, rec)
 		if !all { // Q1, Q28
 			delete(rec, "userclass")
 		}
 		recs = append(recs, rec)
 	}
 	return listLimited(c, recs), nil
+}
+
+// hideCounters is Q186: the login counters are not readable, not even the
+// caller's own, without User Administrators.
+func (s *Server) hideCounters(c Call, uid string, rec map[string]any) {
+	if !s.holds(c.User, "User Administrators") {
+		delete(rec, "krbloginfailedcount")
+		delete(rec, "krblastfailedauth")
+	}
+}
+
+// checkManager is Q185: the manager must be an active user.
+func (s *Server) checkManager(uid string) *ipa.IpaError {
+	if uid != "" && s.users[uid] == nil {
+		return &ipa.IpaError{Code: ipa.CodeNotFound, Name: "NotFound", Message: "manager " + uid + " not found"}
+	}
+	return nil
 }
 
 func matches(c Call, opt, have string) bool {
@@ -615,6 +664,9 @@ func (s *Server) userAdd(stage bool, c Call) (any, *ipa.IpaError) {
 	}
 	if u.Last == "" {
 		return nil, required("sn")
+	}
+	if err := s.checkManager(u.Manager); err != nil {
+		return nil, err
 	}
 	r := s.putUser(stage, uid, u)
 	if pw := str(c.Options["userpassword"]); pw != "" { // Q160
@@ -668,6 +720,11 @@ func (s *Server) userMod(stage bool, c Call) (any, *ipa.IpaError) {
 	}
 	if next.Last == "" {
 		return nil, required("sn")
+	}
+	if next.Manager != r.Manager {
+		if err := s.checkManager(next.Manager); err != nil {
+			return nil, err
+		}
 	}
 	random := flag(c, "random")
 	if !random && reflect.DeepEqual(next, r.User) { // Q11
@@ -791,6 +848,8 @@ func loginPassword(s *Server, w http.ResponseWriter, r *http.Request) {
 		u.FailedLogins++
 		u.LastFailedLogin = time.Now()
 		reject("invalid-password")
+	case !u.PrincipalExpire.IsZero() && !u.PrincipalExpire.After(time.Now()): // Q187
+		reject("krbprincipal-expired")
 	case !u.PasswdExpire.IsZero() && !u.PasswdExpire.After(time.Now()): // Q5
 		reject("password-expired")
 	default:

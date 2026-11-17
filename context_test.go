@@ -10,6 +10,7 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+	"time"
 
 	ipa "github.com/neverlless/goipa"
 )
@@ -81,6 +82,12 @@ func twinCalls() []twinCall {
 		}},
 		{"SetAuthTypesContext", func(ctx context.Context, c *ipa.Client) error {
 			return c.SetAuthTypesContext(ctx, "bob", []string{"otp"})
+		}},
+		{"SetManagerContext", func(ctx context.Context, c *ipa.Client) error {
+			return c.SetManagerContext(ctx, "bob", "walter")
+		}},
+		{"SetPrincipalExpirationContext", func(ctx context.Context, c *ipa.Client) error {
+			return c.SetPrincipalExpirationContext(ctx, "bob", time.Now())
 		}},
 		{"UserDisableContext", func(ctx context.Context, c *ipa.Client) error {
 			return c.UserDisableContext(ctx, "bob")
