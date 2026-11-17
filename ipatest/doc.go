@@ -887,6 +887,22 @@
 //   - Q198: adding a class the entry has is a no-op, 4202 EmptyModlist when
 //     alone; UserAddObjectClass returns nil. TestUserShow_ObjectClassWithAll,
 //     goipa.TestContractFirstOwnPasskey.
+//   - Q185: user's manager is stored as a uid and rendered as the DN
+//     uid=<uid>,cn=users,...; user_add and user_mod with an unknown manager
+//     are 4001 "manager <uid> not found". user_find filters on manager.
+//     TestContractUserManager, TestUserFind_ByManager.
+//   - Q186: user_show and user_find with all render krbloginfailedcount
+//     (["n"], absent at zero) and krblastfailedauth. A caller without User
+//     Administrators does not get them, not even for the own entry.
+//     TestContractLoginCounters, TestUserShow_LoginCounters.
+//   - Q187: a login with the right password for a user whose
+//     krbprincipalexpiration has passed is 401 with X-IPA-Rejection-Reason
+//     krbprincipal-expired (ipa.ErrUnauthorized). The attribute is a
+//     one-element DateTime list. TestContractPrincipalExpiration,
+//     TestLogin_PrincipalExpired.
+//   - Q188: krbprincipalexpiration is outside the self-service attributes:
+//     a plain user changing the own value is ErrACI, as no system permission
+//     grants write on it. TestContractPrincipalExpiration.
 //
 // A response's version is the server release, 4.13.4 unless SetVersion
 // changes it, and its principal is

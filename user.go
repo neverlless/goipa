@@ -14,6 +14,7 @@ import (
 	"net/http"
 	"net/url"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 
@@ -53,6 +54,15 @@ type User struct {
 	LastLoginSuccess time.Time           `json:"krblastsuccessfulauth"`
 	LastLoginFail    time.Time           `json:"krblastfailedauth"`
 	RandomPassword   string              `json:"randompassword"`
+
+	// Manager is the uid of the user's manager (SetManager writes it). Read
+	// only for UserMod, which never sends it.
+	Manager string `json:"manager"`
+	// LoginFailedCount is krbloginfailedcount, the consecutive wrong
+	// passwords of this server; UserShow reports it with all. LastLoginSuccess
+	// stays zero under FreeIPA's default ipaconfigstring "KDC:Disable Last
+	// Success".
+	LoginFailedCount int `json:"krbloginfailedcount"`
 
 	// Emails holds every mail value; Email is the first. UserMod and UserAdd
 	// send Email first, then Emails[1:] (see ToOptions), so Emails[0] is
@@ -190,6 +200,12 @@ func (u *User) fromJSON(raw []byte) error {
 		r = r.Get("0")
 	}
 	u.RandomPassword = r.String()
+	// FreeIPA returns the manager as a DN; a bare uid is kept as is.
+	u.Manager = res.Get("manager.0").String()
+	if rdn, _, ok := strings.Cut(u.Manager, ","); ok {
+		u.Manager = strings.TrimPrefix(rdn, "uid=")
+	}
+	u.LoginFailedCount, _ = strconv.Atoi(scalarOrFirst(res, "krbloginfailedcount"))
 	u.LastPasswdChange = ParseDateTime(res.Get("krblastpwdchange.0.__datetime__").String())
 	u.PasswdExpire = ParseDateTime(res.Get("krbpasswordexpiration.0.__datetime__").String())
 	u.PrincipalExpire = ParseDateTime(res.Get("krbprincipalexpiration.0.__datetime__").String())
@@ -666,4 +682,44 @@ func (c *Client) UserModContext(ctx context.Context, user *User) (*User, error) 
 	}
 
 	return userRec, nil
+}
+
+// SetManager sets the manager of username to the uid manager; "" clears it.
+// UserMod never sends it: FreeIPA's "User Self service" lets a user change
+// their own manager, so a profile save through UserMod must not touch it.
+func (c *Client) SetManager(username, manager string) error {
+	return c.SetManagerContext(context.Background(), username, manager)
+}
+
+// SetManagerContext is like SetManager but bounds the request with ctx.
+func (c *Client) SetManagerContext(ctx context.Context, username, manager string) error {
+	return c.userModOne(ctx, username, "manager", manager)
+}
+
+// SetPrincipalExpiration sets krbprincipalexpiration of username; the zero
+// time clears it. No FreeIPA system permission grants write on this
+// attribute: only admins, or a custom permission, can change it.
+func (c *Client) SetPrincipalExpiration(username string, t time.Time) error {
+	return c.SetPrincipalExpirationContext(context.Background(), username, t)
+}
+
+// SetPrincipalExpirationContext is like SetPrincipalExpiration but bounds the request with ctx.
+func (c *Client) SetPrincipalExpirationContext(ctx context.Context, username string, t time.Time) error {
+	v := ""
+	if !t.IsZero() {
+		v = t.UTC().Format(IpaDatetimeFormat)
+	}
+	return c.userModOne(ctx, username, "krbprincipalexpiration", v)
+}
+
+// userModOne sends user_mod with one option; no change is not an error.
+func (c *Client) userModOne(ctx context.Context, username, attr, value string) error {
+	if username == "" {
+		return errors.New("ipa: username is required")
+	}
+	_, err := c.rpc(ctx, "user_mod", []string{username}, Options{attr: value})
+	if errors.Is(err, ErrEmptyModlist) {
+		return nil
+	}
+	return err
 }

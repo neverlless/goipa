@@ -14,6 +14,7 @@ import (
 	"slices"
 	"strings"
 	"testing"
+	"time"
 
 	ipa "github.com/neverlless/goipa"
 	"github.com/neverlless/goipa/ipatest"
@@ -107,9 +108,7 @@ func TestIpatest_UserFieldsRoundTrip(t *testing.T) {
 	skip := map[string]string{
 		"RandomPassword":   "only in the response of a random=true call",
 		"LastPasswdChange": "time, not modelled",
-		"PrincipalExpire":  "time, not modelled",
 		"LastLoginSuccess": "time, not modelled",
-		"LastLoginFail":    "time, not modelled",
 		"PasswdExpire":     "time, covered by the password tests",
 		"SudoRules":        "sudo rules are not modelled",
 		"HbacRules":        "HBAC rules are not modelled",
@@ -133,6 +132,7 @@ func TestIpatest_UserFieldsRoundTrip(t *testing.T) {
 	seed.Groups = nil
 	seed.First, seed.Last, seed.DisplayName = "F", "L", "F L"
 	seed.Telephone, seed.Mobile, seed.Shell, seed.HomeDir = "1", "2", "/bin/zsh", "/h/jdoe"
+	seed.Manager, seed.PrincipalExpire, seed.FailedLogins, seed.LastFailedLogin = "walter", time.Now().Add(time.Hour), 1, time.Now()
 	s.AddUser("jdoe", seed)
 	u, err := c.UserShow("jdoe")
 	if err != nil {
@@ -291,5 +291,122 @@ func TestResetPassword_IgnoresValue(t *testing.T) {
 	pw, err := resetWithHandler(t, map[string]any{"uid": []string{"jdoe"}})
 	if err == nil {
 		t.Errorf("ResetPassword = %q, want an error", pw)
+	}
+}
+
+func showUser(t *testing.T, rec string) *ipa.User {
+	t.Helper()
+	c, _ := newFakeIPA(t, 200, envelope(`{"result":`+rec+`,"value":"u"}`))
+	u, err := c.UserShow("u")
+	if err != nil {
+		t.Fatal(err)
+	}
+	return u
+}
+
+func TestUserFromJSON_ManagerUIDAndDN(t *testing.T) {
+	for in, want := range map[string]string{
+		`["uid=walter,cn=users,cn=accounts,dc=x,dc=y"]`: "walter",
+		`["walter"]`: "walter",
+		`[]`:         "",
+	} {
+		if u := showUser(t, `{"manager":`+in+`}`); u.Manager != want {
+			t.Errorf("manager %s = %q, want %q", in, u.Manager, want)
+		}
+	}
+	if u := showUser(t, `{}`); u.Manager != "" {
+		t.Errorf("absent manager = %q", u.Manager)
+	}
+}
+
+func TestUserFromJSON_LoginFailedCount(t *testing.T) {
+	for in, want := range map[string]int{`"0"`: 0, `["3"]`: 3, `["0"]`: 0} {
+		if u := showUser(t, `{"krbloginfailedcount":`+in+`}`); u.LoginFailedCount != want {
+			t.Errorf("count %s = %d, want %d", in, u.LoginFailedCount, want)
+		}
+	}
+	if u := showUser(t, `{}`); u.LoginFailedCount != 0 {
+		t.Errorf("absent count = %d", u.LoginFailedCount)
+	}
+}
+
+func lastRPC(t *testing.T, f *fakeIPA) rpcCall {
+	t.Helper()
+	calls := f.Calls()
+	if len(calls) == 0 {
+		t.Fatal("no request")
+	}
+	return calls[len(calls)-1]
+}
+
+func TestSetManager_SendsOption(t *testing.T) {
+	c, f := newFakeIPA(t, 200, envelope(`{}`))
+	if err := c.SetManager("bob", "walter"); err != nil {
+		t.Fatal(err)
+	}
+	call := lastRPC(t, f)
+	if call.Method != "user_mod" || string(call.Args) != `["bob"]` || call.Options["manager"] != "walter" {
+		t.Errorf("call = %+v", call)
+	}
+	if err := c.SetManager("", "walter"); err == nil {
+		t.Error("empty username accepted")
+	}
+}
+
+func TestSetManager_Clear(t *testing.T) {
+	c, f := newFakeIPA(t, 200, envelope(`{}`))
+	if err := c.SetManager("bob", ""); err != nil {
+		t.Fatal(err)
+	}
+	if v, ok := lastRPC(t, f).Options["manager"]; !ok || v != "" {
+		t.Errorf("manager = %v (present %v)", v, ok)
+	}
+}
+
+func TestSetManager_EmptyModlistIsNil(t *testing.T) {
+	c, _ := newFakeIPA(t, 200, errorBody(ipa.CodeEmptyModlist, "EmptyModlist", "no modifications to be performed"))
+	if err := c.SetManager("bob", "walter"); err != nil {
+		t.Errorf("err = %v", err)
+	}
+	if err := c.SetPrincipalExpiration("bob", time.Now()); err != nil {
+		t.Errorf("err = %v", err)
+	}
+}
+
+func TestSetPrincipalExpiration_Format(t *testing.T) {
+	c, f := newFakeIPA(t, 200, envelope(`{}`))
+	loc := time.FixedZone("x", 3*3600)
+	if err := c.SetPrincipalExpiration("bob", time.Date(2030, 1, 2, 3, 4, 5, 0, loc)); err != nil {
+		t.Fatal(err)
+	}
+	if v := lastRPC(t, f).Options["krbprincipalexpiration"]; v != "20300102000405Z" {
+		t.Errorf("krbprincipalexpiration = %v", v)
+	}
+	if err := c.SetPrincipalExpiration("", time.Now()); err == nil {
+		t.Error("empty username accepted")
+	}
+}
+
+func TestSetPrincipalExpiration_ZeroClears(t *testing.T) {
+	c, f := newFakeIPA(t, 200, envelope(`{}`))
+	if err := c.SetPrincipalExpiration("bob", time.Time{}); err != nil {
+		t.Fatal(err)
+	}
+	if v, ok := lastRPC(t, f).Options["krbprincipalexpiration"]; !ok || v != "" {
+		t.Errorf("krbprincipalexpiration = %v (present %v)", v, ok)
+	}
+}
+
+func TestUserMod_DoesNotSendManagerOrExpiry(t *testing.T) {
+	c, f := newFakeIPA(t, 200, envelope(`{"result":{}}`))
+	u := &ipa.User{Username: "bob", First: "B", Last: "B", Manager: "walter", PrincipalExpire: time.Now().Add(time.Hour)}
+	if _, err := c.UserMod(u); err != nil {
+		t.Fatal(err)
+	}
+	opts := lastRPC(t, f).Options
+	for _, k := range []string{"manager", "krbprincipalexpiration"} {
+		if _, ok := opts[k]; ok {
+			t.Errorf("UserMod sent %s", k)
+		}
 	}
 }
