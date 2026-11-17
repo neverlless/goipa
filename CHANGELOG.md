@@ -7,6 +7,8 @@ existing exported identifiers keep their signatures).
 
 ## [Unreleased]
 
+## [v1.2.0] - 2026-11-17
+
 ### Added
 
 - `ReportTruncation(ctx)`: one `…Context` find returns `ErrTruncated` with
@@ -542,7 +544,8 @@ v0.0.1 – v0.0.7 were released by Andrew E. Bruno as
 [ubccr/goipa](https://github.com/ubccr/goipa/tags). This repository keeps
 that history.
 
-[Unreleased]: https://github.com/neverlless/goipa/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/neverlless/goipa/compare/v1.2.0...HEAD
+[v1.2.0]: https://github.com/neverlless/goipa/compare/v1.1.0...v1.2.0
 [v1.1.0]: https://github.com/neverlless/goipa/compare/v1.0.0...v1.1.0
 [v1.0.0]: https://github.com/neverlless/goipa/compare/v0.9.1...v1.0.0
 [v0.9.1]: https://github.com/neverlless/goipa/compare/v0.9.0...v0.9.1
