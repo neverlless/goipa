@@ -10,7 +10,7 @@ require (
 	github.com/jcmturner/gokrb5/v8 v8.4.4
 	github.com/joho/godotenv v1.5.1
 	github.com/stretchr/testify v1.12.1
-	github.com/tidwall/gjson v1.20.4
+	github.com/tidwall/gjson v1.20.6
 	golang.org/x/crypto v0.59.0
 )
 
